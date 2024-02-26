@@ -1,0 +1,4 @@
+{
+  "mongoURI": "mongodb://Admin:45gEJdPMO1fE@13.200.164.92:27017//power",
+  "jwtSecret": "autocreate"
+}
