@@ -90,8 +90,8 @@ table {
   width: 100%;
 }
 
-table, th, td {
-  border: 1px solid gainsboro;
+ th, td {
+  border-bottom: 1px solid gainsboro;
   border-collapse: collapse;
 }
 
