@@ -1,10 +1,9 @@
-import { useState } from "react";
 import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-  Outlet,
+	BrowserRouter as Router,
+	Route,
+	Routes,
+	Navigate,
+	Outlet,
 } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -13,47 +12,65 @@ import { useSelector } from "react-redux";
 // import { toast, ToastContainer } from "react-toastify";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import CreateTable from "./pages/CreateTable";
+import NewDocument from "./pages/NewDocument";
 import DisplayTable from "./pages/DisplayTable";
 import Layout from "./components/Layout";
 import Loading from "./components/Loading";
+import ViewDocuments from "./pages/ViewDocuments";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated } = useSelector((state) => state.auth);
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  return <Outlet />;
+	const { isAuthenticated } = useSelector((state) => state.auth);
+	if (!isAuthenticated) {
+		return (
+			<Navigate
+				to='/'
+				replace
+			/>
+		);
+	}
+	return <Outlet />;
 };
 
 function App() {
-  const [selectedRow, setSelectedRow] = useState(null);
-  const { loading } = useSelector((state) => state.loading);
+	const { loading } = useSelector((state) => state.loading);
 
-  return (
-    <>
-      <Loading loading={loading} />
+	return (
+		<>
+			<Loading loading={loading} />
 
-      <Router>
-        <Routes>
-          <Route element={<ProtectedRoute />}>
-            <Route path="/tb" element={<Layout />}>
-              <Route
-                path="dbtable"
-                element={<DisplayTable setSelectedRow={setSelectedRow} />}
-              />
-              <Route
-                path="createtable"
-                element={<CreateTable selectedRow={selectedRow} />}
-              />
-            </Route>
-          </Route>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Routes>
-      </Router>
-    </>
-  );
+			<Router>
+				<Routes>
+					<Route element={<ProtectedRoute />}>
+						<Route
+							path='/tb'
+							element={<Layout />}
+						>
+							<Route
+								path='dbtable'
+								element={<DisplayTable />}
+							/>
+							<Route
+								path='new_or_edit'
+								element={<NewDocument />}
+							/>
+							<Route
+								path='view'
+								element={<ViewDocuments />}
+							/>
+						</Route>
+					</Route>
+					<Route
+						path='/'
+						element={<Login />}
+					/>
+					<Route
+						path='/register'
+						element={<Register />}
+					/>
+				</Routes>
+			</Router>
+		</>
+	);
 }
 
 export default App;
