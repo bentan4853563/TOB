@@ -46,6 +46,14 @@ const SignIn = () => {
 		}
 	};
 
+	const handleKeyDown = (e) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleSubmit();
+			setErrors({ ...errors, section: "" });
+		}
+	};
+
 	const handleFocus = (e) => {
 		setErrors({ ...errors, [e.target.name]: "" });
 	};
@@ -89,6 +97,7 @@ const SignIn = () => {
 							placeholder='Password'
 							onChange={(e) => setPassword(e.target.value)}
 							onFocus={handleFocus}
+							onKeyDown={handleKeyDown}
 							className='w-full py-2 mt-8 rounded-sm pl-2 border border-gray-600 focus:outline-none'
 						/>
 						{errors.password && (

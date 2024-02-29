@@ -21,7 +21,7 @@ const TableSchema = new mongoose.Schema({
 	},
 	status: {
 		type: String,
-		default: "Generated",
+		default: "Progress",
 	},
 });
 

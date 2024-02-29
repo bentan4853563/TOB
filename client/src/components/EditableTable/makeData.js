@@ -70,52 +70,54 @@
 //   return { columns: columns, data: data, skipReset: false };
 // }
 
-import { useSelector } from "react-redux";
+// import { useSelector } from "react-redux";
 
-export default function MakeData() {
-  const { table } = useSelector((state) => state.table);
+export default function MakeData(table) {
+	// const { table } = useSelector((state) => state.table);
+	let columns = [];
+	if (table && table.length > 0) {
+		const keys = Object.keys(table[0]);
+		const idIndex = keys.indexOf("id");
 
-  let data = table || []; // Fallback to an empty array if table is undefined
-  let columns = [];
+		if (idIndex > -1) {
+			keys.splice(idIndex, 1); // Remove 'id' from its current position
+			keys.unshift("id"); // Add 'id' to the beginning of the keys array
+		}
 
-  if (data.length > 0) {
-    const keys = Object.keys(data[0]); // Get keys and reverse the order
-
-    keys.forEach((key) => {
-      columns.push({
-        id: key,
-        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
-        accessor: key,
-        minWidth: 100,
-        dataType: "text",
-      });
-    });
-    columns.push({
-      id: 999999,
-      width: 20,
-      label: "+",
-      disableResizing: true,
-      dataType: "null",
-    });
-  } else {
-    const keys = ["Column_1", "Column_2", "Column_3", "Column_4", "Column_5"];
-    keys.forEach((key) => {
-      columns.push({
-        id: key,
-        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
-        accessor: key,
-        minWidth: 100,
-        dataType: "text",
-      });
-    });
-    columns.push({
-      id: 999999,
-      width: 20,
-      label: "+",
-      disableResizing: true,
-      dataType: "null",
-    });
-  }
-
-  return { columns: columns, data: data, skipReset: false };
+		keys.forEach((key) => {
+			columns.push({
+				id: key,
+				label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
+				accessor: key,
+				minWidth: 100,
+				dataType: "text",
+			});
+		});
+		columns.push({
+			id: 999999,
+			width: 20,
+			label: "+",
+			disableResizing: true,
+			dataType: "null",
+		});
+	} else {
+		const keys = ["Column_1", "Column_2", "Column_3", "Column_4", "Column_5"];
+		keys.forEach((key) => {
+			columns.push({
+				id: key,
+				label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
+				accessor: key,
+				minWidth: 100,
+				dataType: "text",
+			});
+		});
+		columns.push({
+			id: 999999,
+			width: 20,
+			label: "+",
+			disableResizing: true,
+			dataType: "null",
+		});
+	}
+	return { columns: columns, data: table, skipReset: false };
 }
