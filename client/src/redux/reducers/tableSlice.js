@@ -30,7 +30,7 @@ export const tableSlice = createSlice({
 			state.metaData = action.payload;
 		},
 		setReview: (state) => {
-			state.metaData = { ...state.metaData, status: "Review" };
+			state.metaData.status = "Review";
 		},
 		clearMetaData: (state) => {
 			state.metaData = initialState.metaData;
