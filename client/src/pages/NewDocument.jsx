@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import { Button } from "primereact/button";
 import { IoClose } from "react-icons/io5";
@@ -13,6 +13,7 @@ import EditableTable from "../components/EditableTable/EditableTable";
 
 const NewDocument = () => {
 	const dispatch = useDispatch();
+	const { metaData } = useSelector((state) => state.table);
 
 	const [isMetaForm, setIsMetaForm] = useState(true);
 
@@ -69,6 +70,11 @@ const NewDocument = () => {
 		"GLOBAL CARE",
 	];
 
+	useEffect(() => {
+		setBroker(metaData.broker);
+		setClient(metaData.client);
+	}, [metaData]);
+
 	const handleProcess = () => {
 		let newErrors = {};
 		if (!broker.trim()) {
@@ -86,7 +92,7 @@ const NewDocument = () => {
 				client,
 				previousInsurer: insurer,
 			};
-			setMetaData(newMetaData);
+			dispatch(setMetaData(newMetaData));
 			setIsMetaForm(false);
 		}
 	};
@@ -300,8 +306,9 @@ const NewDocument = () => {
 								</div>
 								<label htmlFor='fileInput'>
 									<span
-										name='file'
-										onClick={handleFocus}
+										onClick={() =>
+											setOptionErrors({ ...optionErrors, file: "" })
+										}
 										className='w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-2 rounded-md cursor-pointer'
 									>
 										Upload

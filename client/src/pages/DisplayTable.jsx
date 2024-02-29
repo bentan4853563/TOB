@@ -54,7 +54,7 @@ const DisplayTable = () => {
 					throw new Error(`HTTP error! Status: ${response.status}`);
 				}
 				const data = await response.json();
-				setDBTableData(data);
+				setDBTableData(data.data);
 				dispatch(clearLoading());
 			} catch (error) {
 				console.error("Fetching data failed:", error);
@@ -211,7 +211,7 @@ const DisplayTable = () => {
 		"GLOBAL CARE",
 	];
 	return (
-		<div className='w-full h-full bg-gray-100 px-24 flex flex-col items-start justify-start'>
+		<div className='w-full h-full bg-gray-100 px-8 lg:px-24 flex flex-col items-start justify-start'>
 			<div className='w-full px-8 py-4 my-4 flex justify-between items-center bg-white rounded-lg'>
 				<span className='text-2xl'>Documents</span>
 				<button

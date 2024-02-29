@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 
@@ -17,6 +17,7 @@ import {
 	clearTablData,
 	clearMetaData,
 } from "../../redux/reducers/tableSlice";
+import { clearLoading, setLoading } from "../../redux/reducers/loadingSlice";
 
 function reducer(state, action) {
 	switch (action.type) {
@@ -216,6 +217,7 @@ function reducer(state, action) {
 
 function EditableTable() {
 	const navigate = useNavigate();
+	const customDispatch = useDispatch();
 	const base_URL = import.meta.env.VITE_BACKEND_URL;
 
 	const { token } = useSelector((state) => state.auth);
@@ -248,7 +250,7 @@ function EditableTable() {
 		// 	},
 		// 	body: JSON.stringify({ id: metaData._id }),
 		// });
-		dispatch(setReview());
+		customDispatch(setReview());
 	};
 
 	// const handleSaveasCSV = () => {
@@ -259,16 +261,25 @@ function EditableTable() {
 
 	const handleSaveToDB = async () => {
 		// Proceed with saving data to the database
+		let source_TOB = "";
+		if (metaData.sourceTOB) {
+			source_TOB = metaData.sourceTOB;
+		} else {
+			source_TOB = uploadedFile;
+		}
 		const formData = {
 			table: state.data,
 			metaData: {
+				_id: metaData._id,
 				broker: metaData.broker,
 				client: metaData.client,
 				previousInsurer: metaData.previousInsurer,
-				sourceTOB: uploadedFile,
+				status: "Generated",
+				sourceTOB: source_TOB,
 			},
 		};
 
+		customDispatch(setLoading());
 		try {
 			const response = await fetch(`${base_URL}/table/fileUploadAndSave`, {
 				method: "POST",
@@ -282,7 +293,7 @@ function EditableTable() {
 			if (!response.ok) {
 				throw new Error("Failed to save data. Please try again.");
 			}
-
+			customDispatch(clearLoading());
 			navigate("/tb/dbtable");
 			dispatch(clearFileName());
 			dispatch(clearTablData());
@@ -291,6 +302,10 @@ function EditableTable() {
 			console.error("Error saving data:", error);
 			// Handle error if needed
 		}
+	};
+
+	const handleClose = () => {
+		navigate("/tb/dbtable");
 	};
 
 	return (
@@ -310,19 +325,27 @@ function EditableTable() {
 							style={{ width: "100%" }}
 						/>
 						<div className='flex gap-4'>
+							{metaData.status === "Progress" && (
+								<button
+									onClick={handleReview}
+									className='w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none'
+								>
+									Review
+								</button>
+							)}
+							{(metaData.status === "Review" ||
+								metaData.status === "Generated") && (
+								<button
+									onClick={handleSaveToDB}
+									className='w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none'
+								>
+									Generate
+								</button>
+							)}
 							<button
-								onClick={handleReview}
+								onClick={handleClose}
 								className='w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none'
 							>
-								Review
-							</button>
-							<button
-								onClick={handleSaveToDB}
-								className='w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none'
-							>
-								Generate
-							</button>
-							<button className='w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none'>
 								Close
 							</button>
 						</div>

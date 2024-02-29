@@ -15,7 +15,6 @@ router.get("/readAll", async (req, res) => {
 			resultTOB: 1,
 			status: 1,
 		});
-		console.log(tableData);
 		res.json(tableData);
 	} catch (error) {
 		res.status(500).json({ message: error.message });
@@ -25,12 +24,9 @@ router.get("/readAll", async (req, res) => {
 router.post("/getOne", auth, async (req, res) => {
 	try {
 		const { resultTOB, _id } = req.body;
-		console.log("resultTOB", resultTOB, _id, req.body);
 		// Use await here because readDataFromFile now returns a Promise
 		const fileData = await readDataFromFile(resultTOB);
-		console.log(fileData);
 		const metaData = await Table.findOne({ _id: _id });
-		console.log(metaData);
 
 		res.send({ metaData, fileData });
 	} catch (error) {
@@ -77,13 +73,14 @@ router.post("/search", async (req, res) => {
 			query.client = client;
 		}
 		if (insurer && insurer.trim() !== "") {
-			query.insurer = insurer;
+			query.previousInsurer = insurer;
 		}
 		console.log(query);
 		let documents = [];
 		if (Object.keys(query).length > 0) {
 			documents = await Table.find(query);
 		}
+		console.log(documents);
 		res.json({ message: "Success", data: documents });
 	} catch (error) {
 		console.error(error);
@@ -115,6 +112,7 @@ router.post("/fileUploadAndSave", async (req, res) => {
 			client: metaData.client,
 			previousInsurer: metaData.previousInsurer,
 			sourceTOB: metaData.sourceTOB,
+			status: metaData.status,
 			resultTOB: newResultTOB,
 		};
 		// policyPeriod: metaData.policyPeriod,
