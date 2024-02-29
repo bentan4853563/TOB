@@ -172,6 +172,8 @@ const DisplayTable = () => {
 			body: JSON.stringify(searchData),
 		});
 		const result = await response.json();
+		console.log(result);
+		setDBTableData(result);
 		// dispatch(setMetaData(result.metaData));
 		// dispatch(setTableData(result.fileData));
 		// dispatch(setFileName(metaData.sourceTOB));
@@ -289,74 +291,76 @@ const DisplayTable = () => {
 					</button>
 				</div>
 			</div>
-			<div className='w-full py-2 my-4 flex flex-col bg-white rounded-lg divide-y divide-gray-300'>
-				<div className='py-2 px-8'>
-					<span className='text-xl font-bold font-sans'>Search Results</span>
-				</div>
-				<div className='px-4 py-4'>
-					{dbTableData && (
-						<table className='w-full'>
-							<thead>
-								<tr>
-									<th>No</th>
-									{columns.map(
-										(item, index) =>
-											item !== "_id" && (
-												<th
-													className='py-3'
-													key={index}
-												>
-													{/* {item === "sourceTOB"
+			{dbTableData && dbTableData.length > 0 && (
+				<div className='w-full py-2 my-4 flex flex-col bg-white rounded-lg divide-y divide-gray-300'>
+					<div className='py-2 px-8'>
+						<span className='text-xl font-bold font-sans'>Search Results</span>
+					</div>
+					<div className='px-4 py-4'>
+						{dbTableData && (
+							<table className='w-full'>
+								<thead>
+									<tr>
+										<th>No</th>
+										{columns.map(
+											(item, index) =>
+												item !== "_id" && (
+													<th
+														className='py-3'
+														key={index}
+													>
+														{/* {item === "sourceTOB"
 												? "Source TOB"
 												: item === "resultTOB"
 												? "TOB"
 												: item} */}
-													{item}
-												</th>
-											)
-									)}
-									<th>Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{dbTableData.map((row, rowIndex) => (
-									<tr
-										key={rowIndex}
-										className='hover:bg-gray-100'
-									>
-										<td>{rowIndex + 1}</td>
-										{columns.map(
-											(colKey, colIndex) =>
-												colKey !== "_id" && (
-													<td key={colIndex}>{row[colKey]}</td>
+														{item}
+													</th>
 												)
 										)}
-										<td>
-											<div className='flex gap-2'>
-												<BsEye
-													className='cursor-pointer'
-													size={20}
-													onClick={() => handleView(rowIndex)}
-												/>
-												<MdOutlineModeEditOutline
-													className='cursor-pointer'
-													size={20}
-													onClick={() => handleEdit(rowIndex)}
-												/>
-												<BsTrash3
-													className='cursor-pointer'
-													size={20}
-													onClick={() => handleDelete(row._id)}
-												/>
-											</div>
-										</td>
+										<th>Actions</th>
 									</tr>
-								))}
-							</tbody>
-						</table>
-					)}
+								</thead>
+								<tbody>
+									{dbTableData.map((row, rowIndex) => (
+										<tr
+											key={rowIndex}
+											className='hover:bg-gray-100'
+										>
+											<td>{rowIndex + 1}</td>
+											{columns.map(
+												(colKey, colIndex) =>
+													colKey !== "_id" && (
+														<td key={colIndex}>{row[colKey]}</td>
+													)
+											)}
+											<td>
+												<div className='flex gap-2'>
+													<BsEye
+														className='cursor-pointer'
+														size={20}
+														onClick={() => handleView(rowIndex)}
+													/>
+													<MdOutlineModeEditOutline
+														className='cursor-pointer'
+														size={20}
+														onClick={() => handleEdit(rowIndex)}
+													/>
+													<BsTrash3
+														className='cursor-pointer'
+														size={20}
+														onClick={() => handleDelete(row._id)}
+													/>
+												</div>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						)}
+					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 };

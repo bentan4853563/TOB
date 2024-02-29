@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
 	metaData: {},
 	table: [],
-	uploadedFile: null,
+	uploadedFile: "",
 };
 
 export const tableSlice = createSlice({
@@ -30,7 +30,6 @@ export const tableSlice = createSlice({
 			state.metaData = action.payload;
 		},
 		setReview: (state) => {
-			console.log("Action");
 			state.metaData = { ...state.metaData, status: "Review" };
 		},
 		clearMetaData: (state) => {

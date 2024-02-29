@@ -65,6 +65,32 @@ router.post("/review", auth, async (req, res) => {
 	}
 });
 
+router.post("/search", async (req, res) => {
+	try {
+		const { broker, client, insurer } = req.body;
+		const query = {};
+
+		if (broker && broker.trim() !== "") {
+			query.broker = broker;
+		}
+		if (client && client.trim() !== "") {
+			query.client = client;
+		}
+		if (insurer && insurer.trim() !== "") {
+			query.insurer = insurer;
+		}
+		console.log(query);
+		let documents = [];
+		if (Object.keys(query).length > 0) {
+			documents = await Table.find(query);
+		}
+		res.json({ message: "Success", data: documents });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal Server Error" });
+	}
+});
+
 router.post("/fileUploadAndSave", async (req, res) => {
 	try {
 		const { table, metaData } = req.body;
@@ -82,16 +108,16 @@ router.post("/fileUploadAndSave", async (req, res) => {
 			}
 		}
 
-		await saveDataToFile(table, newResultTOB);
+		saveDataToFile(table, newResultTOB);
 
 		const newTableData = {
 			broker: metaData.broker,
 			client: metaData.client,
 			previousInsurer: metaData.previousInsurer,
-			policyPeriod: metaData.policyPeriod,
 			sourceTOB: metaData.sourceTOB,
 			resultTOB: newResultTOB,
 		};
+		// policyPeriod: metaData.policyPeriod,
 
 		if (metaData._id) {
 			await Table.findByIdAndUpdate(metaData._id, newTableData, {

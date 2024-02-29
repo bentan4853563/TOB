@@ -8,7 +8,7 @@ import { logout } from "../redux/reducers/authSlice";
 import logo from "../assets/logo.png";
 import userImg from "../assets/user.png";
 
-import { TbBellRinging } from "react-icons/tb";
+// import { TbBellRinging } from "react-icons/tb";
 import { IoIosArrowDown } from "react-icons/io";
 
 const Header = () => {
@@ -35,20 +35,20 @@ const Header = () => {
 			<div className='flex justify-center items-center gap-4'>
 				<Link
 					className='text-lg font-sans text-black'
-					to='/'
+					to='/tb/dbtable'
 				>
 					Home
 				</Link>
 				<Link
 					className='text-lg font-sans text-black'
-					to='/'
+					to='#'
 				>
 					Document
 				</Link>
-				<TbBellRinging
+				{/* <TbBellRinging
 					size={28}
 					className=' hover:text-indigo-500 cursor-pointer'
-				/>
+				/> */}
 				<Menu
 					menuButton={
 						<MenuButton className='h-10 flex justify-center items-center focus:outline-none border-none'>
@@ -65,13 +65,13 @@ const Header = () => {
 					gap={8}
 					align='end'
 				>
+					<MenuItem className='flex justify-center'>Profile</MenuItem>
 					<MenuItem
 						onClick={handleLogout}
 						className='flex justify-center'
 					>
 						Logout
 					</MenuItem>
-					<MenuItem className='flex justify-center'>Profile</MenuItem>
 				</Menu>
 			</div>
 		</div>
