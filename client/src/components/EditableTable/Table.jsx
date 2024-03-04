@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import PropTypes from "prop-types";
 import clsx from "clsx";
-import { IoMdClose } from "react-icons/io";
 import {
   useTable,
   useFlexLayout,
@@ -11,7 +10,10 @@ import {
 
 import Cell from "./Cell";
 import Header from "./Header";
+
+import { IoMdClose } from "react-icons/io";
 import { GoPlus } from "react-icons/go";
+import { BsTrash3 } from "react-icons/bs";
 
 const defaultColumn = {
   minWidth: 50,
@@ -33,6 +35,9 @@ export default function Table({
     console.log("close", index);
     handleClick(index);
   };
+
+  console.log("Tatble=====");
+
   const sortTypes = useMemo(
     () => ({
       alphanumericFalsyLast(rowA, rowB, columnId, desc) {
@@ -117,7 +122,7 @@ export default function Table({
                     index === 0 ? "border-t-[1px] -mt-[1px]" : ""
                   }`}
                 >
-                  <IoMdClose
+                  <BsTrash3
                     className="cursor-pointer"
                     onClick={() => handleCloseClick(index)}
                   />

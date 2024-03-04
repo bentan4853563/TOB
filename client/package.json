@@ -21,6 +21,8 @@
     "faker": "^5.5.3",
     "flowbite-react": "^0.7.2",
     "form-data": "^4.0.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "material-react-table": "^2.11.3",
     "primereact": "^10.5.1",
     "prop-types": "^15.8.1",
