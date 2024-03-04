@@ -1,16 +1,16 @@
 const mongoose = require("mongoose");
 
 const TableSchema = new mongoose.Schema({
-	broker: {
+	previousInsurer: {
 		type: String,
 	},
 	client: {
 		type: String,
 	},
-	previousInsurer: {
+	broker: {
 		type: String,
 	},
-	policyPeriod: {
+	tobType: {
 		type: String,
 	},
 	sourceTOB: {

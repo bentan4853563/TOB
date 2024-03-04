@@ -73,51 +73,59 @@
 // import { useSelector } from "react-redux";
 
 export default function MakeData(table) {
-	// const { table } = useSelector((state) => state.table);
-	let columns = [];
-	if (table && table.length > 0) {
-		const keys = Object.keys(table[0]);
-		const idIndex = keys.indexOf("id");
+  // const { table } = useSelector((state) => state.table);
 
-		if (idIndex > -1) {
-			keys.splice(idIndex, 1); // Remove 'id' from its current position
-			keys.unshift("id"); // Add 'id' to the beginning of the keys array
-		}
+  const tableList = Object.keys(table);
 
-		keys.forEach((key) => {
-			columns.push({
-				id: key,
-				label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
-				accessor: key,
-				minWidth: 100,
-				dataType: "text",
-			});
-		});
-		columns.push({
-			id: 999999,
-			width: 20,
-			label: "+",
-			disableResizing: true,
-			dataType: "null",
-		});
-	} else {
-		const keys = ["Column_1", "Column_2", "Column_3", "Column_4", "Column_5"];
-		keys.forEach((key) => {
-			columns.push({
-				id: key,
-				label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
-				accessor: key,
-				minWidth: 100,
-				dataType: "text",
-			});
-		});
-		columns.push({
-			id: 999999,
-			width: 20,
-			label: "+",
-			disableResizing: true,
-			dataType: "null",
-		});
-	}
-	return { columns: columns, data: table, skipReset: false };
+  let columns = [];
+  if (tableList && tableList.length > 0) {
+    const keys = Object.keys(Object.values(table[tableList[0]])[0]);
+    const idIndex = keys.indexOf("filter");
+
+    if (idIndex > -1) {
+      keys.splice(idIndex, 1); // Remove 'id' from its current position
+      keys.unshift("filter"); // Add 'id' to the beginning of the keys array
+    }
+
+    keys.forEach((key) => {
+      columns.push({
+        id: key,
+        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
+        accessor: key,
+        minWidth: 100,
+        dataType: "text",
+      });
+    });
+    columns.push({
+      id: 999999,
+      width: 20,
+      label: "+",
+      disableResizing: true,
+      dataType: "null",
+    });
+  } else {
+    const keys = ["Column_1", "Column_2", "Column_3", "Column_4", "Column_5"];
+    keys.forEach((key) => {
+      columns.push({
+        id: key,
+        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
+        accessor: key,
+        minWidth: 100,
+        dataType: "text",
+      });
+    });
+    columns.push({
+      id: 999999,
+      width: 20,
+      label: "+",
+      disableResizing: true,
+      dataType: "null",
+    });
+  }
+  return {
+    columns: columns,
+    data: table,
+    tableList: tableList,
+    skipReset: false,
+  };
 }
