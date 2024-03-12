@@ -106,6 +106,7 @@ const NewDocument = () => {
         broker: broker,
         client: client,
         sourceTOB: file.name,
+        topType: tobType,
         previousInsurer: insurer,
       };
       customdispatch(setMetaData(newMetaData));
