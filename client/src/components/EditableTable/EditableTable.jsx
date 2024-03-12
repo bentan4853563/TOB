@@ -1,8 +1,8 @@
 import { useEffect, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
@@ -306,9 +306,9 @@ function EditableTable() {
       customDispatch(clearLoading());
       navigate("/tb/dbtable");
       alert("Successfully generated!");
-      dispatch(clearFileName());
-      dispatch(clearTablData());
-      dispatch(clearMetaData());
+      customDispatch(clearFileName());
+      customDispatch(clearTablData());
+      customDispatch(clearMetaData());
     } catch (error) {
       console.error("Error saving data:", error);
       // Handle error if needed
@@ -316,21 +316,97 @@ function EditableTable() {
   };
 
   const handleSaveToPDF = async () => {
-    handleSaveToDB();
+    await handleSaveToDB(); // Assuming this should be awaited
 
-    // const doc = new jsPDF();
+    const TableData = Object.values(state.data);
 
-    // const pdfcolumns = state.columns;
-    // autoTable(doc, {
-    //   head: [pdfcolumns],
-    //   body: data.map((row) => pdfcolumns.map((col) => row[col])),
-    //   didDrawPage: (dataArg) => {
-    //     doc.text("Your Table Title", 20, 10);
-    //   },
-    // });
+    const doc = new jsPDF();
+    const pdfColumns = Object.keys(TableData[0][0]); // Ensure this is correctly set up as an array of strings
 
-    // doc.save("table.pdf");
+    // Helper function to add sections to the PDF
+    const addSectionToPDF = (title, data) => {
+      doc.addPage();
+      doc.text(title, 20, 20); // Adjusted the y-coordinate for the title to avoid overlap with the table
+      autoTable(doc, {
+        startY: 30, // Start the table a little below the title
+        head: [pdfColumns],
+        body: data.map((item) => pdfColumns.map((col) => item[col] || "")), // Handle any undefined values gracefully
+        margin: { top: 10 },
+      });
+    };
 
+    // Extract table data for each benefit section
+    console.log("tableData[0]", TableData[0]);
+    console.log("pdfColumns", pdfColumns);
+    // Add each section to the PDF
+    addSectionToPDF("General Benefit", TableData[0]);
+    addSectionToPDF("In Patient Benefit", TableData[1]);
+    addSectionToPDF("Other Benefit", TableData[2]);
+    addSectionToPDF("Out Patient Benefit", TableData[3]);
+
+    // Finalize and save the PDF document
+    doc.save("benefits_table.pdf");
+
+    // Dispatch actions to clear meta data and table data if necessary
+    customDispatch(clearMetaData());
+    customDispatch(clearTablData());
+  };
+
+  const handleSaveToCSV = async () => {
+    await handleSaveToDB(); // Assuming you still want to save to DB first
+
+    const TableData = Object.values(state.data);
+
+    // Helper function to convert data array to CSV string
+    const convertToCSV = (arr) => {
+      return arr
+        .map((row) =>
+          Object.values(row)
+            .map(String)
+            .map((v) => v.replaceAll('"', '""'))
+            .join(",")
+        )
+        .join("\n");
+    };
+
+    // Start CSV File content with headers
+    let csvContent = "";
+    const csvColumns = Object.keys(TableData[0][0]); // Headers from the object keys
+
+    // Add headers to CSV content
+    csvContent += csvColumns.join(",") + "\n";
+
+    // Add the data for each section
+    TableData.forEach((sectionData, index) => {
+      const sectionTitle = [
+        "General Benefit",
+        "In Patient Benefit",
+        "Other Benefit",
+        "Out Patient Benefit",
+      ][index];
+
+      // Add the section title as a comment or individual cell in the CSV (optional)
+      csvContent += `# ${sectionTitle}\n`;
+
+      // Convert data to CSV rows and add them to CSV content
+      csvContent += convertToCSV(sectionData);
+
+      // Optionally, add an empty line between sections
+      csvContent += "\n";
+    });
+
+    // Trigger the download of the CSV file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "benefits_table.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Dispatch actions to clear meta data and table data if necessary
     customDispatch(clearMetaData());
     customDispatch(clearTablData());
   };
@@ -409,7 +485,7 @@ function EditableTable() {
                       Save to PDF
                     </MenuItem>
                     <MenuItem
-                      onClick={handleSaveToPDF}
+                      onClick={handleSaveToCSV}
                       className="flex justify-center"
                     >
                       Save to CSV
