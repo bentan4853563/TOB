@@ -20,20 +20,6 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
     setCategoryList(list);
   }, [list]);
 
-  // useEffect(() => {
-  //   if (categoryList && categoryList.length > 0) {
-  //     setMetaFormErrors({ ...metaFormErrors, categoryList: "" });
-  //   }
-  // }, [categoryList, metaFormErrors]);
-
-  // const handleProcess = async () => {
-  //   let newErrors = {};
-
-  //   if (categoryList.length === 0) {
-  //     newErrors.categoryList = "Category list is required.";
-  //   }
-  // };
-
   console.log("categoryList", categoryList);
 
   const handleKeyDown = (e) => {
@@ -49,15 +35,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
     setCategoryList((prev) => prev.filter((item, index) => index !== param));
   };
 
-  // const handleFocus = (e) => {
-  //   setMetaFormErrors({ ...metaFormErrors, [e.target.name]: "" });
-  // };
-
   const handleSubmit = async () => {
-    // const requestData = {
-    //   category_list: categoryList,
-    //   file_name,
-    // };
     const formData = new FormData();
     formData.append("category_list", JSON.stringify(categoryList));
     formData.append("file_name", JSON.stringify(file_name));
@@ -73,7 +51,6 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
       );
       if (response.ok) {
         const data = await response.json();
-        console.log("table Data=====>", data);
         dispatch(setTableData(data));
         dispatch(clearLoading());
         hideModal();

@@ -14,6 +14,9 @@ import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 const NewDocument = () => {
   const customdispatch = useDispatch();
   const { metaData } = useSelector((state) => state.table);
+  const { table } = useSelector((state) => state.table);
+
+  console.log("table", table);
 
   const [tobType, setTobType] = useState("");
 
@@ -21,6 +24,7 @@ const NewDocument = () => {
   const [broker, setBroker] = useState("");
   const [client, setClient] = useState("");
   const [insurer, setInsurer] = useState("");
+  const [sourceTOB, setSourceTOB] = useState("");
 
   const [categoryList, setCategoryList] = useState([]);
   const [tempFileName, setTempFileName] = useState("");
@@ -78,6 +82,7 @@ const NewDocument = () => {
     setClient(metaData.client);
     setInsurer(metaData.previousInsurer);
     setTobType(metaData.topType);
+    setSourceTOB(metaData.sourceTOB);
   }, [metaData]);
 
   const handleProcess = async () => {
@@ -122,6 +127,7 @@ const NewDocument = () => {
     const newFile =
       e.target.files && e.target.files[0] ? e.target.files[0] : null;
     setFile(newFile);
+    setSourceTOB(newFile.name);
   };
 
   const handleFetch = async () => {
@@ -162,11 +168,13 @@ const NewDocument = () => {
           <span className="text-xl font-bold font-sans">New Document</span>
         </div>
         <div className="w-full px-8 py-2 flex flex-col gap-2">
+          {/* Insurer */}
           <div className="flex flex-col">
             <label htmlFor="insurer">Insurer</label>
             <select
               name="insurer"
               id="insurer"
+              value={insurer}
               disabled={isDisabled}
               onClick={handleFocus}
               onChange={(e) => setInsurer(e.target.value)}
@@ -183,6 +191,8 @@ const NewDocument = () => {
               </p>
             )}
           </div>
+
+          {/* Client */}
           <div className="flex flex-col">
             <label htmlFor="client">Client</label>
             <input
@@ -201,6 +211,8 @@ const NewDocument = () => {
               </p>
             )}
           </div>
+
+          {/* Broker */}
           <div className="flex flex-col">
             <label htmlFor="broker">Broker</label>
             <input
@@ -220,11 +232,13 @@ const NewDocument = () => {
             )}
           </div>
 
+          {/* tobType */}
           <div className="flex flex-col">
             <label htmlFor="tobType">Type of TOB</label>
             <select
               name="tobType"
               id="tobType"
+              value={tobType}
               onClick={handleFocus}
               disabled={isDisabled}
               onChange={(e) => setTobType(e.target.value)}
@@ -245,6 +259,8 @@ const NewDocument = () => {
               </p>
             )}
           </div>
+
+          {/* sourceTOB */}
           <div className="flex flex-col">
             <label className="text-black" htmlFor="sourceTOB">
               Source TOB File
@@ -253,7 +269,7 @@ const NewDocument = () => {
               <div className="flex flex-col flex-1">
                 <input
                   type="text"
-                  value={file ? file.name : ""}
+                  value={sourceTOB ? sourceTOB : ""}
                   className="w-full px-4 py-1.5 rounded-md border border-gray-200"
                   disabled
                   readOnly // Since this input is not intended to be modified directly by the user
@@ -265,40 +281,46 @@ const NewDocument = () => {
                   </p>
                 )}
               </div>
-              <label htmlFor="fileInput">
-                <span
-                  onClick={() =>
-                    setMetaFormErrors({ ...metaFormErrors, file: "" })
-                  }
-                  disabled={isDisabled}
-                  className="w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-2 rounded-md cursor-pointer"
-                >
-                  Upload
-                </span>
-                <input
-                  type="file"
-                  id="fileInput"
-                  name="fileInput"
-                  disabled={isDisabled}
-                  className="hidden px-4 border border-gray-200"
-                  onChange={handleFileInput}
-                />
-              </label>
+              {Object.keys(metaData).length === 0 && (
+                <label htmlFor="fileInput">
+                  <span
+                    onClick={() =>
+                      setMetaFormErrors({ ...metaFormErrors, file: "" })
+                    }
+                    disabled={isDisabled}
+                    className="w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-2 rounded-md cursor-pointer"
+                  >
+                    Upload
+                  </span>
+                  <input
+                    type="file"
+                    id="fileInput"
+                    name="fileInput"
+                    disabled={isDisabled}
+                    className="hidden px-4 border border-gray-200"
+                    onChange={handleFileInput}
+                  />
+                </label>
+              )}
             </div>
           </div>
 
-          <button
-            onClick={handleProcess}
-            disabled={isDisabled}
-            className="w-full md:w-72 lg-w-2/3 bg-indigo-600 text-white focus:outline-none"
-          >
-            Process
-          </button>
+          {Object.keys(metaData).length === 0 && (
+            <button
+              onClick={handleProcess}
+              disabled={isDisabled}
+              className="w-full md:w-72 lg-w-2/3 bg-indigo-600 text-white focus:outline-none"
+            >
+              Process
+            </button>
+          )}
         </div>
       </div>
-      <div className="w-full my-2 bg-white rounded-lg">
-        <EditableTable />
-      </div>
+      {Object.keys(table).length !== 0 && (
+        <div className="w-full my-2 bg-white rounded-lg">
+          <EditableTable />
+        </div>
+      )}
       {modalOpen && (
         <CategoryConfirmModal
           list={categoryList}

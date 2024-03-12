@@ -29,10 +29,12 @@ router.get("/readAll", async (req, res) => {
 router.post("/getOne", auth, async (req, res) => {
   try {
     const { resultTOB, _id } = req.body;
-    // Use await here because readDataFromFile now returns a Promise
-    const fileData = await readDataFromFile(resultTOB);
-    const metaData = await Table.findOne({ _id: _id });
+    const path = `/TBData/${resultTOB}.json`;
 
+    // Use await here because readDataFromFile now returns a Promise
+    const fileData = await readDataFromFile(path);
+    const metaData = await Table.findOne({ _id: _id });
+    console.log("metaData", metaData);
     res.send({ metaData, fileData });
   } catch (error) {
     console.error(error);
@@ -93,43 +95,67 @@ router.post("/search", async (req, res) => {
   }
 });
 
+const createFileNameWithPrefix = (clientName) => {
+  // Prefix
+  const prefix = "QIC";
+
+  // Function to sanitize input to ensure it's safe for file names
+  function sanitizeInput(input) {
+    // Replace any character not allowed in file names with an underscore
+    return input.replace(/[\/\\:*?"<>|\s]+/g, "_");
+  }
+
+  // Sanitize the client name
+  const safeClientName = sanitizeInput(clientName);
+
+  // Get today's date and format it as yyyy_dd_mm
+  const today = new Date();
+  const year = today.getFullYear();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0!
+  const dateStr = `${year}_${day}_${month}`;
+
+  // Construct the file name with prefix, sanitized client name, and formatted date
+  const fileName = `${prefix}_${safeClientName}_${dateStr}`;
+
+  return fileName;
+};
+
 router.post("/fileUploadAndSave", async (req, res) => {
   try {
     const { table, metaData } = req.body;
-    console.log("metaData", metaData);
 
     let newResultTOB;
     if (metaData.resultTOB) {
       newResultTOB = metaData.resultTOB;
     } else {
       if (metaData.sourceTOB) {
-        newResultTOB = `/TBData/${metaData.sourceTOB}.json`;
+        newResultTOB = createFileNameWithPrefix(metaData.client);
       } else {
-        const randomString = Math.random().toString(36).substring(2, 15);
-        newResultTOB = `/TBData/${randomString}.json`;
+        newResultTOB = Math.random().toString(36).substring(2, 15);
       }
     }
 
-    await saveDataToFile(table, newResultTOB);
+    const filepath = `/TBData/${newResultTOB}.json`;
+    await saveDataToFile(table, filepath);
 
-    const newTableData = new Table({
+    const update = new Table({
       broker: metaData.broker,
       client: metaData.client,
       previousInsurer: metaData.previousInsurer,
       sourceTOB: metaData.sourceTOB,
       status: metaData.status,
-      tobType: metaData.tobType,
+      tobType: metaData.tobType, // Fixing the potential typo here from topType to tobType
       resultTOB: newResultTOB,
     });
-
-    console.log(newTableData);
-
+    console.log("meataData", metaData);
     if (metaData._id) {
-      await Table.findByIdAndUpdate(metaData._id, newTableData, {
+      await Table.findByIdAndUpdate(metaData._id, update, {
+        new: true,
         upsert: true,
       });
     } else {
-      await newTableData.save();
+      await update.save();
     }
 
     res.send({

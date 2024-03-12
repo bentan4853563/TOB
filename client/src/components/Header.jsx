@@ -12,70 +12,54 @@ import userImg from "../assets/user.png";
 import { IoIosArrowDown } from "react-icons/io";
 
 const Header = () => {
-	const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
-	const handleLogout = () => {
-		dispatch(logout());
-	};
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
-	return (
-		<div className='w-full min-h-20 h-20 bg-white flex items-center justify-between px-24'>
-			<div className='flex gap-8'>
-				<Link
-					to='/tb/dbtable'
-					className='text-xl font-sans text-black hover:text-sky-900'
-				>
-					<img
-						className='mx-auto w-24'
-						src={logo}
-						alt='logo'
-					/>
-				</Link>
-			</div>
-			<div className='flex justify-center items-center gap-4'>
-				<Link
-					className='text-lg font-sans text-black'
-					to='/tb/dbtable'
-				>
-					Home
-				</Link>
-				<Link
-					className='text-lg font-sans text-black'
-					to='#'
-				>
-					Document
-				</Link>
-				{/* <TbBellRinging
+  return (
+    <div className="w-full min-h-20 h-20 bg-white flex items-center justify-between px-24">
+      <div className="flex gap-8">
+        <Link
+          to="/tb/home"
+          className="text-xl font-sans text-black hover:text-sky-900"
+        >
+          <img className="mx-auto w-24" src={logo} alt="logo" />
+        </Link>
+      </div>
+      <div className="flex justify-center items-center gap-4">
+        <Link className="text-lg font-sans text-black" to="/tb/home">
+          Home
+        </Link>
+        <Link className="text-lg font-sans text-black" to="/tb/dbtable">
+          Document
+        </Link>
+        {/* <TbBellRinging
 					size={28}
 					className=' hover:text-indigo-500 cursor-pointer'
 				/> */}
-				<Menu
-					menuButton={
-						<MenuButton className='h-10 flex justify-center items-center focus:outline-none border-none'>
-							<div className='flex items-center justify-center cursor-pointer gap-2'>
-								<img
-									className='w-8'
-									src={userImg}
-								/>
-								<IoIosArrowDown size={16} />
-							</div>
-						</MenuButton>
-					}
-					transition
-					gap={8}
-					align='end'
-				>
-					<MenuItem className='flex justify-center'>Profile</MenuItem>
-					<MenuItem
-						onClick={handleLogout}
-						className='flex justify-center'
-					>
-						Logout
-					</MenuItem>
-				</Menu>
-			</div>
-		</div>
-	);
+        <Menu
+          menuButton={
+            <MenuButton className="h-10 flex justify-center items-center focus:outline-none border-none">
+              <div className="flex items-center justify-center cursor-pointer gap-2">
+                <img className="w-8" src={userImg} />
+                <IoIosArrowDown size={16} />
+              </div>
+            </MenuButton>
+          }
+          transition
+          gap={8}
+          align="end"
+        >
+          <MenuItem className="flex justify-center">Profile</MenuItem>
+          <MenuItem onClick={handleLogout} className="flex justify-center">
+            Logout
+          </MenuItem>
+        </Menu>
+      </div>
+    </div>
+  );
 };
 
 export default Header;

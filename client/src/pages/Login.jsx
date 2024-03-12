@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Login } from "../redux/actions/auth";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import logo from "../assets/logo.png";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
@@ -64,6 +66,7 @@ const SignIn = () => {
   return (
     <div className="w-[100vw] h-[100vh] flex justify-center items-center bg-gray-200">
       <div className="fadeup w-4/5 md:w-1/2 xl:w-1/3 2xl:w-1/4 h-2/3 block rounded-lg bg-white shadow-lg dark:bg-neutral-800">
+        <ToastContainer />
         <div className="mx-12">
           {/* <!--Logo--> */}
           <div className="text-center">
