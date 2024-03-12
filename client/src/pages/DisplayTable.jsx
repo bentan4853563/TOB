@@ -18,7 +18,6 @@ import {
 } from "../redux/reducers/tableSlice";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
-import TestData from "../components/TestData";
 
 const DisplayTable = () => {
   const navigate = useNavigate();
@@ -31,8 +30,9 @@ const DisplayTable = () => {
 
   const base_URL = import.meta.env.VITE_BACKEND_URL;
 
-  const [dbTableData, setDBTableData] = useState(null);
-  const [showData, setShowData] = useState(null);
+  const [dbTableData, setDBTableData] = useState([]);
+  const [showData, setShowData] = useState([]);
+  const [statisticalData, setStatisticalData] = useState({});
 
   useEffect(() => {
     dispatch(clearTablData());
@@ -66,8 +66,27 @@ const DisplayTable = () => {
         console.error("Fetching data failed:", error);
       }
     };
+    dispatch(setLoading());
     fetchData();
+    dispatch(clearLoading());
   }, []);
+
+  useEffect(() => {}, [dbTableData]);
+
+  const countDocumentsByStatus = (docs) => {
+    return docs.reduce((acc, doc) => {
+      const { status } = doc;
+      if (!acc[status]) {
+        acc[status] = 0; // Initialize the counter for this status
+      }
+      acc[status] += 1; // Increment the counter for this status
+      return acc;
+    }, {});
+  };
+
+  useEffect(() => {
+    setStatisticalData(countDocumentsByStatus(dbTableData));
+  }, [dbTableData]);
 
   const columns =
     dbTableData && dbTableData.length > 0 ? Object.keys(dbTableData[0]) : [];
@@ -129,7 +148,6 @@ const DisplayTable = () => {
     const result = await response.json();
     dispatch(setMetaData(result.metaData));
     dispatch(setTableData(result.fileData));
-    dispatch(setFileName(metaData.sourceTOB));
     navigate("/tb/view");
     dispatch(clearLoading());
   };
@@ -150,7 +168,6 @@ const DisplayTable = () => {
     const result = await response.json();
     // dispatch(setMetaData(result.metaData));
     dispatch(setTableData(result.fileData));
-    dispatch(setFileName(metaData.sourceTOB));
     navigate("/tb/new_or_edit");
     dispatch(clearLoading());
   };
@@ -200,19 +217,20 @@ const DisplayTable = () => {
     } else {
       console.log(dbTableData);
       const filteredData = dbTableData.filter((row) => {
+        // Safely access and convert strings to lowercase, ensuring they are defined first
+        const previousInsurer = row.previousInsurer
+          ? row.previousInsurer.toLowerCase()
+          : "";
+        const client = row.client ? row.client.toLowerCase() : "";
+        const broker = row.broker ? row.broker.toLowerCase() : "";
+
         return (
           (!searchValues.insurer ||
-            row.previousInsurer
-              .toLowerCase()
-              .includes(searchValues.insurer.toLowerCase())) &&
+            previousInsurer.includes(searchValues.insurer.toLowerCase())) &&
           (!searchValues.client ||
-            row.client
-              .toLowerCase()
-              .includes(searchValues.client.toLowerCase())) &&
+            client.includes(searchValues.client.toLowerCase())) &&
           (!searchValues.broker ||
-            row.broker
-              .toLowerCase()
-              .includes(searchValues.broker.toLowerCase()))
+            broker.includes(searchValues.broker.toLowerCase()))
         );
       });
       setShowData(filteredData);
@@ -259,8 +277,10 @@ const DisplayTable = () => {
     "ORIENTAL INSURANCE COMPANY",
     "GLOBAL CARE",
   ];
+
   return (
     <div className="w-full h-full bg-gray-100 px-8 lg:px-24 flex flex-col items-start justify-start">
+      {/* Header */}
       <div className="w-full px-8 py-4 my-4 flex justify-between items-center bg-white rounded-lg">
         <span className="text-2xl">Documents</span>
         <button
@@ -270,6 +290,26 @@ const DisplayTable = () => {
           New Document
         </button>
       </div>
+
+      {/* Dashboard */}
+      <div className="w-full lg:w-1/2 py-2 mb-4 flex flex-col items-start bg-white rounded-lg px-4">
+        <table>
+          <thead className="">
+            <th>Status</th>
+            <th>Count</th>
+          </thead>
+          <tbody>
+            {Object.entries(statisticalData).map(([status, count]) => (
+              <tr key={status}>
+                <td>{status}</td>
+                <td>{count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Search form */}
       <div className="w-full py-2 flex flex-col items-start bg-white rounded-lg divide-y divide-gray-300">
         <div className="py-2 px-8">
           <span className="text-xl font-bold font-sans">Search</span>
@@ -360,36 +400,37 @@ const DisplayTable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {showData.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="hover:bg-gray-100">
-                      <td>{rowIndex + 1}</td>
-                      {columns.map(
-                        (colKey, colIndex) =>
-                          colKey !== "_id" && (
-                            <td key={colIndex}>{row[colKey]}</td>
-                          )
-                      )}
-                      <td>
-                        <div className="flex gap-2">
-                          <BsEye
-                            className="cursor-pointer"
-                            size={20}
-                            onClick={() => handleView(rowIndex)}
-                          />
-                          <MdOutlineModeEditOutline
-                            className="cursor-pointer"
-                            size={20}
-                            onClick={() => handleEdit(rowIndex)}
-                          />
-                          <BsTrash3
-                            className="cursor-pointer"
-                            size={20}
-                            onClick={() => handleDelete(row._id)}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {showData &&
+                    showData.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="hover:bg-gray-100">
+                        <td>{rowIndex + 1}</td>
+                        {columns.map(
+                          (colKey, colIndex) =>
+                            colKey !== "_id" && (
+                              <td key={colIndex}>{row[colKey]}</td>
+                            )
+                        )}
+                        <td>
+                          <div className="flex gap-2">
+                            <BsEye
+                              className="cursor-pointer"
+                              size={20}
+                              onClick={() => handleView(rowIndex)}
+                            />
+                            <MdOutlineModeEditOutline
+                              className="cursor-pointer"
+                              size={20}
+                              onClick={() => handleEdit(rowIndex)}
+                            />
+                            <BsTrash3
+                              className="cursor-pointer"
+                              size={20}
+                              onClick={() => handleDelete(row._id)}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             )}

@@ -11,7 +11,6 @@ import {
 import Cell from "./Cell";
 import Header from "./Header";
 
-import { IoMdClose } from "react-icons/io";
 import { GoPlus } from "react-icons/go";
 import { BsTrash3 } from "react-icons/bs";
 

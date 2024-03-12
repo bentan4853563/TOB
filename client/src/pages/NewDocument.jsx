@@ -1,28 +1,31 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import { IoClose } from "react-icons/io5";
-import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
+// import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import {
-  setTableData,
-  setUploadedFile,
+  // setTableData,
+  // setUploadedFile,
   setMetaData,
-  clearTablData,
 } from "../redux/reducers/tableSlice";
 import EditableTable from "../components/EditableTable/EditableTable";
+import CategoryConfirmModal from "../components/CategoryConfirmModal";
+import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 
 const NewDocument = () => {
   const customdispatch = useDispatch();
   const { metaData } = useSelector((state) => state.table);
 
   const [tobType, setTobType] = useState("");
-  const [catetoryInput, setCategoryInput] = useState("");
-  const [categoryList, setCategoryList] = useState([]);
+
   const [file, setFile] = useState(null);
   const [broker, setBroker] = useState("");
   const [client, setClient] = useState("");
   const [insurer, setInsurer] = useState("");
 
+  const [categoryList, setCategoryList] = useState([]);
+  const [tempFileName, setTempFileName] = useState("");
+
+  const [modalOpen, setModalOpen] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
 
   const [metaFormErrors, setMetaFormErrors] = useState({
@@ -30,8 +33,8 @@ const NewDocument = () => {
     client: "",
     insurer: "",
     tobType: "",
-    file: "",
-    categoryList: "",
+    file: null,
+    categoryList: [],
   });
 
   const tobTypeList = ["Standard", "EliteCare", "GulfCare"];
@@ -75,14 +78,7 @@ const NewDocument = () => {
     setClient(metaData.client);
     setInsurer(metaData.previousInsurer);
     setTobType(metaData.topType);
-    setInsurer(metaData.previousInsurer);
-  }, []);
-
-  useEffect(() => {
-    if (categoryList && categoryList.length > 0) {
-      setMetaFormErrors({ ...metaFormErrors, categoryList: "" });
-    }
-  }, [categoryList]);
+  }, [metaData]);
 
   const handleProcess = async () => {
     let newErrors = {};
@@ -96,10 +92,7 @@ const NewDocument = () => {
       newErrors.client = "Client is required";
     }
     if (!tobType || !tobType) {
-      newErrors.tobType = "Type of TOB field must include one section.";
-    }
-    if (categoryList.length === 0) {
-      newErrors.categoryList = "Category list is required.";
+      newErrors.tobType = "Type of TOB field must include one type.";
     }
     if (!file || !file) {
       newErrors.file = "Please upload a file.";
@@ -125,42 +118,30 @@ const NewDocument = () => {
   };
 
   const handleFileInput = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleRemoveSection = (param) => {
-    setCategoryList((prev) => prev.filter((item, index) => index !== param));
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      setCategoryList((prev) => [...prev, e.target.value]);
-      setCategoryInput("");
-      setMetaFormErrors({ ...metaFormErrors, section: "" });
-    }
+    const newFile =
+      e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    setFile(newFile);
   };
 
   const handleFetch = async () => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("category_list", JSON.stringify(categoryList));
+    // formData.append("category_list", JSON.stringify(categoryList));
     customdispatch(setLoading());
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_PYTHON_BACKEND_URL}/generateDoc`,
+        `${import.meta.env.VITE_PYTHON_BACKEND_URL}/checkCategory`,
         {
           method: "POST",
           body: formData,
-          "ngrok-skip-browser-warning": true,
         }
       );
       if (response.ok) {
         const data = await response.json();
-        customdispatch(setUploadedFile(file.name));
-        customdispatch(setTableData(data));
+        console.log("Category List=====>", data);
+        setCategoryList(data.category_list);
+        setTempFileName(data.file_name);
+        setModalOpen(true);
         customdispatch(clearLoading());
       } else {
         console.error("Error:", response.statusText);
@@ -264,46 +245,6 @@ const NewDocument = () => {
             )}
           </div>
           <div className="flex flex-col">
-            <label htmlFor="category_list">Category List</label>
-            <input
-              id="set_List"
-              type="text"
-              name="category"
-              disabled={isDisabled}
-              value={catetoryInput}
-              onChange={(e) => {
-                setCategoryInput(e.target.value);
-              }}
-              onKeyDown={handleKeyDown}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-2 py-2 outline-none focus:border-sky-700"
-            />
-          </div>
-          <div>
-            <div className="w-full lg:w-2/3 p-2 flex flex-wrap gap-2 min-h-16  border border-gray-200 rounded-lg">
-              {categoryList &&
-                categoryList.length > 0 &&
-                categoryList.map((item, index) => {
-                  return (
-                    <span
-                      key={index}
-                      className="h-8 pl-4 pr-5 py-2 flex items-center rounded-sm relative bg-green-100"
-                    >
-                      {item}
-                      <IoClose
-                        className="w-4 h-4 absolute top-0.5 right-0.5 cursor-pointer"
-                        onClick={() => handleRemoveSection(index)}
-                      />
-                    </span>
-                  );
-                })}
-            </div>
-            {metaFormErrors.categoryList && (
-              <p className="w-full text-red-400 text-xs text-left">
-                {metaFormErrors.categoryList}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col">
             <label className="text-black" htmlFor="sourceTOB">
               Source TOB File
             </label>
@@ -314,7 +255,9 @@ const NewDocument = () => {
                   value={file ? file.name : ""}
                   className="w-full px-4 py-1.5 rounded-md border border-gray-200"
                   disabled
+                  readOnly // Since this input is not intended to be modified directly by the user
                 />
+
                 {metaFormErrors.file && (
                   <p className="w-full text-red-400 text-xs text-left">
                     {metaFormErrors.file}
@@ -355,6 +298,13 @@ const NewDocument = () => {
       <div className="w-full my-2 bg-white rounded-lg">
         <EditableTable />
       </div>
+      {modalOpen && (
+        <CategoryConfirmModal
+          list={categoryList}
+          file_name={tempFileName}
+          hideModal={() => setModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
