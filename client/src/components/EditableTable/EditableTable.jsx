@@ -1,8 +1,8 @@
 import { useEffect, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
 
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
@@ -246,6 +246,8 @@ function EditableTable() {
     dispatch({ type: "delete_row", columnId: index });
   };
 
+  console.log("Table ==========> ", table);
+
   const handleReview = async () => {
     // await fetch(`${base_URL}/table/review`, {
     // 	method: "POST",
@@ -265,7 +267,6 @@ function EditableTable() {
   // 		Makecsv(state.data);
   // 	}
   // };
-  console.log("metaData", metaData);
 
   const handleSaveToDB = async () => {
     // Proceed with saving data to the database
@@ -338,8 +339,6 @@ function EditableTable() {
     navigate("/tb/dbtable");
   };
 
-  console.log("columns", state.columns);
-
   return (
     <div className="w-full h-full bg-gray-100 flex flex-col items-start justify-start">
       <div
@@ -358,9 +357,8 @@ function EditableTable() {
           {state.data &&
             state.tableList.map((item, index) => {
               let tabledata = state.data[item];
-              console.log(index, "tablesd", tabledata);
               return (
-                <div className="mb-8">
+                <div key={index} className="mb-8">
                   <p className="w-full text-center text-2xl font-serif">
                     {item}
                   </p>
@@ -375,58 +373,60 @@ function EditableTable() {
                 </div>
               );
             })}
-          <div className="flex gap-4">
-            {(!metaData.status || metaData.status === "Progress") && (
-              <button
-                onClick={handleReview}
-                className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-              >
-                Review
-              </button>
-            )}
-            {(metaData.status === "Review" ||
-              metaData.status === "Generated") && (
-              <div className="relative">
-                {/* <button
+          {table && (
+            <div className="flex gap-4">
+              {(!metaData.status || metaData.status === "Progress") && (
+                <button
+                  onClick={handleReview}
+                  className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+                >
+                  Review
+                </button>
+              )}
+              {(metaData.status === "Review" ||
+                metaData.status === "Generated") && (
+                <div className="relative">
+                  {/* <button
                     onClick={handleSaveToDB}
                     className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
                   >
                     Generate
                   </button> */}
-                <Menu
-                  menuButton={
-                    <MenuButton className="w-48 h-12 bg-indigo-600 text-white hover:bg-indigo-500 flex justify-center items-center focus:outline-none border-none">
-                      Generate
-                    </MenuButton>
-                  }
-                  transition
-                  gap={8}
-                  align="end"
+                  <Menu
+                    menuButton={
+                      <MenuButton className="w-48 h-12 bg-indigo-600 text-white hover:bg-indigo-500 flex justify-center items-center focus:outline-none border-none">
+                        Generate
+                      </MenuButton>
+                    }
+                    transition
+                    gap={8}
+                    align="end"
+                  >
+                    <MenuItem
+                      className="flex justify-center"
+                      onClick={handleSaveToPDF}
+                    >
+                      Save to PDF
+                    </MenuItem>
+                    <MenuItem
+                      onClick={handleSaveToPDF}
+                      className="flex justify-center"
+                    >
+                      Save to CSV
+                    </MenuItem>
+                  </Menu>
+                </div>
+              )}
+              {metaData.status && metaData.status !== "Progress" && (
+                <button
+                  onClick={handleClose}
+                  className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
                 >
-                  <MenuItem
-                    className="flex justify-center"
-                    onClick={handleSaveToPDF}
-                  >
-                    Save to PDF
-                  </MenuItem>
-                  <MenuItem
-                    onClick={handleSaveToPDF}
-                    className="flex justify-center"
-                  >
-                    Save to CSV
-                  </MenuItem>
-                </Menu>
-              </div>
-            )}
-            {metaData.status && metaData.status !== "Progress" && (
-              <button
-                onClick={handleClose}
-                className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-              >
-                Close
-              </button>
-            )}
-          </div>
+                  Close
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
