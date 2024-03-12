@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   metaData: {},
-  table: [],
+  table: {},
   uploadedFile: "",
 };
 

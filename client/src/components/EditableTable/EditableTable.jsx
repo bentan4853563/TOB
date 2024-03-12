@@ -1,8 +1,10 @@
 import { useEffect, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import jsPDF from "jspdf";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 
@@ -223,6 +225,7 @@ function reducer(state, action) {
 function EditableTable() {
   const navigate = useNavigate();
   const customDispatch = useDispatch();
+
   const base_URL = import.meta.env.VITE_BACKEND_URL;
 
   const { token } = useSelector((state) => state.auth);
@@ -236,6 +239,43 @@ function EditableTable() {
     tableList: [],
     skipReset: false,
   });
+
+  const getEndPoint = () => {
+    const currentHref = window.location.href;
+    const parsedUrl = new URL(currentHref);
+    const pathSegments = parsedUrl.pathname
+      .split("/")
+      .filter((segment) => segment);
+    return pathSegments[pathSegments.length - 1];
+  };
+
+  const endPoint = getEndPoint();
+
+  const createFileNameWithPrefix = (clientName) => {
+    // Prefix
+    const prefix = "QIC";
+
+    // Function to sanitize input to ensure it's safe for file names
+    const sanitizeInput = (input) => {
+      // Replace any character not allowed in file names with an underscore
+      return input.replace(/[\/\\:*?"<>|\s]+/g, "_");
+    };
+
+    // Sanitize the client name
+    const safeClientName = sanitizeInput(clientName);
+
+    // Get today's date and format it as yyyy_mm_dd
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0!
+    const day = String(today.getDate()).padStart(2, "0");
+    const dateStr = `${year}_${month}_${day}`; // Correct order of yyyy_mm_dd
+
+    // Construct the file name with prefix, sanitized client name, and formatted date
+    const fileName = `${prefix}_${safeClientName}_${dateStr}`;
+
+    return fileName;
+  };
 
   useEffect(() => {
     const newDataState = MakeData(table);
@@ -259,7 +299,9 @@ function EditableTable() {
     // 	body: JSON.stringify({ id: metaData._id }),
     // });
     customDispatch(setReview());
-    alert("Successfully Reviewed.");
+    toast.success("Successfully Reviewed!", {
+      position: "top-right",
+    });
   };
 
   // const handleSaveasCSV = () => {
@@ -282,7 +324,7 @@ function EditableTable() {
         _id: metaData._id,
         broker: metaData.broker,
         client: metaData.client,
-        tobType: metaData.tobType,
+        topType: metaData.topType,
         previousInsurer: metaData.previousInsurer,
         status: "Generated",
         sourceTOB: source_TOB,
@@ -305,7 +347,9 @@ function EditableTable() {
       }
       customDispatch(clearLoading());
       navigate("/tb/dbtable");
-      alert("Successfully generated!");
+      toast.success("Successfully generated!", {
+        position: "top-right",
+      });
       customDispatch(clearFileName());
       customDispatch(clearTablData());
       customDispatch(clearMetaData());
@@ -335,17 +379,16 @@ function EditableTable() {
       });
     };
 
-    // Extract table data for each benefit section
-    console.log("tableData[0]", TableData[0]);
-    console.log("pdfColumns", pdfColumns);
     // Add each section to the PDF
     addSectionToPDF("General Benefit", TableData[0]);
     addSectionToPDF("In Patient Benefit", TableData[1]);
     addSectionToPDF("Other Benefit", TableData[2]);
     addSectionToPDF("Out Patient Benefit", TableData[3]);
 
+    const fileName = createFileNameWithPrefix(metaData.client);
+
     // Finalize and save the PDF document
-    doc.save("benefits_table.pdf");
+    doc.save(`${fileName}.pdf`);
 
     // Dispatch actions to clear meta data and table data if necessary
     customDispatch(clearMetaData());
@@ -395,12 +438,13 @@ function EditableTable() {
       csvContent += "\n";
     });
 
+    const fileName = createFileNameWithPrefix(metaData.client);
     // Trigger the download of the CSV file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "benefits_table.csv");
+    link.setAttribute("download", `${fileName}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -416,7 +460,9 @@ function EditableTable() {
   };
 
   return (
-    <div className="w-full h-full bg-gray-100 flex flex-col items-start justify-start">
+    <div className="w-full h-full  flex flex-col items-start justify-start">
+      <ToastContainer />
+
       <div
         style={{ display: "flex" }}
         className="w-full bg-white rounded-lg my-4"
@@ -449,7 +495,7 @@ function EditableTable() {
                 </div>
               );
             })}
-          {table && (
+          {table && endPoint !== "view" && (
             <div className="flex gap-4">
               {(!metaData.status || metaData.status === "Progress") && (
                 <button

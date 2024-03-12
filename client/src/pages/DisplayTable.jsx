@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { confirmAlert } from "react-confirm-alert";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { BsEye } from "react-icons/bs";
 import { BsTrash3 } from "react-icons/bs";
@@ -24,15 +26,20 @@ const DisplayTable = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
 
-  // const [broker, setBroker] = useState("");
-  // const [client, setClient] = useState("");
-  // const [insurer, setInsurer] = useState("");
-
   const base_URL = import.meta.env.VITE_BACKEND_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
   const [showData, setShowData] = useState([]);
-  const [statisticalData, setStatisticalData] = useState({});
+
+  const status = useLocation().state;
+
+  useEffect(() => {
+    console.log(status);
+    if (status) {
+      const filteredData = dbTableData.filter((row) => row.status === status);
+      setShowData(filteredData);
+    }
+  }, [status, dbTableData]);
 
   useEffect(() => {
     dispatch(clearTablData());
@@ -69,24 +76,9 @@ const DisplayTable = () => {
     dispatch(setLoading());
     fetchData();
     dispatch(clearLoading());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {}, [dbTableData]);
-
-  const countDocumentsByStatus = (docs) => {
-    return docs.reduce((acc, doc) => {
-      const { status } = doc;
-      if (!acc[status]) {
-        acc[status] = 0; // Initialize the counter for this status
-      }
-      acc[status] += 1; // Increment the counter for this status
-      return acc;
-    }, {});
-  };
-
-  useEffect(() => {
-    setStatisticalData(countDocumentsByStatus(dbTableData));
-  }, [dbTableData]);
 
   const columns =
     dbTableData && dbTableData.length > 0 ? Object.keys(dbTableData[0]) : [];
@@ -134,7 +126,8 @@ const DisplayTable = () => {
 
   const handleView = async (index) => {
     dispatch(setLoading());
-    const metaData = dbTableData[index];
+    const metaData = showData[index];
+    console.log(index, metaData);
     dispatch(setMetaData(metaData));
     const response = await fetch(`${base_URL}/table/getOne`, {
       method: "POST",
@@ -146,7 +139,8 @@ const DisplayTable = () => {
       body: JSON.stringify(metaData),
     });
     const result = await response.json();
-    dispatch(setMetaData(result.metaData));
+    console.log("result", result);
+    // dispatch(setMetaData(result.metaData));
     dispatch(setTableData(result.fileData));
     navigate("/tb/view");
     dispatch(clearLoading());
@@ -213,7 +207,9 @@ const DisplayTable = () => {
 
   const handleSearch = () => {
     if (areAllSearchValuesEmpty()) {
-      alert("Please input any search field!");
+      toast.error("Please input any fields!", {
+        position: "top-right",
+      });
     } else {
       console.log(dbTableData);
       const filteredData = dbTableData.filter((row) => {
@@ -290,25 +286,7 @@ const DisplayTable = () => {
           New Document
         </button>
       </div>
-
-      {/* Dashboard */}
-      <div className="w-full lg:w-1/2 py-2 mb-4 flex flex-col items-start bg-white rounded-lg px-4">
-        <table>
-          <thead className="">
-            <th>Status</th>
-            <th>Count</th>
-          </thead>
-          <tbody>
-            {Object.entries(statisticalData).map(([status, count]) => (
-              <tr key={status}>
-                <td>{status}</td>
-                <td>{count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
+      <ToastContainer />
       {/* Search form */}
       <div className="w-full py-2 flex flex-col items-start bg-white rounded-lg divide-y divide-gray-300">
         <div className="py-2 px-8">
