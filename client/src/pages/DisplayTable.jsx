@@ -82,7 +82,7 @@ const DisplayTable = () => {
 
   const columns =
     dbTableData && dbTableData.length > 0 ? Object.keys(dbTableData[0]) : [];
-  const handleDelete = async (id) => {
+  const handleDelete = async (resultTOB) => {
     confirmAlert({
       title: "Confirm!",
       message: "Are you sure to do this.",
@@ -92,22 +92,29 @@ const DisplayTable = () => {
           onClick: async () => {
             try {
               dispatch(setLoading());
-              const response = await fetch(`${base_URL}/table/delete/${id}`, {
-                method: "DELETE",
-                headers: {
-                  "x-auth-token": token,
-                  "ngrok-skip-browser-warning": true,
-                },
-              });
+              const response = await fetch(
+                `${base_URL}/table/delete/${resultTOB}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    "x-auth-token": token,
+                    "ngrok-skip-browser-warning": true,
+                  },
+                }
+              );
               if (response.ok) {
                 setDBTableData((previousData) =>
-                  previousData.filter((item) => item._id !== id)
+                  previousData.filter((item) => item.resultTOB !== resultTOB)
                 );
-                console.error("Failed to delete the item:", response.status);
+                toast.success("Successfully deleted!", {
+                  position: "top-right",
+                });
               }
               dispatch(clearLoading());
             } catch (error) {
-              console.error("Error occurred while deleting the item:", error);
+              toast.error("Error occurred while deleting the item!", {
+                position: "top-right",
+              });
             }
           },
         },
@@ -403,7 +410,7 @@ const DisplayTable = () => {
                             <BsTrash3
                               className="cursor-pointer"
                               size={20}
-                              onClick={() => handleDelete(row._id)}
+                              onClick={() => handleDelete(row.resultTOB)}
                             />
                           </div>
                         </td>
