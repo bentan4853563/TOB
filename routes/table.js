@@ -211,10 +211,10 @@ router.put("/update", auth, async (req, res) => {
   }
 });
 
-router.delete("/delete/:id", auth, async (req, res) => {
-  const { id } = req.params;
+router.delete("/delete/:resultTOB", auth, async (req, res) => {
+  const { resultTOB } = req.params;
   try {
-    const deletedTableEntry = await Table.findByIdAndDelete(id);
+    const deletedTableEntry = await Table.findOneAndDelete(resultTOB);
 
     if (!deletedTableEntry) {
       return res
