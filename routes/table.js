@@ -19,7 +19,6 @@ router.get("/readAll", async (req, res) => {
         status: 1,
       }
     );
-    console.log("=====>", tableData);
     res.json(tableData);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -139,7 +138,7 @@ router.post("/fileUploadAndSave", async (req, res) => {
     const filepath = `/TBData/${newResultTOB}.json`;
     await saveDataToFile(table, filepath);
 
-    const update = new Table({
+    const update = {
       broker: metaData.broker,
       client: metaData.client,
       previousInsurer: metaData.previousInsurer,
@@ -147,16 +146,12 @@ router.post("/fileUploadAndSave", async (req, res) => {
       status: metaData.status,
       tobType: metaData.tobType, // Fixing the potential typo here from topType to tobType
       resultTOB: newResultTOB,
+    };
+
+    await Table.findOneAndUpdate({ resultTOB: newResultTOB }, update, {
+      new: true,
+      upsert: true,
     });
-    console.log("meataData", metaData);
-    if (metaData._id) {
-      await Table.findByIdAndUpdate(metaData._id, update, {
-        new: true,
-        upsert: true,
-      });
-    } else {
-      await update.save();
-    }
 
     res.send({
       success: true,

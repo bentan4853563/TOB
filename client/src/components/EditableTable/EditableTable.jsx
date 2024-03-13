@@ -21,7 +21,7 @@ import "./style.css";
 import {
   setReview,
   clearFileName,
-  clearTablData,
+  clearTableData,
   clearMetaData,
 } from "../../redux/reducers/tableSlice";
 import { clearLoading, setLoading } from "../../redux/reducers/loadingSlice";
@@ -136,17 +136,24 @@ function reducer(state, action) {
       }
     }
     case "update_column_header": {
-      const index = state.columns.findIndex(
+      const tableName = action.tableName;
+
+      // Assuming columns is an object with keys as table names
+      const index = state.columns[tableName].findIndex(
         (column) => column.id === action.columnId
       );
+
       return {
         ...state,
         skipReset: true,
-        columns: [
-          ...state.columns.slice(0, index),
-          { ...state.columns[index], label: action.label },
-          ...state.columns.slice(index + 1, state.columns.length),
-        ],
+        columns: {
+          ...state.columns,
+          [tableName]: [
+            ...state.columns[tableName].slice(0, index),
+            { ...state.columns[tableName][index], label: action.label },
+            ...state.columns[tableName].slice(index + 1),
+          ],
+        },
       };
     }
     case "update_cell":
@@ -168,62 +175,77 @@ function reducer(state, action) {
       };
 
     case "add_column_to_left": {
-      const leftIndex = state.columns.findIndex(
+      const tableName = action.tableName;
+      const leftIndex = state.columns[tableName].findIndex(
         (column) => column.id === action.columnId
       );
       let leftId = shortId();
       return {
         ...state,
         skipReset: true,
-        columns: [
-          ...state.columns.slice(0, leftIndex),
-          {
-            id: leftId,
-            label: "Column",
-            accessor: leftId,
-            dataType: "text",
-            created: action.focus && true,
-            options: [],
-          },
-          ...state.columns.slice(leftIndex, state.columns.length),
-        ],
+        columns: {
+          ...state.columns,
+          [tableName]: [
+            ...state.columns[tableName].slice(0, leftIndex),
+            {
+              id: leftId,
+              label: "New Column",
+              accessor: leftId,
+              dataType: "text",
+              created: !!action.focus,
+              options: [],
+            },
+            ...state.columns[tableName].slice(leftIndex),
+          ],
+        },
       };
     }
+
     case "add_column_to_right": {
-      const rightIndex = state.columns.findIndex(
+      const tableName = action.tableName;
+      const rightIndex = state.columns[tableName].findIndex(
         (column) => column.id === action.columnId
       );
       const rightId = shortId();
       return {
         ...state,
         skipReset: true,
-        columns: [
-          ...state.columns.slice(0, rightIndex + 1),
-          {
-            id: rightId,
-            label: "Column",
-            accessor: rightId,
-            dataType: "text",
-            created: action.focus && true,
-            options: [],
-          },
-          ...state.columns.slice(rightIndex + 1, state.columns.length),
-        ],
+        columns: {
+          ...state.columns,
+          [tableName]: [
+            ...state.columns[tableName].slice(0, rightIndex + 1),
+            {
+              id: rightId,
+              label: "New Column",
+              accessor: rightId,
+              dataType: "text",
+              created: !!action.focus,
+              options: [],
+            },
+            ...state.columns[tableName].slice(rightIndex + 1),
+          ],
+        },
       };
     }
+
     case "delete_column": {
-      const deleteIndex = state.columns.findIndex(
+      const tableName = action.tableName;
+      const deleteIndex = state.columns[tableName].findIndex(
         (column) => column.id === action.columnId
       );
       return {
         ...state,
         skipReset: true,
-        columns: [
-          ...state.columns.slice(0, deleteIndex),
-          ...state.columns.slice(deleteIndex + 1, state.columns.length),
-        ],
+        columns: {
+          ...state.columns,
+          [tableName]: [
+            ...state.columns[tableName].slice(0, deleteIndex),
+            ...state.columns[tableName].slice(deleteIndex + 1),
+          ],
+        },
       };
     }
+
     case "enable_reset":
       return {
         ...state,
@@ -269,8 +291,7 @@ function EditableTable() {
 
     // Function to sanitize input to ensure it's safe for file names
     const sanitizeInput = (input) => {
-      // Replace any character not allowed in file names with an underscore
-      return input.replace(/[\/\\:*?"<>|\s]+/g, "_");
+      return input.replace(/[/\\:*?"<>|\s]+/g, "_");
     };
 
     // Sanitize the client name
@@ -299,14 +320,14 @@ function EditableTable() {
   };
 
   const handleReview = async () => {
-    // await fetch(`${base_URL}/table/review`, {
-    // 	method: "POST",
-    // 	headers: {
-    // 		"content-type": "application/json",
-    // 		"x-auth-token": token, // Include the token in the Authorization header
-    // 		"ngrok-skip-browser-warning": true,
-    // 	},
-    // 	body: JSON.stringify({ id: metaData._id }),
+    // const response = await fetch(`${base_URL}/table/review`, {
+    //   method: "POST",
+    //   headers: {
+    //     "content-type": "application/json",
+    //     "x-auth-token": token, // Include the token in the Authorization header
+    //     "ngrok-skip-browser-warning": true,
+    //   },
+    //   body: JSON.stringify({ id: metaData._id }),
     // });
     toast.success("Successfully Reviewed!", {
       position: "top-right",
@@ -314,14 +335,61 @@ function EditableTable() {
     customDispatch(setReview());
   };
 
+  // const handleSaveToDB = async () => {
+  //   // Proceed with saving data to the database
+  //   let source_TOB = "";
+  //   if (metaData.sourceTOB) {
+  //     source_TOB = metaData.sourceTOB;
+  //   } else {
+  //     source_TOB = uploadedFile;
+  //   }
+  //   const formData = {
+  //     table: state.data,
+  //     metaData: {
+  //       _id: metaData._id,
+  //       broker: metaData.broker,
+  //       client: metaData.client,
+  //       topType: metaData.topType,
+  //       previousInsurer: metaData.previousInsurer,
+  //       status: "Generated",
+  //       sourceTOB: source_TOB,
+  //     },
+  //   };
+
+  //   customDispatch(setLoading());
+  //   try {
+  //     const response = await fetch(`${base_URL}/table/fileUploadAndSave`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "x-auth-token": token,
+  //       },
+  //       body: JSON.stringify(formData),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error("Failed to save data. Please try again.");
+  //     }
+  //     customDispatch(clearLoading());
+
+  //     toast.success("Successfully generated!", {
+  //       position: "top-right",
+  //     });
+
+  //     navigate("/tb/dbtable");
+  //     customDispatch(clearFileName());
+  //     customDispatch(clearTableData());
+  //     customDispatch(clearMetaData());
+  //   } catch (error) {
+  //     console.error("Error saving data:", error);
+  //     // Handle error if needed
+  //   }
+  // };
+
   const handleSaveToDB = async () => {
     // Proceed with saving data to the database
-    let source_TOB = "";
-    if (metaData.sourceTOB) {
-      source_TOB = metaData.sourceTOB;
-    } else {
-      source_TOB = uploadedFile;
-    }
+    let source_TOB = metaData.sourceTOB || uploadedFile;
+
     const formData = {
       table: state.data,
       metaData: {
@@ -335,7 +403,7 @@ function EditableTable() {
       },
     };
 
-    customDispatch(setLoading());
+    customDispatch(setLoading()); // Start the loading process
     try {
       const response = await fetch(`${base_URL}/table/fileUploadAndSave`, {
         method: "POST",
@@ -347,126 +415,141 @@ function EditableTable() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save data. Please try again.");
+        // Check for HTTP errors
+        throw new Error(`HTTP error: ${response.status}`);
       }
-      customDispatch(clearLoading());
-      toast.success("Successfully generated!", {
-        position: "top-right",
-      });
+
+      // Parsing the JSON body of the response (optional)
+      const responseData = await response.json();
+
+      // Additional checks for server-side validation errors or other conditions
+      if (responseData.error) {
+        throw new Error(responseData.error);
+      }
+
+      // Present a toast for successful generation after valid respons
+
       navigate("/tb/dbtable");
       customDispatch(clearFileName());
-      customDispatch(clearTablData());
+      customDispatch(clearTableData());
       customDispatch(clearMetaData());
     } catch (error) {
       console.error("Error saving data:", error);
-      // Handle error if needed
+
+      // Dispatch action to clear the loading state
+      customDispatch(clearLoading());
+
+      // Show toast with error message
+      toast.error(`Save failed: ${error.message}`, {
+        position: "top-right",
+      });
+
+      // It could be appropriate here to also navigate away or take other corrective actions
     }
   };
 
   const handleSaveToPDF = async () => {
-    await handleSaveToDB(); // Assuming this should be awaited
+    await handleSaveToDB();
 
-    const TableData = Object.values(state.data);
+    console.log("dfsfdsfdsdf");
 
+    const tableData = Object.values(state.data);
     const doc = new jsPDF();
-    const pdfColumns = Object.keys(TableData[0][0]); // Ensure this is correctly set up as an array of strings
 
-    // Helper function to add sections to the PDF
-    const addSectionToPDF = (title, data) => {
+    const addSectionToPDF = (title, data, pdfColumns) => {
       doc.addPage();
-      doc.text(title, 20, 20); // Adjusted the y-coordinate for the title to avoid overlap with the table
-      autoTable(doc, {
-        startY: 30, // Start the table a little below the title
+      doc.text(title, 20, 20);
+      doc.autoTable({
+        startY: 40,
         head: [pdfColumns],
-        body: data.map((item) => pdfColumns.map((col) => item[col] || "")), // Handle any undefined values gracefully
-        margin: { top: 10 },
+        body: data.map((item) =>
+          pdfColumns.map((col) => item[col]?.toString() || "")
+        ),
+        margin: { top: 30 },
       });
     };
 
-    // Add each section to the PDF
-    addSectionToPDF("General Benefit", TableData[0]);
-    addSectionToPDF("In Patient Benefit", TableData[1]);
-    addSectionToPDF("Other Benefit", TableData[2]);
-    addSectionToPDF("Out Patient Benefit", TableData[3]);
+    const titleMap = [
+      "General Benefit",
+      "In Patient Benefit",
+      "Other Benefit",
+      "Out Patient Benefit",
+    ];
 
-    const fileName = createFileNameWithPrefix(metaData.client);
+    tableData.forEach((sectionData, index) => {
+      if (sectionData.length > 0) {
+        const title = titleMap[index];
+        addSectionToPDF(title, sectionData, Object.keys(sectionData[0]));
+      }
+    });
 
-    // Finalize and save the PDF document
+    const fileName = `${metaData.client}-${new Date().toISOString()}`;
     doc.save(`${fileName}.pdf`);
 
-    // Dispatch actions to clear meta data and table data if necessary
+    toast.success("Successfully generated!", {
+      position: "top-right",
+    });
     customDispatch(clearMetaData());
-    customDispatch(clearTablData());
+    customDispatch(clearTableData());
   };
 
   const handleSaveToCSV = async () => {
-    await handleSaveToDB(); // Assuming you still want to save to DB first
+    await handleSaveToDB();
 
-    const TableData = Object.values(state.data);
+    const tableData = Object.values(state.data);
 
-    // Helper function to convert data array to CSV string
     const convertToCSV = (arr) => {
       return arr
         .map((row) =>
           Object.values(row)
-            .map(String)
-            .map((v) => v.replaceAll('"', '""'))
+            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
             .join(",")
         )
         .join("\n");
     };
 
-    // Start CSV File content with headers
-    let csvContent = "";
-    const csvColumns = Object.keys(TableData[0][0]); // Headers from the object keys
-
-    // Add headers to CSV content
-    csvContent += csvColumns.join(",") + "\n";
-
-    // Add the data for each section
-    TableData.forEach((sectionData, index) => {
-      const sectionTitle = [
-        "General Benefit",
-        "In Patient Benefit",
-        "Other Benefit",
-        "Out Patient Benefit",
-      ][index];
-
-      // Add the section title as a comment or individual cell in the CSV (optional)
-      csvContent += `# ${sectionTitle}\n`;
-
-      // Convert data to CSV rows and add them to CSV content
-      csvContent += convertToCSV(sectionData);
-
-      // Optionally, add an empty line between sections
-      csvContent += "\n";
+    let csvContent = "data:text/csv;charset=utf-8,";
+    tableData.forEach((sectionData, index) => {
+      if (sectionData.length > 0) {
+        const sectionTitles = [
+          "General Benefit",
+          "In Patient Benefit",
+          "Other Benefit",
+          "Out Patient Benefit",
+        ];
+        const headers = Object.keys(sectionData[0]);
+        csvContent += `${sectionTitles[index]}\n`;
+        csvContent += headers.join(",") + "\n";
+        csvContent += convertToCSV(sectionData) + "\n\n";
+      }
     });
 
     const fileName = createFileNameWithPrefix(metaData.client);
-    // Trigger the download of the CSV file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
+    link.setAttribute("href", encodedUri);
     link.setAttribute("download", `${fileName}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
+    document.body.appendChild(link); // Required for Firefox
     link.click();
     document.body.removeChild(link);
 
-    // Dispatch actions to clear meta data and table data if necessary
+    toast.success("Successfully generated CSV!", {
+      position: "top-right",
+    });
+
     customDispatch(clearMetaData());
-    customDispatch(clearTablData());
+    customDispatch(clearTableData());
   };
 
   const handleClose = () => {
     navigate("/tb/dbtable");
   };
 
+  const isEditable = endPoint === "new_or_edit" ? true : false;
+
   return (
     <div className="w-full h-full  flex flex-col items-start justify-start">
       <ToastContainer />
-
       <div
         style={{ display: "flex" }}
         className="w-full bg-white rounded-lg my-4"
@@ -481,13 +564,17 @@ function EditableTable() {
                     {tableName}
                   </p>
                   <Table
-                    columns={state.columns}
+                    columns={
+                      isEditable
+                        ? state.columns[tableName]
+                        : state.columns[tableName].slice(0, -1)
+                    }
                     data={tabledata}
                     dispatch={(action) => dispatch({ ...action, tableName })}
                     skipReset={state.skipReset}
                     handleClick={(rowIndex) => handleClick(tableName, rowIndex)}
                     style={{ width: "100%" }}
-                    isEditable={endPoint === "new_or_edit" ? true : false}
+                    isEditable={isEditable ? true : false}
                   />
                 </div>
               );

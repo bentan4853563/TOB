@@ -14,7 +14,7 @@ import "@szhsin/react-menu/dist/transitions/slide.css";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import {
   clearMetaData,
-  clearTablData,
+  clearTableData,
   setMetaData,
   setTableData,
 } from "../redux/reducers/tableSlice";
@@ -42,7 +42,7 @@ const DisplayTable = () => {
   }, [status, dbTableData]);
 
   useEffect(() => {
-    dispatch(clearTablData());
+    dispatch(clearTableData());
     dispatch(clearMetaData());
     const fetchData = async () => {
       try {

@@ -13,7 +13,7 @@ export const tableSlice = createSlice({
     setTableData: (state, action) => {
       state.table = action.payload;
     },
-    clearTablData: (state) => {
+    clearTableData: (state) => {
       state.table = initialState.table;
     },
     setUploadedFile: (state, action) => {
@@ -41,7 +41,7 @@ export const {
   setUploadedFile,
   setMetaData,
   setReview,
-  clearTablData,
+  clearTableData,
   clearFileName,
   clearMetaData,
 } = tableSlice.actions;

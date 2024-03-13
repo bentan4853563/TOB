@@ -33,6 +33,7 @@ export default function Table({
     Cell: isEditable ? Cell : Default,
     Header: Header,
     sortType: "alphanumericFalsyLast",
+    isEditable,
   };
 
   // const newColumns = isEditable ? columns : columns.slice(0, -1);

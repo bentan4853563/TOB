@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 import "react-confirm-alert/src/react-confirm-alert.css";
-import { clearMetaData, clearTablData } from "../redux/reducers/tableSlice";
+import { clearMetaData, clearTableData } from "../redux/reducers/tableSlice";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +19,7 @@ const Home = () => {
   const [dbTableData, setDBTableData] = useState([]);
   const [statisticalData, setStatisticalData] = useState({});
   useEffect(() => {
-    dispatch(clearTablData());
+    dispatch(clearTableData());
     dispatch(clearMetaData());
     const fetchData = async () => {
       try {
@@ -50,9 +50,7 @@ const Home = () => {
         console.error("Fetching data failed:", error);
       }
     };
-    dispatch(setLoading());
     fetchData();
-    dispatch(clearLoading());
   }, [dispatch]);
 
   useEffect(() => {}, [dbTableData]);
