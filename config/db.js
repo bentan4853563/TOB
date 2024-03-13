@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const db = "mongodb://Admin:45gEJdPMO1fE@13.200.164.92:27017/";
+const db = "mongodb://127.0.0.1:27017/";
 
 const connectDB = async () => {
   try {
