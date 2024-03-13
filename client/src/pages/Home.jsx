@@ -18,7 +18,6 @@ const Home = () => {
 
   const [dbTableData, setDBTableData] = useState([]);
   const [statisticalData, setStatisticalData] = useState({});
-
   useEffect(() => {
     dispatch(clearTablData());
     dispatch(clearMetaData());

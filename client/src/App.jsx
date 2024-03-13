@@ -30,6 +30,8 @@ const ProtectedRoute = () => {
 function App() {
   const { loading } = useSelector((state) => state.loading);
 
+  console.log("loading", loading);
+
   return (
     <>
       <Loading loading={loading} />

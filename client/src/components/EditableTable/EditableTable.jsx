@@ -58,19 +58,27 @@ function reducer(state, action) {
       return {
         ...state,
         skipReset: true,
-        data: [...state.data, {}],
+        data: {
+          ...state.data,
+          [action.tableName]: [...state.data[action.tableName], {}],
+        },
       };
     case "delete_row": {
-      let id = action.columnId;
+      console.log(action);
+      const rowIndex = action.rowIndex;
       return {
         ...state,
         skipReset: true,
-        data: [
-          ...state.data.slice(0, id),
-          ...state.data.slice(id + 1, state.data.length),
-        ],
+        data: {
+          ...state.data,
+          [action.tableName]: [
+            ...state.data[action.tableName].slice(0, rowIndex),
+            ...state.data[action.tableName].slice(rowIndex + 1),
+          ],
+        },
       };
     }
+
     case "update_column_type": {
       const typeIndex = state.columns.findIndex(
         (column) => column.id === action.columnId
@@ -145,16 +153,20 @@ function reducer(state, action) {
       return {
         ...state,
         skipReset: true,
-        data: state.data.map((row, index) => {
-          if (index === action.rowIndex) {
-            return {
-              ...state.data[action.rowIndex],
-              [action.columnId]: action.value,
-            };
-          }
-          return row;
-        }),
+        data: {
+          ...state.data,
+          [action.tableName]: state.data[action.tableName].map((row, index) => {
+            if (index === action.rowIndex) {
+              return {
+                ...row,
+                [action.columnId]: action.value,
+              };
+            }
+            return row;
+          }),
+        },
       };
+
     case "add_column_to_left": {
       const leftIndex = state.columns.findIndex(
         (column) => column.id === action.columnId
@@ -282,11 +294,9 @@ function EditableTable() {
     dispatch({ type: "UPDATE_DATA", payload: newDataState });
   }, [table]);
 
-  const handleClick = (index) => {
-    dispatch({ type: "delete_row", columnId: index });
+  const handleClick = (tableName, rowIndex) => {
+    dispatch({ type: "delete_row", tableName, rowIndex });
   };
-
-  console.log("Table ==========> ", table);
 
   const handleReview = async () => {
     // await fetch(`${base_URL}/table/review`, {
@@ -298,17 +308,11 @@ function EditableTable() {
     // 	},
     // 	body: JSON.stringify({ id: metaData._id }),
     // });
-    customDispatch(setReview());
     toast.success("Successfully Reviewed!", {
       position: "top-right",
     });
+    customDispatch(setReview());
   };
-
-  // const handleSaveasCSV = () => {
-  // 	if (Object.values(errors).every((error) => error === "")) {
-  // 		Makecsv(state.data);
-  // 	}
-  // };
 
   const handleSaveToDB = async () => {
     // Proceed with saving data to the database
@@ -346,10 +350,10 @@ function EditableTable() {
         throw new Error("Failed to save data. Please try again.");
       }
       customDispatch(clearLoading());
-      navigate("/tb/dbtable");
       toast.success("Successfully generated!", {
         position: "top-right",
       });
+      navigate("/tb/dbtable");
       customDispatch(clearFileName());
       customDispatch(clearTablData());
       customDispatch(clearMetaData());
@@ -468,29 +472,22 @@ function EditableTable() {
         className="w-full bg-white rounded-lg my-4"
       >
         <div className="w-full px-8 flex flex-col gap-4 justify-center py-8">
-          {/* <Table
-              columns={state.columns}
-              data={state.data}
-              dispatch={dispatch}
-              skipReset={state.skipReset}
-              handleClick={handleClick}
-              style={{ width: "100%" }}
-            /> */}
           {state.data &&
-            state.tableList.map((item, index) => {
-              let tabledata = state.data[item];
+            state.tableList.map((tableName, index) => {
+              let tabledata = state.data[tableName];
               return (
                 <div key={index} className="mb-8">
                   <p className="w-full text-center text-2xl font-serif">
-                    {item}
+                    {tableName}
                   </p>
                   <Table
                     columns={state.columns}
                     data={tabledata}
-                    dispatch={dispatch}
+                    dispatch={(action) => dispatch({ ...action, tableName })}
                     skipReset={state.skipReset}
-                    handleClick={handleClick}
+                    handleClick={(rowIndex) => handleClick(tableName, rowIndex)}
                     style={{ width: "100%" }}
+                    isEditable={endPoint === "new_or_edit" ? true : false}
                   />
                 </div>
               );

@@ -16,8 +16,6 @@ const NewDocument = () => {
   const { metaData } = useSelector((state) => state.table);
   const { table } = useSelector((state) => state.table);
 
-  console.log("table", table);
-
   const [tobType, setTobType] = useState("");
 
   const [file, setFile] = useState(null);

@@ -8,20 +8,12 @@ import {
   useSortBy,
 } from "react-table";
 
+import Default from "./DefaultCell";
 import Cell from "./Cell";
 import Header from "./Header";
 
 import { GoPlus } from "react-icons/go";
 import { BsTrash3 } from "react-icons/bs";
-
-const defaultColumn = {
-  minWidth: 50,
-  width: 150,
-  maxWidth: 400,
-  Cell: Cell,
-  Header: Header,
-  sortType: "alphanumericFalsyLast",
-};
 
 export default function Table({
   columns,
@@ -29,13 +21,21 @@ export default function Table({
   dispatch: dataDispatch,
   skipReset,
   handleClick,
+  isEditable,
 }) {
   const handleCloseClick = (index) => {
-    console.log("close", index);
     handleClick(index);
   };
+  const defaultColumn = {
+    minWidth: 50,
+    width: 150,
+    maxWidth: 400,
+    Cell: isEditable ? Cell : Default,
+    Header: Header,
+    sortType: "alphanumericFalsyLast",
+  };
 
-  console.log("Tatble=====");
+  // const newColumns = isEditable ? columns : columns.slice(0, -1);
 
   const sortTypes = useMemo(
     () => ({
@@ -126,23 +126,27 @@ export default function Table({
                     onClick={() => handleCloseClick(index)}
                   />
                 </span>
-                {row.cells.map((cell, index) => (
-                  <div key={index} {...cell.getCellProps()} className="td">
-                    {cell.render("Cell")}
-                  </div>
-                ))}
+                {row.cells.map((cell, index) => {
+                  return (
+                    <div key={index} {...cell.getCellProps()} className="td">
+                      {cell.render("Cell")}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
-          <div
-            className="tr add-row"
-            onClick={() => dataDispatch({ type: "add_row" })}
-          >
-            <span className="svg-icon svg-gray" style={{ marginRight: 4 }}>
-              <GoPlus />
-            </span>
-            New
-          </div>
+          {isEditable && (
+            <div
+              className="tr add-row"
+              onClick={() => dataDispatch({ type: "add_row" })}
+            >
+              <span className="svg-icon svg-gray" style={{ marginRight: 4 }}>
+                <GoPlus />
+              </span>
+              New
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -155,4 +159,5 @@ Table.propTypes = {
   dispatch: PropTypes.func.isRequired,
   skipReset: PropTypes.bool.isRequired,
   handleClick: PropTypes.func.isRequired,
+  isEditable: PropTypes.bool.isRequired,
 };
