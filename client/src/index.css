@@ -103,6 +103,3 @@ th {
 td {
   padding: 8px 16px;
 }
-tr:nth-child(even) {
-  background-color: #f8f8f8;
-}

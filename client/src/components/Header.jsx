@@ -22,18 +22,18 @@ const Header = () => {
     <div className="w-full min-h-20 h-20 bg-white flex items-center justify-between px-24">
       <div className="flex gap-8">
         <Link
-          to="/tb/home"
+          to="/tb/dbtable"
           className="text-xl font-sans text-black hover:text-sky-900"
         >
           <img className="mx-auto w-24" src={logo} alt="logo" />
         </Link>
       </div>
       <div className="flex justify-center items-center gap-4">
-        <Link className="text-lg font-sans text-black" to="/tb/home">
+        <Link className="text-lg font-sans text-black" to="/tb/dbtable">
           Home
         </Link>
         <Link className="text-lg font-sans text-black" to="/tb/dbtable">
-          Document
+          Documents
         </Link>
         {/* <TbBellRinging
 					size={28}

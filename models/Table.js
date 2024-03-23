@@ -1,28 +1,29 @@
 const mongoose = require("mongoose");
 
 const TableSchema = new mongoose.Schema({
-	previousInsurer: {
-		type: String,
-	},
-	client: {
-		type: String,
-	},
-	broker: {
-		type: String,
-	},
-	tobType: {
-		type: String,
-	},
-	sourceTOB: {
-		type: String,
-	},
-	resultTOB: {
-		type: String,
-	},
-	status: {
-		type: String,
-		default: "Progress",
-	},
+  uuid: {
+    type: String,
+    unique: true,
+    required: true,
+  },
+  tobType: {
+    type: String,
+  },
+  insurer: {
+    type: String,
+  },
+  client: {
+    type: String,
+  },
+  broker: {
+    type: String,
+  },
+  sourceTOB: {
+    type: String,
+  },
+  statusByCategory: {
+    type: Array,
+  },
 });
 
 module.exports = mongoose.model("table", TableSchema);

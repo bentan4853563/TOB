@@ -6,19 +6,7 @@ const auth = require("../middleware/auth");
 
 router.get("/readAll", async (req, res) => {
   try {
-    const tableData = await Table.find(
-      {},
-      {
-        previousInsurer: 1,
-        broker: 1,
-        client: 1,
-        policyPeriod: 1,
-        tobType: 1,
-        sourceTOB: 1,
-        resultTOB: 1,
-        status: 1,
-      }
-    );
+    const tableData = await Table.find();
     res.json(tableData);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -27,13 +15,12 @@ router.get("/readAll", async (req, res) => {
 
 router.post("/getOne", auth, async (req, res) => {
   try {
-    const { resultTOB, _id } = req.body;
-    const path = `/TBData/${resultTOB}.json`;
+    const uuid = req.body.uuid;
+    const path = `TBData/${uuid}.json`;
 
     // Use await here because readDataFromFile now returns a Promise
     const fileData = await readDataFromFile(path);
-    const metaData = await Table.findOne({ _id: _id });
-    console.log("metaData", metaData);
+    const metaData = await Table.findOne({ uuid: uuid });
     res.send({ metaData, fileData });
   } catch (error) {
     console.error(error);
@@ -43,19 +30,17 @@ router.post("/getOne", auth, async (req, res) => {
 
 router.post("/review", auth, async (req, res) => {
   try {
-    const { id } = req.body;
-    if (!id) {
-      return res.status(400).json({ message: "ID must be provided" });
+    const { uuid } = req.body;
+    if (!uuid) {
+      return res.status(400).json({ message: "UUID must be provided" });
     }
-    const result = await Table.findByIdAndUpdate(
-      id,
-      { status: "Review" },
+    const result = await Table.findOneAndUpdate(
+      { uuid: uuid },
+      { status: "Reviewed" },
       { new: true }
     ); // Use 'new: true' to return the updated document
     if (result) {
-      res
-        .status(200)
-        .json({ message: "Status updated to Review", data: result });
+      res.status(200).json(result);
     } else {
       res.status(404).json({ message: "Document not found with provided ID" });
     }
@@ -163,6 +148,82 @@ router.post("/fileUploadAndSave", async (req, res) => {
   }
 });
 
+router.post("/insert", auth, async (req, res) => {
+  try {
+    const { uuid, metaData, tableData } = req.body;
+
+    let newResultTOB;
+    if (metaData.sourceTOB) {
+      newResultTOB = createFileNameWithPrefix(metaData.client);
+    } else {
+      newResultTOB = Math.random().toString(36).substring(2, 15);
+    }
+
+    const filepath = `TBData/${uuid}.json`;
+    await saveDataToFile(tableData, filepath);
+
+    let statusByCategory = Object.keys(tableData).map((category) => {
+      return {
+        category: category,
+        status: "Processed",
+        version: 0,
+      };
+    });
+
+    const inputData = {
+      uuid, // uuid from outer scope
+      ...metaData, // Spreads metaData properties into inputData
+      resultTOB: newResultTOB, // newResultTOB from outer scope
+      statusByCategory, // Array constructed above
+    };
+    result = await Table.insertMany(inputData, {
+      new: true,
+      upsert: true,
+    });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Error saving data" });
+  }
+});
+
+router.post("/update", auth, async (req, res) => {
+  try {
+    const { uuid, tableData } = req.body;
+    console.log("tableData", tableData);
+    console.log("uuid", uuid);
+    const filepath = `TBData/${uuid}.json`;
+    await saveDataToFile(tableData, filepath);
+
+    let statusByCategory = Object.keys(tableData).map((category) => {
+      return {
+        version: 0,
+        catetory: category,
+        status: tableData[category].status
+          ? tableData[category].status
+          : "Processed",
+      };
+    });
+
+    console.log("statusByCategory", statusByCategory);
+
+    const result = await Table.findOneAndUpdate(
+      { uuid: uuid },
+      { statusByCategory },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+    console.log("result", result);
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Error saving data" });
+  }
+});
+
 const saveDataToFile = async (data, filePath) => {
   const jsonData = JSON.stringify(data, null, 2); // Pretty print the JSON
 
@@ -211,25 +272,26 @@ router.put("/update", auth, async (req, res) => {
   }
 });
 
-router.delete("/delete/:resultTOB", auth, async (req, res) => {
-  const { resultTOB } = req.params;
+// DELETE endpoint to handle record deletion
+router.delete("/delete/:id", auth, async (req, res) => {
   try {
-    const deletedTableEntry = await Table.findOneAndDelete(resultTOB);
+    const { id } = req.params;
+    console.log("id", id);
+    const result = await Table.findByIdAndDelete(id);
 
-    if (!deletedTableEntry) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Table entry not found" });
+    if (!result) {
+      return res.status(404).json({ message: "Record not found" });
     }
-
-    console.log("Deleted successfully");
-    res.status(200).json({ success: true, message: "Deleted successfully" });
+    console.log(result);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res
       .status(500)
-      .json({ success: false, message: "Error deleting table entry" });
+      .json({ message: "Error deleting record", error: error.message });
   }
 });
+
+module.exports = router;
 
 module.exports = router;

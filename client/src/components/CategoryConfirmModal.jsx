@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import PropTypes from "prop-types";
 
 import { IoClose } from "react-icons/io5";
-import { useDispatch } from "react-redux";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
-import { setTableData } from "../redux/reducers/tableSlice";
+import {
+  setMetaData,
+  setUUID,
+  storeTableData,
+} from "../redux/reducers/tableSlice";
 
 const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
   const dispatch = useDispatch();
+
+  const { token } = useSelector((state) => state.auth);
+  const { metaData } = useSelector((state) => state.table);
 
   const [categoryInput, setCategoryInput] = useState("");
   const [categoryList, setCategoryList] = useState([]);
@@ -16,11 +23,12 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
     categoryList: [],
   });
 
+  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
+  const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
+
   useEffect(() => {
     setCategoryList(list);
   }, [list]);
-
-  console.log("categoryList", categoryList);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -41,17 +49,29 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
     formData.append("file_name", JSON.stringify(file_name));
     dispatch(setLoading());
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_PYTHON_BACKEND_URL}/generateDoc`,
-        {
-          method: "POST",
-          body: formData,
-          "ngrok-skip-browser-warning": true,
-        }
-      );
+      const response = await fetch(`${python_server_url}/generateDoc`, {
+        method: "POST",
+        body: formData,
+        "ngrok-skip-browser-warning": true,
+      });
       if (response.ok) {
         const data = await response.json();
-        dispatch(setTableData(data));
+        const initialized = Object.keys(data).reduce(
+          (accumulator, category) => {
+            accumulator[category] = {
+              ...data[category],
+              status: "Processed",
+            };
+            if (accumulator !== "") {
+              return accumulator;
+            }
+          },
+          {}
+        );
+        console.log(initialized);
+
+        dispatch(storeTableData(initialized));
+        saveStatusByCategory(data);
         dispatch(clearLoading());
         hideModal();
       } else {
@@ -59,6 +79,37 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const saveStatusByCategory = async (tableData) => {
+    const uuid = crypto.randomUUID();
+    dispatch(setUUID(uuid));
+
+    try {
+      const response = await fetch(`${node_server_url}/api/table/insert`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-auth-token": token, // Include the token in the Authorization header
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({
+          uuid,
+          metaData,
+          tableData,
+        }),
+      });
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("responseData", responseData);
+        dispatch(setMetaData(responseData));
+      } else {
+        // Handle non-2xx responses here
+        console.error("Error:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
     }
   };
 
