@@ -98,7 +98,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Deviated Nasal Septum",
@@ -118,7 +118,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Reconstructive Surgery",
@@ -163,7 +163,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Work Related Injuries",
@@ -208,7 +208,7 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Mindset",
@@ -312,7 +312,8 @@
         "limit": "Covered",
         "status": "checked"
       }
-    ]
+    ],
+    "status": "Reviewed"
   },
   "cat_b": {
     "General Benefit": [
@@ -627,6 +628,8 @@
         "limit": "Covered",
         "status": "checked"
       }
-    ]
-  }
+    ],
+    "status": "Processed"
+  },
+  "": {}
 }

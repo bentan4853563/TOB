@@ -4,12 +4,16 @@
       {
         "benefit": "Area of Cover",
         "limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Area of Cover",
+        "New Limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE"
       },
       {
         "benefit": "Overall Annual Limit",
         "limit": "AED 250,000",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Overall Annual Limit",
+        "New Limit": "AED 250,000"
       }
     ],
     "In patient Benefit": [
@@ -98,7 +102,9 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Influenza Vaccine (once in a year)",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Deviated Nasal Septum",
@@ -295,7 +301,9 @@
       {
         "benefit": "Prescription drugs",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Prescription drugs",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Alternative Treatments",
@@ -310,10 +318,12 @@
       {
         "benefit": "Deductible payable by the Insured ",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Deductible payable by the Insured ",
+        "New Limit": "Covered"
       }
     ],
-    "status": "Reviewed"
+    "status": "Generated"
   },
   "cat_b": {
     "General Benefit": [
@@ -325,7 +335,9 @@
       {
         "benefit": "Overall Annual Limit",
         "limit": "AED 250,000",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Overall Annual Limit",
+        "New Limit": "AED 250,000"
       }
     ],
     "In patient Benefit": [
@@ -342,7 +354,9 @@
       {
         "benefit": "Surgical fees, including anesthesia & theatre charges",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Surgical fees, including anesthesia & theatre charges",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Physician, surgeon, & anesthetist fees",
@@ -399,7 +413,9 @@
       {
         "benefit": "Local ambulance",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Local ambulance",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Imaging (X-ray, MRI, CT, PET, Ultrasound)",
@@ -409,7 +425,9 @@
       {
         "benefit": "Child Preventive Services, Vaccines and Immunizations",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Child Preventive Services, Vaccines and Immunizations",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Influenza Vaccine (once in a year)",
@@ -616,12 +634,16 @@
       {
         "benefit": "Alternative Treatments",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Alternative Treatments",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Other Services",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Other Services",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Deductible payable by the Insured ",
@@ -629,6 +651,6 @@
         "status": "checked"
       }
     ],
-    "status": "Reviewed"
+    "status": "Generated"
   }
 }

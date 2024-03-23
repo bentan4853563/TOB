@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import { toast } from "react-toastify";
 import { confirmAlert } from "react-confirm-alert";
@@ -11,6 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { clearMetaData } from "../redux/reducers/tableSlice";
 import EditableTable from "./EditableTable";
+import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
@@ -20,7 +23,7 @@ export default function CustomizedTable() {
 
   const { table } = useSelector((state) => state.table);
   const { token } = useSelector((state) => state.auth);
-  const { metaData, uuid } = useSelector((state) => state.table);
+  const { metaData } = useSelector((state) => state.table);
 
   const [selectedCategory, setSlectedCategory] = useState("");
   const [selectedTable, setSelectedTable] = useState({});
@@ -28,12 +31,20 @@ export default function CustomizedTable() {
 
   const [enableReview, setEnableReview] = useState(true);
 
+  // useEffect(() => {
+  //   return () => {
+  //     console.log("Before unmount");
+  //     update(tableData);
+  //   };
+  // }, []);
+
   useEffect(() => {
     if (Object.keys(table).length > 0) {
       setSlectedCategory(Object.keys(table)[0]);
       setTableData(table);
     }
   }, [table]);
+
   useEffect(() => {
     if (tableData && selectedCategory !== null) {
       setSelectedTable(tableData[selectedCategory]);
@@ -118,6 +129,7 @@ export default function CustomizedTable() {
   };
 
   const update = async (temp) => {
+    console.log("Update", temp, metaData.uuid);
     try {
       const response = await fetch(`${node_server_url}/api/table/update`, {
         method: "POST",
@@ -127,13 +139,15 @@ export default function CustomizedTable() {
           "ngrok-skip-browser-warning": true,
         },
         body: JSON.stringify({
-          uuid: uuid,
+          uuid: metaData.uuid,
           tableData: temp,
         }),
       });
       if (response.ok) {
-        const responseData = await response.json();
-        console.log("update response", responseData);
+        const result = await response.json();
+        const { metaData, tableData } = result;
+        dispatch(setMetaData(metaData[0]));
+        dispatch(storeTableData(tableData));
       } else {
         console.error("Error:", response.status, response.statusText);
       }
@@ -186,6 +200,7 @@ export default function CustomizedTable() {
       ],
     });
   };
+
   const deleteProcess = async () => {
     try {
       const response = await fetch(`${node_server_url}/api/table/delete`, {
@@ -291,99 +306,131 @@ export default function CustomizedTable() {
   const handleSaveToPDF = async () => {
     await handleGenerate();
 
-    //   console.log("dfsfdsfdsdf");
+    const tableData = Object.values(selectedTable).slice(0, -1);
+    const doc = new jsPDF();
+    console.log("selectedTable", selectedTable);
 
-    //   const tableData = Object.values(state.data);
-    //   const doc = new jsPDF();
+    const addSectionToPDF = (title, data, pdfColumns) => {
+      doc.addPage();
+      doc.text(title, 20, 20);
+      doc.autoTable({
+        startY: 40,
+        head: [pdfColumns],
+        body: data.map((item) =>
+          pdfColumns.map((col) => item[col]?.toString() || "")
+        ),
+        margin: { top: 30 },
+      });
+    };
 
-    //   const addSectionToPDF = (title, data, pdfColumns) => {
-    //     doc.addPage();
-    //     doc.text(title, 20, 20);
-    //     doc.autoTable({
-    //       startY: 40,
-    //       head: [pdfColumns],
-    //       body: data.map((item) =>
-    //         pdfColumns.map((col) => item[col]?.toString() || "")
-    //       ),
-    //       margin: { top: 30 },
-    //     });
-    //   };
+    const titleMap = [
+      "General Benefit",
+      "In Patient Benefit",
+      "Other Benefit",
+      "Out Patient Benefit",
+    ];
 
-    //   const titleMap = [
-    //     "General Benefit",
-    //     "In Patient Benefit",
-    //     "Other Benefit",
-    //     "Out Patient Benefit",
-    //   ];
+    tableData.forEach((sectionData, index) => {
+      if (sectionData.length > 0) {
+        const title = titleMap[index];
+        addSectionToPDF(title, sectionData, Object.keys(sectionData[0]));
+      }
+    });
 
-    //   tableData.forEach((sectionData, index) => {
-    //     if (sectionData.length > 0) {
-    //       const title = titleMap[index];
-    //       addSectionToPDF(title, sectionData, Object.keys(sectionData[0]));
-    //     }
-    //   });
+    const fileName = `${metaData.client}-${new Date().toISOString()}`;
+    doc.save(`${fileName}.pdf`);
 
-    //   const fileName = `${metaData.client}-${new Date().toISOString()}`;
-    //   doc.save(`${fileName}.pdf`);
+    toast.success("Successfully generated!", {
+      position: "top-right",
+    });
+  };
+  console.log("selectedTable", selectedTable);
 
-    //   toast.success("Successfully generated!", {
-    //     position: "top-right",
-    //   });
-    //   dispatch(clearMetaData());
-    //   dispatch(clearTableData());
+  const handleSaveToCSV = async () => {
+    await handleGenerate();
+
+    const tableData = Object.values(selectedTable).slice(0, -1);
+
+    const convertToCSV = (arr) => {
+      return arr
+        .map((row) =>
+          Object.values(row)
+            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+            .join(",")
+        )
+        .join("\n");
+    };
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    tableData.forEach((sectionData, index) => {
+      if (sectionData.length > 0) {
+        const sectionTitles = [
+          "General Benefit",
+          "In Patient Benefit",
+          "Other Benefit",
+          "Out Patient Benefit",
+        ];
+        const headers = Object.keys(sectionData[0]);
+        csvContent += `${sectionTitles[index]}\n`;
+        csvContent += headers.join(",") + "\n";
+        csvContent += convertToCSV(sectionData) + "\n\n";
+      }
+    });
+
+    const fileName = createFileNameWithPrefix(metaData.client);
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${fileName}.csv`);
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Successfully generated CSV!", {
+      position: "top-right",
+    });
   };
 
-  // const handleSaveToCSV = async () => {
-  //   await handleGenerate();
+  const createFileNameWithPrefix = (clientName) => {
+    // Prefix
+    const prefix = "QIC";
 
-  //   const tableData = Object.values(state.data);
+    // Function to sanitize input to ensure it's safe for file names
+    function sanitizeInput(input) {
+      // Replace any character not allowed in file names with an underscore
+      return input.replace(/[\/\\:*?"<>|\s]+/g, "_");
+    }
 
-  //   const convertToCSV = (arr) => {
-  //     return arr
-  //       .map((row) =>
-  //         Object.values(row)
-  //           .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-  //           .join(",")
-  //       )
-  //       .join("\n");
-  //   };
+    // Sanitize the client name
+    const safeClientName = sanitizeInput(clientName);
 
-  //   let csvContent = "data:text/csv;charset=utf-8,";
-  //   tableData.forEach((sectionData, index) => {
-  //     if (sectionData.length > 0) {
-  //       const sectionTitles = [
-  //         "General Benefit",
-  //         "In Patient Benefit",
-  //         "Other Benefit",
-  //         "Out Patient Benefit",
-  //       ];
-  //       const headers = Object.keys(sectionData[0]);
-  //       csvContent += `${sectionTitles[index]}\n`;
-  //       csvContent += headers.join(",") + "\n";
-  //       csvContent += convertToCSV(sectionData) + "\n\n";
-  //     }
-  //   });
+    // Get today's date and format it as yyyy_dd_mm
+    const today = new Date();
+    const year = today.getFullYear();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0!
+    const dateStr = `${year}_${day}_${month}`;
 
-  //   const fileName = createFileNameWithPrefix(metaData.client);
-  //   const encodedUri = encodeURI(csvContent);
-  //   const link = document.createElement("a");
-  //   link.setAttribute("href", encodedUri);
-  //   link.setAttribute("download", `${fileName}.csv`);
-  //   document.body.appendChild(link); // Required for Firefox
-  //   link.click();
-  //   document.body.removeChild(link);
+    // Construct the file name with prefix, sanitized client name, and formatted date
+    const fileName = `${prefix}_${safeClientName}_${dateStr}`;
 
-  //   toast.success("Successfully generated CSV!", {
-  //     position: "top-right",
-  //   });
+    return fileName;
+  };
 
-  //   dispatch(clearMetaData());
-  //   dispatch(clearTableData());
-  // };
+  const handleClose = () => {
+    navigate("/tb/dbtable");
+  };
 
-  // const handleClose = () => {
-  //   navigate("/tb/dbtable");
-  // };
+  const getEndPoint = () => {
+    const currentHref = window.location.href;
+    const parsedUrl = new URL(currentHref);
+    const pathSegments = parsedUrl.pathname
+      .split("/")
+      .filter((segment) => segment);
+    return pathSegments[pathSegments.length - 1];
+  };
+
+  const endPoint = getEndPoint();
 
   return (
     <div className="w-full flex flex-col mt-8">
@@ -395,7 +442,7 @@ export default function CustomizedTable() {
           name="category"
           id="category"
           onChange={(e) => setSlectedCategory(e.target.value)}
-          className="w-full md:w-2/3 lg:w-1/2 p-3 gap-4 text-xl"
+          className="w-full md:w-2/3 lg:w-1/2 p-3 gap-4 text-xl rounded-md"
         >
           {table &&
             Object.keys(table).map((category, index) => {
@@ -467,22 +514,41 @@ export default function CustomizedTable() {
                 >
                   Save to PDF
                 </MenuItem>
-                <MenuItem className="flex justify-center">Save to CSV</MenuItem>
+                <MenuItem
+                  className="flex justify-center"
+                  onClick={handleSaveToCSV}
+                >
+                  Save to CSV
+                </MenuItem>
               </Menu>
             </div>
           )}
-        <button
-          onClick={handleDelete}
-          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-        >
-          Delete
-        </button>
-        {/* <button
-          onClick={handleClose}
-          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-        >
-          Close
-        </button> */}
+
+        {selectedTable && selectedTable.status === "Generated" && (
+          <button
+            onClick={handleReview}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Revise
+          </button>
+        )}
+
+        {endPoint !== "view" && (
+          <button
+            onClick={handleDelete}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Delete
+          </button>
+        )}
+        {endPoint === "view" && (
+          <button
+            onClick={handleClose}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Close
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import ScrollToTop from "react-scroll-to-top";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { setMetaData } from "../redux/reducers/tableSlice";
@@ -422,7 +423,9 @@ const NewDocument = () => {
           </button>
         </div>
       </div>
+
       {Object.keys(table).length > 0 && <CustomizedTable />}
+
       {modalOpen && (
         <CategoryConfirmModal
           list={categoryList}
@@ -430,6 +433,13 @@ const NewDocument = () => {
           hideModal={() => setModalOpen(false)}
         />
       )}
+
+      <ScrollToTop
+        className="scroll-to-top flex fixed focus:outline-none text-black shadow-md shadow-gray-800 justify-center items-center rounded-full"
+        smooth
+        height={18}
+        style={{ zIndex: 999, fontSize: 4 }}
+      />
     </div>
   );
 };

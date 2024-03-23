@@ -18,6 +18,7 @@
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.0.3",
     "path": "^0.12.7",
+    "react-scroll-to-top": "^3.0.0",
     "react-toastify": "^10.0.4",
     "tw-elements": "^1.1.0"
   }

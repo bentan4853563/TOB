@@ -28,6 +28,85 @@ router.post("/getOne", auth, async (req, res) => {
   }
 });
 
+router.post("/insert", auth, async (req, res) => {
+  try {
+    const { uuid, metaData, tableData } = req.body;
+
+    // let newResultTOB;
+    // if (metaData.sourceTOB) {
+    //   newResultTOB = createFileNameWithPrefix(metaData.client);
+    // } else {
+    //   newResultTOB = Math.random().toString(36).substring(2, 15);
+    // }
+    console.log("metaData", metaData, uuid);
+
+    const filepath = `TBData/${uuid}.json`;
+    await saveDataToFile(tableData, filepath);
+
+    let statusByCategory = Object.keys(tableData).map((category) => {
+      return {
+        category: category,
+        status: "Processed",
+        version: 0,
+      };
+    });
+
+    const inputData = {
+      uuid, // uuid from outer scope
+      ...metaData, // Spreads metaData properties into inputData
+      statusByCategory, // Array constructed above
+    };
+
+    result = await Table.insertMany(inputData, {
+      new: true,
+      upsert: true,
+    });
+
+    res.json({ metaData: result, tableData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Error saving data" });
+  }
+});
+
+router.post("/update", auth, async (req, res) => {
+  try {
+    const { uuid, tableData } = req.body;
+    console.log("tableData", tableData);
+    const filepath = `TBData/${uuid}.json`;
+    await saveDataToFile(tableData, filepath);
+
+    let statusByCategory = Object.keys(tableData).map((category) => {
+      return {
+        version: 0,
+        catetory: category,
+        status: tableData[category].status
+          ? tableData[category].status === "Revise"
+            ? "Processed"
+            : tableData[category].status
+          : "Processed",
+      };
+    });
+
+    console.log("statusByCategory", statusByCategory);
+
+    const result = await Table.findOneAndUpdate(
+      { uuid: uuid },
+      { statusByCategory },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+    console.log("result", result);
+
+    res.json({ metaData: result, tableData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Error saving data" });
+  }
+});
+
 router.post("/review", auth, async (req, res) => {
   try {
     const { uuid } = req.body;
@@ -142,82 +221,6 @@ router.post("/fileUploadAndSave", async (req, res) => {
       success: true,
       message: "Data saved successfully",
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ success: false, message: "Error saving data" });
-  }
-});
-
-router.post("/insert", auth, async (req, res) => {
-  try {
-    const { uuid, metaData, tableData } = req.body;
-
-    let newResultTOB;
-    if (metaData.sourceTOB) {
-      newResultTOB = createFileNameWithPrefix(metaData.client);
-    } else {
-      newResultTOB = Math.random().toString(36).substring(2, 15);
-    }
-
-    const filepath = `TBData/${uuid}.json`;
-    await saveDataToFile(tableData, filepath);
-
-    let statusByCategory = Object.keys(tableData).map((category) => {
-      return {
-        category: category,
-        status: "Processed",
-        version: 0,
-      };
-    });
-
-    const inputData = {
-      uuid, // uuid from outer scope
-      ...metaData, // Spreads metaData properties into inputData
-      resultTOB: newResultTOB, // newResultTOB from outer scope
-      statusByCategory, // Array constructed above
-    };
-    result = await Table.insertMany(inputData, {
-      new: true,
-      upsert: true,
-    });
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ success: false, message: "Error saving data" });
-  }
-});
-
-router.post("/update", auth, async (req, res) => {
-  try {
-    const { uuid, tableData } = req.body;
-    console.log("tableData", tableData);
-    console.log("uuid", uuid);
-    const filepath = `TBData/${uuid}.json`;
-    await saveDataToFile(tableData, filepath);
-
-    let statusByCategory = Object.keys(tableData).map((category) => {
-      return {
-        version: 0,
-        catetory: category,
-        status: tableData[category].status
-          ? tableData[category].status
-          : "Processed",
-      };
-    });
-
-    console.log("statusByCategory", statusByCategory);
-
-    const result = await Table.findOneAndUpdate(
-      { uuid: uuid },
-      { statusByCategory },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
-    console.log("result", result);
-
-    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: "Error saving data" });

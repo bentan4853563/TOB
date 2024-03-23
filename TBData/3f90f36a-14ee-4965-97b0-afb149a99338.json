@@ -51,7 +51,9 @@
       {
         "benefit": "Companion accommodation ",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Companion accommodation ",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Inpatient cash benefit",
@@ -78,7 +80,9 @@
       {
         "benefit": "Out-patient surgery",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Out-patient surgery",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Local ambulance",
@@ -88,7 +92,9 @@
       {
         "benefit": "Imaging (X-ray, MRI, CT, PET, Ultrasound)",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Imaging (X-ray, MRI, CT, PET, Ultrasound)",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Child Preventive Services, Vaccines and Immunizations",
@@ -313,7 +319,7 @@
         "status": "checked"
       }
     ],
-    "status": "Reviewed"
+    "status": "Generated"
   },
   "cat_b": {
     "General Benefit": [
@@ -469,7 +475,9 @@
       {
         "benefit": "Vitamins",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Vitamins",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Vitamins registered as medications",
@@ -539,7 +547,9 @@
       {
         "benefit": "Screening / Health Check-up (Routine)",
         "limit": "Covered",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Screening / Health Check-up (Routine)",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Basic Routine Dental Benefits",
@@ -629,6 +639,7 @@
         "status": "checked"
       }
     ],
-    "status": "Reviewed"
-  }
+    "status": "Generated"
+  },
+  "": {}
 }

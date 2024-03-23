@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import ScrollToTop from "react-scroll-to-top";
 
 import ViewTable from "../components/ViewTable";
 
@@ -133,6 +134,13 @@ export default function CustomizedTable() {
             }
           })}
       </div>
+
+      <ScrollToTop
+        className="scroll-to-top flex fixed focus:outline-none text-black shadow-md shadow-gray-800 justify-center items-center rounded-full"
+        smooth
+        height={18}
+        style={{ zIndex: 999, fontSize: 4 }}
+      />
     </div>
   );
 }

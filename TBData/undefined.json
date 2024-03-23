@@ -1,5 +1,5 @@
 {
-  "cat_a": {
+  "CAT_A": {
     "General Benefit": [
       {
         "benefit": "Area of Cover",
@@ -98,7 +98,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "checked"
+        "status": "unchecked"
       },
       {
         "benefit": "Deviated Nasal Septum",
@@ -118,7 +118,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "checked"
+        "status": "unchecked"
       },
       {
         "benefit": "Reconstructive Surgery",
@@ -163,7 +163,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "checked"
+        "status": "unchecked"
       },
       {
         "benefit": "Work Related Injuries",
@@ -208,7 +208,7 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "checked"
+        "status": "unchecked"
       },
       {
         "benefit": "Mindset",
@@ -312,19 +312,24 @@
         "limit": "Covered",
         "status": "checked"
       }
-    ]
+    ],
+    "status": "Processed"
   },
-  "cat_b": {
+  "CAT_B": {
     "General Benefit": [
       {
         "benefit": "Area of Cover",
         "limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Area of Cover",
+        "New Limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE"
       },
       {
         "benefit": "Overall Annual Limit",
         "limit": "AED 250,000",
-        "status": "checked"
+        "status": "checked",
+        "New Benefit": "Overall Annual Limit",
+        "New Limit": "AED 250,000"
       }
     ],
     "In patient Benefit": [
@@ -413,7 +418,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Deviated Nasal Septum",
@@ -433,7 +438,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Reconstructive Surgery",
@@ -478,7 +483,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Work Related Injuries",
@@ -523,7 +528,7 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked"
+        "status": "checked"
       },
       {
         "benefit": "Mindset",
@@ -627,6 +632,8 @@
         "limit": "Covered",
         "status": "checked"
       }
-    ]
-  }
+    ],
+    "status": "Reviewed"
+  },
+  "": {}
 }

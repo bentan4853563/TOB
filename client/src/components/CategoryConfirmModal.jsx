@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
 import PropTypes from "prop-types";
 
 import { IoClose } from "react-icons/io5";
@@ -25,7 +26,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
 
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
   const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
-
+  console.log("metaData", metaData);
   useEffect(() => {
     setCategoryList(list);
   }, [list]);
@@ -68,10 +69,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
           },
           {}
         );
-        console.log(initialized);
-
-        dispatch(storeTableData(initialized));
-        saveStatusByCategory(data);
+        saveStatusByCategory(initialized);
         dispatch(clearLoading());
         hideModal();
       } else {
@@ -91,7 +89,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-auth-token": token, // Include the token in the Authorization header
+          "x-auth-token": token,
           "ngrok-skip-browser-warning": true,
         },
         body: JSON.stringify({
@@ -101,11 +99,11 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
         }),
       });
       if (response.ok) {
-        const responseData = await response.json();
-        console.log("responseData", responseData);
-        dispatch(setMetaData(responseData));
+        const result = await response.json();
+        const { metaData, tableData } = result;
+        dispatch(setMetaData(metaData[0]));
+        dispatch(storeTableData(tableData));
       } else {
-        // Handle non-2xx responses here
         console.error("Error:", response.status, response.statusText);
       }
     } catch (error) {
