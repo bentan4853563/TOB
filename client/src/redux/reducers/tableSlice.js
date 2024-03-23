@@ -4,13 +4,15 @@ const initialState = {
   metaData: {},
   table: {},
   uploadedFile: "",
+  uuid: "",
 };
 
 export const tableSlice = createSlice({
   name: "table",
   initialState,
   reducers: {
-    setTableData: (state, action) => {
+    storeTableData: (state, action) => {
+      console.log(action.payload);
       state.table = action.payload;
     },
     clearTableData: (state) => {
@@ -32,18 +34,22 @@ export const tableSlice = createSlice({
     clearMetaData: (state) => {
       state.metaData = initialState.metaData;
     },
+    setUUID: (state, action) => {
+      state.uuid = action.payload;
+    },
   },
 });
 
 // Action creators are generated for each case reducer function
 export const {
-  setTableData,
+  storeTableData,
   setUploadedFile,
   setMetaData,
   setReview,
   clearTableData,
   clearFileName,
   clearMetaData,
+  setUUID,
 } = tableSlice.actions;
 
 export default tableSlice.reducer;

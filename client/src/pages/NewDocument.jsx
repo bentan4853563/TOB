@@ -1,22 +1,15 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import ScrollToTop from "react-scroll-to-top";
 
-// import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
-import {
-  // setTableData,
-  // setUploadedFile,
-  setMetaData,
-} from "../redux/reducers/tableSlice";
-import EditableTable from "../components/EditableTable/EditableTable";
-import CategoryConfirmModal from "../components/CategoryConfirmModal";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
+import { setMetaData } from "../redux/reducers/tableSlice";
+import CategoryConfirmModal from "../components/CategoryConfirmModal";
+import CustomizedTable from "../components/CustomizedTable";
 
 const NewDocument = () => {
-  const customdispatch = useDispatch();
-  const { metaData } = useSelector((state) => state.table);
+  const dispatch = useDispatch();
   const { table } = useSelector((state) => state.table);
-
-  const [tobType, setTobType] = useState("");
 
   const [file, setFile] = useState(null);
   const [broker, setBroker] = useState("");
@@ -28,18 +21,37 @@ const NewDocument = () => {
   const [tempFileName, setTempFileName] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(true);
 
   const [metaFormErrors, setMetaFormErrors] = useState({
-    broker: "",
     client: "",
-    insurer: "",
-    tobType: "",
-    file: null,
-    categoryList: [],
+    sourceTOB: "",
   });
 
-  const tobTypeList = ["Standard", "EliteCare", "GulfCare"];
+  const [tobType, setTobType] = useState("");
+  const [gulfPlan, setGulfPlan] = useState("");
+  const [AIPlan, setAIPlan] = useState("");
+  const [ThiqaPlan, setThiqaPlan] = useState("");
+  const [regulator, setRegulator] = useState("");
+  const TobTypeList = ["Elite Care", "Gulf Care", "Al Madallah", "Thiqa"];
+  const gulfPlanList = [
+    "Global",
+    "International",
+    "Arabia",
+    "Emirates",
+    "Asia",
+  ];
+  const regulagorList = ["DHA", "DOH"];
+  const AIPlanList = [];
+  const ThiqaPlanList = [];
+  for (let i = 1; i < 15; i++) {
+    AIPlanList.push(`Plan ${i}`);
+  }
+  for (let i = 1; i < 6; i++) {
+    ThiqaPlanList.push(`Plan ${i}`);
+  }
+
+  const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
+
   const companyList = [
     "ABU DHABI NATIONAL INSURANCE COMPANY",
     "SUKOON",
@@ -72,48 +84,56 @@ const NewDocument = () => {
   ];
 
   useEffect(() => {
-    setIsDisabled(Object.keys(metaData).length > 0);
-  }, [metaData]);
+    setTobType(TobTypeList[0]);
+  }, []);
 
   useEffect(() => {
-    setBroker(metaData.broker);
-    setClient(metaData.client);
-    setInsurer(metaData.previousInsurer);
-    setTobType(metaData.topType);
-    setSourceTOB(metaData.sourceTOB);
-  }, [metaData]);
+    if (tobType === TobTypeList[0]) {
+      setInsurer(companyList[0]);
+    } else if (tobType === TobTypeList[1]) {
+      setGulfPlan(gulfPlanList[0]);
+    } else if (tobType === TobTypeList[2]) {
+      setThiqaPlan(ThiqaPlanList[0]);
+    }
+  }, [tobType]);
 
   const handleProcess = async () => {
-    let newErrors = {};
-    if (!insurer || !insurer.trim()) {
-      newErrors.insurer = "Insurer is required";
-    }
-    if (!broker || !broker.trim()) {
-      newErrors.broker = "Broker is required";
-    }
-    if (!client || !client.trim()) {
-      newErrors.client = "Client is required";
-    }
-    if (!tobType || !tobType) {
-      newErrors.tobType = "Type of TOB field must include one type.";
-    }
-    if (!file || !file) {
-      newErrors.file = "Please upload a file.";
-    }
-
-    setMetaFormErrors(newErrors);
-
-    // Check if there are no errors in the newErrors object
-    if (Object.keys(newErrors).length === 0) {
-      const newMetaData = {
-        broker: broker,
-        client: client,
-        sourceTOB: file.name,
-        topType: tobType,
-        previousInsurer: insurer,
-      };
-      customdispatch(setMetaData(newMetaData));
-      handleFetch();
+    let newMetaData = {};
+    if (tobType === TobTypeList[0]) {
+      let newErrors = {};
+      if (!client || !client.trim()) {
+        newErrors.client = "Client is required";
+      }
+      if (!sourceTOB || !sourceTOB.trim()) {
+        newErrors.sourceTOB = "Source TOB is required";
+      }
+      setMetaFormErrors(newErrors);
+      // Check if there are no errors in the newErrors object
+      if (Object.keys(newErrors).length === 0) {
+        newMetaData.client = client;
+        // Only add the 'broker' key if 'broker' is not an empty string
+        if (insurer !== "") {
+          newMetaData.insurer = insurer;
+        }
+        if (broker !== "") {
+          newMetaData.broker = broker;
+        }
+        if (sourceTOB !== "") {
+          newMetaData.sourceTOB = sourceTOB;
+        }
+        handleFetch();
+        dispatch(setMetaData(newMetaData));
+      }
+    } else if (tobType === TobTypeList[1]) {
+      if (tobType === TobTypeList[0] && insurer !== "") {
+        newMetaData.insurer = insurer;
+      }
+      if (broker !== "") {
+        newMetaData.broker = broker;
+      }
+      if (tobType === TobTypeList[0] && sourceTOB !== "") {
+        newMetaData.sourceTOB = sourceTOB;
+      }
     }
   };
 
@@ -131,28 +151,161 @@ const NewDocument = () => {
   const handleFetch = async () => {
     const formData = new FormData();
     formData.append("file", file);
-    // formData.append("category_list", JSON.stringify(categoryList));
-    customdispatch(setLoading());
+    dispatch(setLoading());
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_PYTHON_BACKEND_URL}/checkCategory`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${python_server_url}/checkCategory`, {
+        method: "POST",
+        body: formData,
+      });
       if (response.ok) {
         const data = await response.json();
-        console.log("Category List=====>", data);
         setCategoryList(data.category_list);
         setTempFileName(data.file_name);
         setModalOpen(true);
-        customdispatch(clearLoading());
+        dispatch(clearLoading());
       } else {
         console.error("Error:", response.statusText);
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const renderContent = () => {
+    switch (tobType) {
+      case "Elite Care":
+        return (
+          <div className="flex flex-col">
+            <label htmlFor="insurer">Insurer</label>
+            <select
+              name="insurer"
+              id="insurer"
+              value={insurer}
+              onClick={handleFocus}
+              onChange={(e) => setInsurer(e.target.value)}
+              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+            >
+              {companyList.map((option, index) => {
+                return <option key={index}>{option}</option>;
+              })}
+            </select>
+            {metaFormErrors.insurer && (
+              <p className="w-full text-red-400 text-xs text-left">
+                {metaFormErrors.insurer}
+              </p>
+            )}
+          </div>
+        );
+      case "Gulf Care":
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="gulfPlan">Plan</label>
+              <select
+                name="gulfPlan"
+                id="gulfPlan"
+                value={gulfPlan}
+                onClick={handleFocus}
+                onChange={(e) => setGulfPlan(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {gulfPlanList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="regulator">Regulator</label>
+              <select
+                name="regulator"
+                id="regulator"
+                value={regulator}
+                onClick={handleFocus}
+                onChange={(e) => setRegulator(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {regulagorList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+            </div>
+          </div>
+        );
+      case "Al Madallah":
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="AIPlan">Plan</label>
+              <select
+                name="AIPlan"
+                id="AIPlan"
+                value={AIPlan}
+                onClick={handleFocus}
+                onChange={(e) => setAIPlan(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {AIPlanList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="regulator">Regulator</label>
+              <select
+                name="regulator"
+                id="regulator"
+                value={regulator}
+                onClick={handleFocus}
+                onChange={(e) => setRegulator(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {regulagorList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+              {metaFormErrors.regulator && (
+                <p className="w-full text-red-400 text-xs text-left">
+                  {metaFormErrors.regulator}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      case "Thiqa":
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="ThiqaPlan">Plan</label>
+              <select
+                name="ThiqaPlan"
+                id="ThiqaPlan"
+                value={ThiqaPlan}
+                onClick={handleFocus}
+                onChange={(e) => setThiqaPlan(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {ThiqaPlanList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="regulator">Regulator</label>
+              <select
+                name="regulator"
+                id="regulator"
+                value={regulator}
+                onClick={handleFocus}
+                onChange={(e) => setRegulator(e.target.value)}
+                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+              >
+                {regulagorList.map((value, index) => {
+                  return <option key={index}>{value}</option>;
+                })}
+              </select>
+            </div>
+          </div>
+        );
     }
   };
 
@@ -165,30 +318,27 @@ const NewDocument = () => {
         <div className="py-2 px-8">
           <span className="text-xl font-bold font-sans">New Document</span>
         </div>
-        <div className="w-full px-8 py-2 flex flex-col gap-2">
-          {/* Insurer */}
+        <div className="w-full px-8 py-2 flex flex-col gap-4">
+          {/* tobType */}
           <div className="flex flex-col">
-            <label htmlFor="insurer">Insurer</label>
+            <label htmlFor="tobType">Type of TOB</label>
             <select
-              name="insurer"
-              id="insurer"
-              value={insurer}
-              disabled={isDisabled}
+              name="tobType"
+              id="tobType"
+              value={tobType}
               onClick={handleFocus}
-              onChange={(e) => setInsurer(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-2 py-2 outline-none focus:border-sky-700"
+              onChange={(e) => setTobType(e.target.value)}
+              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
             >
-              <option value=""></option>
-              {companyList.map((option, index) => {
-                return <option key={index}>{option}</option>;
-              })}
+              {TobTypeList.map((item, index) => (
+                <option id="tobType" key={index} value={item}>
+                  {item}
+                </option>
+              ))}
             </select>
-            {metaFormErrors.insurer && (
-              <p className="w-full text-red-400 text-xs text-left">
-                {metaFormErrors.insurer}
-              </p>
-            )}
           </div>
+
+          {renderContent()}
 
           {/* Client */}
           <div className="flex flex-col">
@@ -198,10 +348,9 @@ const NewDocument = () => {
               name="client"
               id="client"
               value={client}
-              disabled={isDisabled}
               onFocus={handleFocus}
               onChange={(e) => setClient(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-2 py-2 outline-none focus:border-sky-700"
+              className="border border-gray-200 rounded-lg w-full lg:w-2/3 p-3 outline-none focus:border-sky-700"
             />
             {metaFormErrors.client && (
               <p className="w-full text-red-400 text-xs text-left">
@@ -218,75 +367,34 @@ const NewDocument = () => {
               name="broker"
               id="broker"
               value={broker}
-              disabled={isDisabled}
-              onFocus={handleFocus}
               onChange={(e) => setBroker(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-2 py-2 outline-none focus:border-sky-700"
+              className="border border-gray-200 rounded-lg w-full lg:w-2/3 p-3 outline-none focus:border-sky-700"
             />
-            {metaFormErrors.broker && (
-              <p className="w-full text-red-400 text-xs text-left">
-                {metaFormErrors.broker}
-              </p>
-            )}
-          </div>
-
-          {/* tobType */}
-          <div className="flex flex-col">
-            <label htmlFor="tobType">Type of TOB</label>
-            <select
-              name="tobType"
-              id="tobType"
-              value={tobType}
-              onClick={handleFocus}
-              disabled={isDisabled}
-              onChange={(e) => setTobType(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-2 py-2 outline-none focus:border-sky-700"
-            >
-              <option value=""></option>
-              {tobTypeList.map((item, index) => {
-                return (
-                  <option id="tobType" key={index} value={item}>
-                    {item}
-                  </option>
-                );
-              })}
-            </select>
-            {metaFormErrors.tobType && (
-              <p className="w-full text-red-400 text-xs text-left">
-                {metaFormErrors.tobType}
-              </p>
-            )}
           </div>
 
           {/* sourceTOB */}
-          <div className="flex flex-col">
-            <label className="text-black" htmlFor="sourceTOB">
-              Source TOB File
-            </label>
-            <div className="flex gap-2 w-full lg:w-2/3">
-              <div className="flex flex-col flex-1">
-                <input
-                  type="text"
-                  value={sourceTOB ? sourceTOB : ""}
-                  className="w-full px-4 py-1.5 rounded-md border border-gray-200"
-                  disabled
-                  readOnly // Since this input is not intended to be modified directly by the user
-                />
-
-                {metaFormErrors.file && (
-                  <p className="w-full text-red-400 text-xs text-left">
-                    {metaFormErrors.file}
-                  </p>
-                )}
-              </div>
-              {Object.keys(metaData).length === 0 && (
+          {tobType === TobTypeList[0] && (
+            <div className="flex flex-col">
+              <label className="text-black" htmlFor="sourceTOB">
+                Source TOB File
+              </label>
+              <div className="flex gap-4 w-full lg:w-2/3">
+                <div className="flex flex-col flex-1">
+                  <input
+                    type="text"
+                    value={sourceTOB ? sourceTOB : ""}
+                    onFocus={handleFocus}
+                    disabled
+                    readOnly // Since this input is not intended to be modified directly by the user
+                    className="w-full p-3 rounded-md border border-gray-200"
+                  />
+                </div>
                 <label htmlFor="fileInput">
                   <span
                     onClick={() =>
                       setMetaFormErrors({ ...metaFormErrors, file: "" })
                     }
-                    disabled={isDisabled}
-                    className="w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-2 rounded-md cursor-pointer"
+                    className="w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-3 rounded-md cursor-pointer"
                   >
                     Upload
                   </span>
@@ -294,31 +402,30 @@ const NewDocument = () => {
                     type="file"
                     id="fileInput"
                     name="fileInput"
-                    disabled={isDisabled}
-                    className="hidden px-4 border border-gray-200"
+                    className="hidden border border-gray-200"
                     onChange={handleFileInput}
                   />
                 </label>
+              </div>
+              {metaFormErrors.sourceTOB && (
+                <p className="w-full text-red-400 text-xs text-left">
+                  {metaFormErrors.sourceTOB}
+                </p>
               )}
             </div>
-          </div>
-
-          {Object.keys(metaData).length === 0 && (
-            <button
-              onClick={handleProcess}
-              disabled={isDisabled}
-              className="w-full md:w-72 lg-w-2/3 bg-indigo-600 text-white focus:outline-none"
-            >
-              Process
-            </button>
           )}
+
+          <button
+            onClick={handleProcess}
+            className="w-full md:w-72 lg-w-2/3 mt-2 py-3 bg-indigo-600 text-white focus:outline-none"
+          >
+            Process
+          </button>
         </div>
       </div>
-      {Object.keys(table).length !== 0 && (
-        <div className="w-full my-2 bg-white rounded-lg">
-          <EditableTable />
-        </div>
-      )}
+
+      {Object.keys(table).length > 0 && <CustomizedTable />}
+
       {modalOpen && (
         <CategoryConfirmModal
           list={categoryList}
@@ -326,6 +433,13 @@ const NewDocument = () => {
           hideModal={() => setModalOpen(false)}
         />
       )}
+
+      <ScrollToTop
+        className="scroll-to-top flex fixed focus:outline-none text-black shadow-md shadow-gray-800 justify-center items-center rounded-full"
+        smooth
+        height={18}
+        style={{ zIndex: 999, fontSize: 4 }}
+      />
     </div>
   );
 };

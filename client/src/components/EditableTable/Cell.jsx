@@ -19,6 +19,7 @@ export default function Cell({
   const onChange = (e) => {
     setValue({ value: e.target.value, update: false });
   };
+
   const [showAdd, setShowAdd] = useState(false);
   const [addSelectRef, setAddSelectRef] = useState(null);
 
@@ -90,6 +91,7 @@ export default function Cell({
         <ContentEditable
           html={(value.value && value.value.toString()) || ""}
           onChange={onChange}
+          onClick={handleFocus}
           onBlur={() => setValue((old) => ({ value: old.value, update: true }))}
           className="data-input"
         />

@@ -2,253 +2,314 @@
   "General Benefit": [
     {
       "benefit": "Area of Cover",
-      "cat_a": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE"
+      "limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE",
+      "status": "checked"
     },
     {
       "benefit": "Overall Annual Limit",
-      "cat_a": "AED 250,000"
+      "limit": "AED 250,000",
+      "status": "checked"
     }
   ],
   "In patient Benefit": [
     {
       "benefit": "Hospital accommodation",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Prescription drugs & materials",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Surgical fees, including anesthesia & theatre charges",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Physician, surgeon, & anesthetist fees",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Surgical appliances and prosthesis (if surgically required)",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Diagnostics and laboratory",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Prescribed Physiotherapy",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Companion accommodation ",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Inpatient cash benefit",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Parent accommodation",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Charges of other services",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     }
   ],
   "Other Benefit": [
     {
       "benefit": "Day-care treatment",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Out-patient surgery",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Local ambulance",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Imaging (X-ray, MRI, CT, PET, Ultrasound)",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Child Preventive Services, Vaccines and Immunizations",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Influenza Vaccine (once in a year)",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "unchecked"
     },
     {
       "benefit": "Deviated Nasal Septum",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Hormone replacement therapy",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Nursing at home",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "unchecked"
     },
     {
       "benefit": "Reconstructive Surgery",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Organ Transplant",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Terrorism Risk",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Oral and Maxillofacial surgery",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Accidental damage of teeth",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "International Emergency Medical Assistance(IEMA)",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Vitamins",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Vitamins registered as medications",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Psychiatric Treatment",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "unchecked"
     },
     {
       "benefit": "Work Related Injuries",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Road Traffic Accidents",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Ophthalmology",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Kidney dialysis",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Obstructive Sleep Apnoea",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Teleconsultation",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Shield for Diabetes",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Cancer Safe",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Hepatitis Safe",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "unchecked"
     },
     {
       "benefit": "Mindset",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Cancer support benefits",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Screening / Health Check-up (Routine)",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Basic Routine Dental Benefits",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Optical Benefits",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Maternity Benefits",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Maternity Complications",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "New Born Cover",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Preventive Services, Vaccines and Immunizations",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Diagnostic and treatment services for dental and gum treatments",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Hearing and vision aids, and vision correction by surgeris and laser",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Pre-existing & Chronic conditions",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Network Applicable",
-      "cat_a": "Information about the networks applicable to the insurance plan"
+      "limit": "Information about the networks applicable to the insurance plan",
+      "status": "checked"
     },
     {
       "benefit": "Claims outside UAE within Geographical Scope",
-      "cat_a": "Territorial limits for Claims outside UAE within Geographical Scope"
+      "limit": "Territorial limits for Claims outside UAE within Geographical Scope",
+      "status": "checked"
     },
     {
       "benefit": "Claims Settlement inside UAE",
-      "cat_a": "Information about claims settlement inside UAE"
+      "limit": "Information about claims settlement inside UAE",
+      "status": "checked"
     }
   ],
   "Out Patient Benefit": [
     {
       "benefit": "Specialists fees",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Prescription drugs",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Alternative Treatments",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Other Services",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     },
     {
       "benefit": "Deductible payable by the Insured ",
-      "cat_a": "Covered"
+      "limit": "Covered",
+      "status": "checked"
     }
   ]
 }

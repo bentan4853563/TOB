@@ -14,7 +14,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
 
-  const base_URL = import.meta.env.VITE_BACKEND_URL;
+  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
   const [statisticalData, setStatisticalData] = useState({});
@@ -24,7 +24,7 @@ const Home = () => {
     const fetchData = async () => {
       try {
         dispatch(setLoading());
-        const response = await fetch(`${base_URL}/table/readAll`, {
+        const response = await fetch(`${node_server_url}/api/table/readAll`, {
           method: "GET",
           headers: {
             "content-type": "application/json",
@@ -44,6 +44,7 @@ const Home = () => {
           resultTOB: item.resultTOB,
           status: item.status,
         }));
+        console.log(data);
         setDBTableData(data);
         dispatch(clearLoading());
       } catch (error) {

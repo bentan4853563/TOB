@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { confirmAlert } from "react-confirm-alert";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { BsEye } from "react-icons/bs";
 import { BsTrash3 } from "react-icons/bs";
 import { MdOutlineModeEditOutline } from "react-icons/md";
+import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
@@ -16,7 +17,7 @@ import {
   clearMetaData,
   clearTableData,
   setMetaData,
-  setTableData,
+  storeTableData,
 } from "../redux/reducers/tableSlice";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
@@ -26,20 +27,24 @@ const DisplayTable = () => {
   const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
 
-  const base_URL = import.meta.env.VITE_BACKEND_URL;
+  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
-  const [showData, setShowData] = useState([]);
+  // const [showData, setShowData] = useState([]);
 
-  const status = useLocation().state;
+  const [expand, setExpand] = useState({
+    previousRow: null,
+    currentRow: null,
+    expanded: false,
+  });
+  // const status = useLocation().state;
 
-  useEffect(() => {
-    console.log(status);
-    if (status) {
-      const filteredData = dbTableData.filter((row) => row.status === status);
-      setShowData(filteredData);
-    }
-  }, [status, dbTableData]);
+  // useEffect(() => {
+  //   if (status) {
+  //     const filteredData = dbTableData.filter((row) => row.status === status);
+  //     setShowData(filteredData);
+  //   }
+  // }, [status, dbTableData]);
 
   useEffect(() => {
     dispatch(clearTableData());
@@ -47,7 +52,7 @@ const DisplayTable = () => {
     const fetchData = async () => {
       try {
         dispatch(setLoading());
-        const response = await fetch(`${base_URL}/table/readAll`, {
+        const response = await fetch(`${node_server_url}/api/table/readAll`, {
           method: "GET",
           headers: {
             "content-type": "application/json",
@@ -59,14 +64,6 @@ const DisplayTable = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         let data = await response.json();
-        data = data.map((item) => ({
-          previousInsurer: item.previousInsurer,
-          client: item.client,
-          broker: item.broker,
-          sourceTOB: item.sourceTOB,
-          resultTOB: item.resultTOB,
-          status: item.status,
-        }));
         setDBTableData(data);
         dispatch(clearLoading());
       } catch (error) {
@@ -76,16 +73,27 @@ const DisplayTable = () => {
     dispatch(setLoading());
     fetchData();
     dispatch(clearLoading());
-  }, [dispatch]);
+  }, []);
 
-  useEffect(() => {}, [dbTableData]);
+  const mainColumns = [
+    { label: "Type of TOB", key: "tobType" },
+    { label: "Insurer", key: "insurer" },
+    { label: "Client", key: "client" },
+    { label: "Broker", key: "broker" },
+    { label: "Source TOB", key: "sourceTOB" },
+  ];
 
-  const columns =
-    dbTableData && dbTableData.length > 0 ? Object.keys(dbTableData[0]) : [];
-  const handleDelete = async (resultTOB) => {
+  const subColumns = [
+    { label: "Category", key: "catetory" },
+    { label: "Result TOB", key: "resultTOB" },
+    { label: "Version", key: "version" },
+    { label: "Status", key: "status" },
+  ];
+
+  const handleDelete = async (id) => {
     confirmAlert({
       title: "Confirm!",
-      message: "Are you sure to do this.",
+      message: "Are you sure to delete this row?",
       buttons: [
         {
           label: "Yes",
@@ -93,7 +101,7 @@ const DisplayTable = () => {
             try {
               dispatch(setLoading());
               const response = await fetch(
-                `${base_URL}/table/delete/${resultTOB}`,
+                `${node_server_url}/api/table/delete/${id}`,
                 {
                   method: "DELETE",
                   headers: {
@@ -103,8 +111,9 @@ const DisplayTable = () => {
                 }
               );
               if (response.ok) {
+                const result = await response.json();
                 setDBTableData((previousData) =>
-                  previousData.filter((item) => item.resultTOB !== resultTOB)
+                  previousData.filter((item) => item._id !== result._id)
                 );
                 toast.success("Successfully deleted!", {
                   position: "top-right",
@@ -131,50 +140,44 @@ const DisplayTable = () => {
   // 	// setIsModalOpen(false);
   // };
 
-  const handleView = async (index) => {
+  const handleView = async (uuid) => {
     dispatch(setLoading());
-    const metaData = showData[index];
-    console.log(index, metaData);
-    dispatch(setMetaData(metaData));
-    const response = await fetch(`${base_URL}/table/getOne`, {
+    const response = await fetch(`${node_server_url}/api/table/getOne`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-auth-token": token,
         "ngrok-skip-browser-warning": true,
       },
-      body: JSON.stringify(metaData),
+      body: JSON.stringify({ uuid: uuid }),
     });
     const result = await response.json();
-    console.log("result", result);
-    // dispatch(setMetaData(result.metaData));
-    dispatch(setTableData(result.fileData));
+    dispatch(setMetaData(result.metaData));
+    dispatch(storeTableData(result.fileData));
     navigate("/tb/view");
     dispatch(clearLoading());
   };
 
-  const handleEdit = async (index) => {
+  const handleEdit = async (uuid) => {
     dispatch(setLoading());
-    const metaData = showData[index];
-    dispatch(setMetaData(metaData));
-    const response = await fetch(`${base_URL}/table/getOne`, {
+    const response = await fetch(`${node_server_url}/api/table/getOne`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-auth-token": token,
         "ngrok-skip-browser-warning": true,
       },
-      body: JSON.stringify(metaData),
+      body: JSON.stringify({ uuid: uuid }),
     });
     const result = await response.json();
-    // dispatch(setMetaData(result.metaData));
-    dispatch(setTableData(result.fileData));
-    navigate("/tb/new_or_edit");
+    dispatch(setMetaData(result.metaData));
+    dispatch(storeTableData(result.fileData));
+    navigate("/tb/edit");
     dispatch(clearLoading());
   };
 
-  const handleNewAndEdit = () => {
-    navigate("/tb/new_or_edit");
+  const handleNew = () => {
+    navigate("/tb/new");
   };
 
   const [searchValues, setSearchValues] = useState({
@@ -190,7 +193,7 @@ const DisplayTable = () => {
   // 		client,
   // 		insurer,
   // 	};
-  // 	const response = await fetch(`${base_URL}/table/search`, {
+  // 	const response = await fetch(`${node_server_url}/api/table/search`, {
   // 		method: "POST",
   // 		headers: {
   // 			"Content-Type": "application/json",
@@ -208,47 +211,43 @@ const DisplayTable = () => {
   // 	dispatch(clearLoading());
   // };
 
-  const areAllSearchValuesEmpty = () => {
-    return Object.values(searchValues).every((value) => value.trim() === "");
-  };
+  // const areAllSearchValuesEmpty = () => {
+  //   return Object.values(searchValues).every((value) => value.trim() === "");
+  // };
 
-  const handleSearch = () => {
-    if (areAllSearchValuesEmpty()) {
-      toast.error("Please input any fields!", {
-        position: "top-right",
-      });
-    } else {
-      console.log(dbTableData);
-      const filteredData = dbTableData.filter((row) => {
-        // Safely access and convert strings to lowercase, ensuring they are defined first
-        const previousInsurer = row.previousInsurer
-          ? row.previousInsurer.toLowerCase()
-          : "";
-        const client = row.client ? row.client.toLowerCase() : "";
-        const broker = row.broker ? row.broker.toLowerCase() : "";
+  // const handleSearch = () => {
+  //   if (areAllSearchValuesEmpty()) {
+  //     toast.error("Please input any fields!", {
+  //       position: "top-right",
+  //     });
+  //   } else {
+  //     console.log(dbTableData);
+  //     const filteredData = dbTableData.filter((row) => {
+  //       // Safely access and convert strings to lowercase, ensuring they are defined first
+  //       const previousInsurer = row.previousInsurer
+  //         ? row.previousInsurer.toLowerCase()
+  //         : "";
+  //       const client = row.client ? row.client.toLowerCase() : "";
+  //       const broker = row.broker ? row.broker.toLowerCase() : "";
 
-        return (
-          (!searchValues.insurer ||
-            previousInsurer.includes(searchValues.insurer.toLowerCase())) &&
-          (!searchValues.client ||
-            client.includes(searchValues.client.toLowerCase())) &&
-          (!searchValues.broker ||
-            broker.includes(searchValues.broker.toLowerCase()))
-        );
-      });
-      setShowData(filteredData);
-    }
-  };
+  //       return (
+  //         (!searchValues.insurer ||
+  //           previousInsurer.includes(searchValues.insurer.toLowerCase())) &&
+  //         (!searchValues.client ||
+  //           client.includes(searchValues.client.toLowerCase())) &&
+  //         (!searchValues.broker ||
+  //           broker.includes(searchValues.broker.toLowerCase()))
+  //       );
+  //     });
+  //     setShowData(filteredData);
+  //   }
+  // };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+  // const handleKeyDown = (e) => {
+  //   if (e.key === "Enter") {
+  //     handleSearch();
+  //   }
+  // };
 
   const insuranceCompanies = [
     "ABU DHABI NATIONAL INSURANCE COMPANY",
@@ -287,7 +286,7 @@ const DisplayTable = () => {
       <div className="w-full px-8 py-4 my-4 flex justify-between items-center bg-white rounded-lg">
         <span className="text-2xl">Documents</span>
         <button
-          onClick={handleNewAndEdit}
+          onClick={handleNew}
           className="py-2 bg-indigo-600 text-white border-none focus:outline-none"
         >
           New Document
@@ -331,7 +330,7 @@ const DisplayTable = () => {
               name="client"
               placeholder="Please enter Client Name"
               value={searchValues.client}
-              onKeyDown={handleKeyDown}
+              // onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setSearchValues({ ...searchValues, client: e.target.value })
               }
@@ -347,7 +346,7 @@ const DisplayTable = () => {
               name="broker"
               placeholder="Please enter Broker Name"
               value={searchValues.broker}
-              onKeyDown={handleKeyDown}
+              // onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setSearchValues({ ...searchValues, broker: e.target.value })
               }
@@ -355,29 +354,32 @@ const DisplayTable = () => {
             />
           </div>
           <button
-            onClick={handleSearch}
+            // onClick={handleSearch}
             className="w-32 py-2 bg-indigo-600 text-white border-none focus:outline-none"
           >
             Search
           </button>
         </div>
       </div>
+
       {dbTableData && dbTableData.length > 0 && (
         <div className="w-full py-2 my-4 flex flex-col bg-white rounded-lg divide-y divide-gray-300">
           <div className="py-2 px-8">
             <span className="text-xl font-bold font-sans">Search Results</span>
           </div>
           <div className="px-4 py-4">
-            {showData && (
+            {dbTableData && (
               <table className="w-full">
                 <thead>
                   <tr>
+                    <th></th>
                     <th>S No</th>
-                    {columns.map(
+                    {mainColumns.map(
                       (item, index) =>
-                        item !== "_id" && (
+                        item.label !== "_id" && (
                           <th className="py-3" key={index}>
-                            {capitalizeFirstLetter(item)}
+                            {/* {capitalizeFirstLetter(item.label)} */}
+                            {item.label}
                           </th>
                         )
                     )}
@@ -385,36 +387,109 @@ const DisplayTable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {showData &&
-                    showData.map((row, rowIndex) => (
-                      <tr key={rowIndex} className="hover:bg-gray-100">
-                        <td>{rowIndex + 1}</td>
-                        {columns.map(
-                          (colKey, colIndex) =>
-                            colKey !== "_id" && (
-                              <td key={colIndex}>{row[colKey]}</td>
-                            )
+                  {dbTableData &&
+                    dbTableData.map((row, rowIndex) => (
+                      <>
+                        <tr
+                          key={`main-${rowIndex}`}
+                          className="hover:bg-gray-100"
+                        >
+                          <td
+                            onClick={() =>
+                              setExpand((previous) => ({
+                                previousRow: previous.currentRow,
+                                currentRow: rowIndex,
+                                expanded:
+                                  previous.currentRow !== rowIndex ||
+                                  !previous.expanded,
+                              }))
+                            }
+                          >
+                            {expand.currentRow === rowIndex &&
+                            expand.expanded ? (
+                              <IoIosArrowDown className="cursor-pointer" />
+                            ) : (
+                              <IoIosArrowForward className="cursor-pointer" />
+                            )}
+                          </td>
+                          <td>{rowIndex + 1}</td>
+                          {mainColumns.map((item, colIndex) => (
+                            <td key={colIndex}>{row[item.key]}</td>
+                          ))}
+                          <td>
+                            <div className="flex gap-4">
+                              <BsEye
+                                className="cursor-pointer hover:text-sky-600"
+                                size={20}
+                                onClick={() => handleView(row.uuid)}
+                              />
+                              <MdOutlineModeEditOutline
+                                className="cursor-pointer hover:text-green-600"
+                                size={20}
+                                onClick={() => handleEdit(row.uuid)}
+                              />
+                              <BsTrash3
+                                className="cursor-pointer hover:text-purple-600"
+                                size={20}
+                                onClick={() => handleDelete(row._id)}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                        {expand.currentRow === rowIndex && expand.expanded && (
+                          <tr key={`sub-${rowIndex}`} className="bg-gray-50">
+                            <td></td> {/* Empty cell for S No column */}
+                            <td></td> {/* Empty cell for S No column */}
+                            <td colSpan={mainColumns.length}>
+                              {" "}
+                              {/* Merge cells for the sub row */}
+                              <table className="w-full">
+                                <thead>
+                                  <tr>
+                                    {subColumns.map(
+                                      (subColumn, subColIndex) => (
+                                        <th
+                                          key={`sub-header-${subColIndex}`}
+                                          className="py-2 bg-gray-200"
+                                        >
+                                          {subColumn.label}
+                                        </th>
+                                      )
+                                    )}
+                                    {/* <th className="py-2 bg-gray-200">
+                                      Actions
+                                    </th> */}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {row["statusByCategory"].map(
+                                    (subRow, subRowIndex) => (
+                                      <tr key={`sub-row-${subRowIndex}`}>
+                                        {subColumns.map(
+                                          (subColumn, subColIndex) => (
+                                            <td key={`sub-data-${subColIndex}`}>
+                                              {subRow[subColumn.key]}
+                                            </td>
+                                          )
+                                        )}
+                                        {/* <td>
+                                          {subRow["status"] === "Processed" && (
+                                            <button className="p-1 bg-red-500 text-white">
+                                              Review
+                                            </button>
+                                          )}
+                                        </td>
+                                        <button>Generate</button>
+                                        <button>Revise</button> */}
+                                      </tr>
+                                    )
+                                  )}
+                                </tbody>
+                              </table>
+                            </td>
+                          </tr>
                         )}
-                        <td>
-                          <div className="flex gap-2">
-                            <BsEye
-                              className="cursor-pointer"
-                              size={20}
-                              onClick={() => handleView(rowIndex)}
-                            />
-                            <MdOutlineModeEditOutline
-                              className="cursor-pointer"
-                              size={20}
-                              onClick={() => handleEdit(rowIndex)}
-                            />
-                            <BsTrash3
-                              className="cursor-pointer"
-                              size={20}
-                              onClick={() => handleDelete(row.resultTOB)}
-                            />
-                          </div>
-                        </td>
-                      </tr>
+                      </>
                     ))}
                 </tbody>
               </table>

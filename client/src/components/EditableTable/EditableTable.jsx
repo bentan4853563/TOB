@@ -1,13 +1,12 @@
 import { useEffect, useReducer } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import autoTable from "jspdf-autotable";
+// import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
-
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 
@@ -260,7 +259,7 @@ function EditableTable() {
   const navigate = useNavigate();
   const customDispatch = useDispatch();
 
-  const base_URL = import.meta.env.VITE_BACKEND_URL;
+  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const { token } = useSelector((state) => state.auth);
   const { metaData } = useSelector((state) => state.table);
@@ -320,7 +319,7 @@ function EditableTable() {
   };
 
   const handleReview = async () => {
-    // const response = await fetch(`${base_URL}/table/review`, {
+    // const response = await fetch(`${node_server_url}/api/table/review`, {
     //   method: "POST",
     //   headers: {
     //     "content-type": "application/json",
@@ -334,57 +333,6 @@ function EditableTable() {
     });
     customDispatch(setReview());
   };
-
-  // const handleSaveToDB = async () => {
-  //   // Proceed with saving data to the database
-  //   let source_TOB = "";
-  //   if (metaData.sourceTOB) {
-  //     source_TOB = metaData.sourceTOB;
-  //   } else {
-  //     source_TOB = uploadedFile;
-  //   }
-  //   const formData = {
-  //     table: state.data,
-  //     metaData: {
-  //       _id: metaData._id,
-  //       broker: metaData.broker,
-  //       client: metaData.client,
-  //       topType: metaData.topType,
-  //       previousInsurer: metaData.previousInsurer,
-  //       status: "Generated",
-  //       sourceTOB: source_TOB,
-  //     },
-  //   };
-
-  //   customDispatch(setLoading());
-  //   try {
-  //     const response = await fetch(`${base_URL}/table/fileUploadAndSave`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "x-auth-token": token,
-  //       },
-  //       body: JSON.stringify(formData),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to save data. Please try again.");
-  //     }
-  //     customDispatch(clearLoading());
-
-  //     toast.success("Successfully generated!", {
-  //       position: "top-right",
-  //     });
-
-  //     navigate("/tb/dbtable");
-  //     customDispatch(clearFileName());
-  //     customDispatch(clearTableData());
-  //     customDispatch(clearMetaData());
-  //   } catch (error) {
-  //     console.error("Error saving data:", error);
-  //     // Handle error if needed
-  //   }
-  // };
 
   const handleSaveToDB = async () => {
     // Proceed with saving data to the database
@@ -405,14 +353,17 @@ function EditableTable() {
 
     customDispatch(setLoading()); // Start the loading process
     try {
-      const response = await fetch(`${base_URL}/table/fileUploadAndSave`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-auth-token": token,
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        `${node_server_url}/api/table/fileUploadAndSave`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-auth-token": token,
+          },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (!response.ok) {
         // Check for HTTP errors
@@ -450,8 +401,6 @@ function EditableTable() {
 
   const handleSaveToPDF = async () => {
     await handleSaveToDB();
-
-    console.log("dfsfdsfdsdf");
 
     const tableData = Object.values(state.data);
     const doc = new jsPDF();
@@ -545,7 +494,7 @@ function EditableTable() {
     navigate("/tb/dbtable");
   };
 
-  const isEditable = endPoint === "new_or_edit" ? true : false;
+  const isEditable = endPoint === ("new" || "edit") ? true : false;
 
   return (
     <div className="w-full h-full  flex flex-col items-start justify-start">
