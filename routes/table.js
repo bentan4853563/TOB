@@ -107,6 +107,7 @@ router.post("/update", auth, async (req, res) => {
         status: tableData[category].status,
         version: tableData[category].version,
         comment: tableData[category].comment,
+        resultTOB: tableData[category].resultTOB,
       };
     });
 
@@ -119,7 +120,7 @@ router.post("/update", auth, async (req, res) => {
       }
     );
 
-    res.json({ metaData: result, tableData });
+    res.json({ metaData: result, tableData, newTableData });
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: "Error saving data" });

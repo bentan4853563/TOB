@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
@@ -349,7 +349,6 @@ const DisplayTable = () => {
                       (item, index) =>
                         item.label !== "_id" && (
                           <th className="py-3" key={index}>
-                            {/* {capitalizeFirstLetter(item.label)} */}
                             {item.label}
                           </th>
                         )
@@ -360,7 +359,7 @@ const DisplayTable = () => {
                 <tbody>
                   {dbTableData &&
                     dbTableData.map((row, rowIndex) => (
-                      <>
+                      <React.Fragment key={`fragment-${row.uuid}`}>
                         <tr
                           key={`main-${row.uuid}`}
                           className="hover:bg-gray-100"
@@ -404,11 +403,9 @@ const DisplayTable = () => {
                         </tr>
                         {expand.currentRow === rowIndex && expand.expanded && (
                           <tr key={`sub-${rowIndex}`} className="bg-gray-50">
-                            <td></td> {/* Empty cell for S No column */}
-                            <td></td> {/* Empty cell for S No column */}
+                            <td></td>
+                            <td></td>
                             <td colSpan={mainColumns.length}>
-                              {" "}
-                              {/* Merge cells for the sub row */}
                               <table className="w-full">
                                 <thead>
                                   <tr>
@@ -465,8 +462,6 @@ const DisplayTable = () => {
                                               </>
                                             )}
                                         </td>
-                                        {/* <button>Generate</button>
-                                        <button>Revise</button> */}
                                       </tr>
                                     )
                                   )}
@@ -475,7 +470,7 @@ const DisplayTable = () => {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                 </tbody>
               </table>

@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-// import autoTable from "jspdf-autotable";
 import Select from "react-select";
 
 import { toast, ToastContainer } from "react-toastify";
-import { confirmAlert } from "react-confirm-alert";
+// import { confirmAlert } from "react-confirm-alert";
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 import "react-toastify/dist/ReactToastify.css";
 
-import { clearMetaData } from "../redux/reducers/tableSlice";
+// import { clearMetaData } from "../redux/reducers/tableSlice";
 import EditableTable from "./EditableTable";
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 import Modal from "react-modal";
@@ -73,6 +73,7 @@ export default function CustomizedTable() {
         tableName !== "status" &&
           tableName !== "version" &&
           tableName !== "comment" &&
+          tableName !== "resultTOB" &&
           selectedTable[tableName].map((row) => {
             if (row.status === "unchecked") uncheckedCount = uncheckedCount + 1;
           });
@@ -182,29 +183,6 @@ export default function CustomizedTable() {
   //   setSelectedTable(tempData[selectedCategory]);
   //   update(tempData);
   // };
-  const handleCommentForCategory = () => {
-    if (!clickedButton) return;
-    console.log("Clicked Button in handle Functin", clickedButton);
-    switch (clickedButton) {
-      case "handleReview":
-        handleReview();
-        break;
-      case "handleGenerate":
-        handleGenerate();
-        break;
-      case "handleSaveToPDF":
-        handleSaveToPDF();
-        break;
-      case "handleSaveToSVG":
-        handleSaveToCSV(); // Assuming this is typo, it should match the function name
-        break;
-      case "handleRevise":
-        handleRevise();
-        break;
-      default:
-        setIsOpen(false);
-    }
-  };
 
   const handleReview = async () => {
     setIsOpen(false);
@@ -223,12 +201,13 @@ export default function CustomizedTable() {
     });
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (fileName) => {
     setIsOpen(false);
     const tempData = {
       ...tableData,
       [selectedCategory]: {
         ...tableData[selectedCategory],
+        resultTOB: fileName,
         status: "Generated",
         comment: comment || "",
         version: tableData[selectedCategory].version + 1,
@@ -280,99 +259,125 @@ export default function CustomizedTable() {
     setRowNumber(null);
   };
 
-  const handleDelete = async () => {
-    confirmAlert({
-      title: "Confirm!",
-      message: "Are you sure to do this.",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: async () => {
-            deleteProcess();
-          },
-        },
-        {
-          label: "No",
-          onClick: () => console.log("no"),
-        },
-      ],
-    });
-  };
+  // const handleDelete = async () => {
+  //   confirmAlert({
+  //     title: "Confirm!",
+  //     message: "Are you sure to do this.",
+  //     buttons: [
+  //       {
+  //         label: "Yes",
+  //         onClick: async () => {
+  //           deleteProcess();
+  //         },
+  //       },
+  //       {
+  //         label: "No",
+  //         onClick: () => console.log("no"),
+  //       },
+  //     ],
+  //   });
+  // };
 
-  const deleteProcess = async () => {
-    try {
-      const response = await fetch(`${node_server_url}/api/table/delete`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "x-auth-token": token, // Assuming Bearer scheme for auth tokens
-          "ngrok-skip-browser-warning": true,
-        },
-        body: JSON.stringify({ uuid: metaData.uuid }),
-      });
+  // const deleteProcess = async () => {
+  //   try {
+  //     const response = await fetch(`${node_server_url}/api/table/delete`, {
+  //       method: "DELETE",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "x-auth-token": token, // Assuming Bearer scheme for auth tokens
+  //         "ngrok-skip-browser-warning": true,
+  //       },
+  //       body: JSON.stringify({ uuid: metaData.uuid }),
+  //     });
 
-      if (response.ok) {
-        dispatch(clearMetaData());
-        toast.success("Successfully Deleted!", {
-          position: "top-right",
-          autoClose: 1000,
-        });
-        navigate("/home");
-      } else {
-        // Handle non-2xx responses here
-        const errorData = await response.json();
-        console.error(
-          "Error:",
-          response.status,
-          response.statusText,
-          errorData
-        );
-        toast.error(`Deletion failed: ${errorData.message}`, {
-          position: "top-right",
-        });
-      }
-    } catch (error) {
-      console.error("Fetch Error:", error);
-      toast.error("Deletion failed due to a network error.", {
-        position: "top-right",
-      });
+  //     if (response.ok) {
+  //       dispatch(clearMetaData());
+  //       toast.success("Successfully Deleted!", {
+  //         position: "top-right",
+  //         autoClose: 1000,
+  //       });
+  //       navigate("/home");
+  //     } else {
+  //       // Handle non-2xx responses here
+  //       const errorData = await response.json();
+  //       console.error(
+  //         "Error:",
+  //         response.status,
+  //         response.statusText,
+  //         errorData
+  //       );
+  //       toast.error(`Deletion failed: ${errorData.message}`, {
+  //         position: "top-right",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Fetch Error:", error);
+  //     toast.error("Deletion failed due to a network error.", {
+  //       position: "top-right",
+  //     });
+  //   }
+  // };
+
+  function capitalizeFirstLetter(word) {
+    if (word && typeof word === "string") {
+      return word.charAt(0).toUpperCase() + word.slice(1);
     }
-  };
+    return word;
+  }
 
   const handleSaveToPDF = async () => {
-    await handleGenerate();
+    const doc = new jsPDF();
 
-    // const tableData = Object.values(selectedTable).slice(0, -1);
-    // const doc = new jsPDF();
+    const addSectionToPDF = (title, data, pdfColumns) => {
+      pdfColumns = pdfColumns.filter((col) => data.some((item) => item[col]));
+      const headers = pdfColumns.map((header) => capitalizeFirstLetter(header));
+      if (Array.isArray(data) && data.length > 0) {
+        doc.text(title, 20, 20);
+        doc.autoTable({
+          startY: 40,
+          head: [headers],
+          body: data.map((item) =>
+            pdfColumns.map((col) => item[col]?.toString() || "")
+          ),
+          margin: { top: 20 },
+        });
+        doc.addPage();
+      } else {
+        console.error(
+          `No data provided for title "${title}", skipping section.`
+        );
+      }
+    };
 
-    // const addSectionToPDF = (title, data, pdfColumns) => {
-    //   doc.addPage();
-    //   doc.text(title, 20, 20);
-    //   doc.autoTable({
-    //     startY: 40,
-    //     head: [pdfColumns],
-    //     body: data.map((item) =>
-    //       pdfColumns.map((col) => item[col]?.toString() || "")
-    //     ),
-    //     margin: { top: 30 },
-    //   });
-    // };
+    const titleMap = [
+      "General Benefit",
+      "In Patient Benefit",
+      "Other Benefit",
+      "Out Patient Benefit",
+    ];
 
-    // const titleMap = [
-    //   "General Benefit",
-    //   "In Patient Benefit",
-    //   "Other Benefit",
-    //   "Out Patient Benefit",
-    // ];
+    const columns = ["benefit", "limit", "New Benefit", "New Limit"];
 
-    // tableData.forEach((sectionData, index) => {
-    //   if (sectionData.length > 0) {
-    //     const title = titleMap[index];
-    //     addSectionToPDF(title, sectionData, Object.keys(sectionData[0]));
-    //   }
-    // });
-    // const fileName = `${metaData.client}-${new Date().toISOString()}`;
-    // doc.save(`${fileName}.pdf`);
+    titleMap.forEach((title) => {
+      console.log(`Selected Category: ${selectedCategory}, Title: ${title}`);
+
+      const sectionData =
+        tableData[selectedCategory] && tableData[selectedCategory][title];
+      if (sectionData) {
+        addSectionToPDF(title, sectionData, columns);
+      } else {
+        console.error(
+          `No data found for category "${selectedCategory}" and title "${title}". Skipping this section.`
+        );
+      }
+    });
+
+    const fileName = `${
+      metaData.client
+    }-${selectedCategory}-${new Date().toISOString()}`;
+    doc.save(`${fileName}.pdf`);
+
+    await handleGenerate(fileName);
 
     toast.success("Successfully generated!", {
       position: "top-right",
@@ -380,8 +385,6 @@ export default function CustomizedTable() {
   };
 
   const handleSaveToCSV = async () => {
-    await handleGenerate();
-
     const tableData = Object.values(selectedTable).slice(0, -1);
 
     const convertToCSV = (arr) => {
@@ -419,6 +422,8 @@ export default function CustomizedTable() {
     link.click();
     document.body.removeChild(link);
 
+    await handleGenerate();
+
     toast.success("Successfully generated CSV!", {
       position: "top-right",
     });
@@ -426,6 +431,7 @@ export default function CustomizedTable() {
 
   const update = async (temp) => {
     try {
+      localStorage.setItem("last-category", selectedCategory);
       const response = await fetch(`${node_server_url}/api/table/update`, {
         method: "POST",
         headers: {
@@ -440,14 +446,38 @@ export default function CustomizedTable() {
       });
       if (response.ok) {
         const result = await response.json();
-        const { metaData, tableData } = result;
+        const { metaData, newTableData } = result;
         dispatch(setMetaData(metaData));
-        dispatch(storeTableData(tableData));
+        dispatch(storeTableData(newTableData));
       } else {
         console.error("Error:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Fetch Error:", error);
+    }
+  };
+
+  const handleCommentForCategory = () => {
+    if (!clickedButton) return;
+    console.log("Clicked Button in handle Functin", clickedButton);
+    switch (clickedButton) {
+      case "handleReview":
+        handleReview();
+        break;
+      case "handleGenerate":
+        handleGenerate();
+        break;
+      case "handleSaveToPDF":
+        handleSaveToPDF();
+        break;
+      case "handleSaveToSVG":
+        handleSaveToCSV(); // Assuming this is typo, it should match the function name
+        break;
+      case "handleRevise":
+        handleRevise();
+        break;
+      default:
+        setIsOpen(false);
     }
   };
 
@@ -481,23 +511,18 @@ export default function CustomizedTable() {
     navigate("/tb/dbtable");
   };
 
-  const getEndPoint = () => {
-    const currentHref = window.location.href;
-    const parsedUrl = new URL(currentHref);
-    const pathSegments = parsedUrl.pathname
-      .split("/")
-      .filter((segment) => segment);
-    return pathSegments[pathSegments.length - 1];
-  };
+  // const getEndPoint = () => {
+  //   const currentHref = window.location.href;
+  //   const parsedUrl = new URL(currentHref);
+  //   const pathSegments = parsedUrl.pathname
+  //     .split("/")
+  //     .filter((segment) => segment);
+  //   return pathSegments[pathSegments.length - 1];
+  // };
 
-  const endPoint = getEndPoint();
+  // const endPoint = getEndPoint();
 
-  let subtitle;
   const [modalIsOpen, setIsOpen] = useState(false);
-
-  function afterOpenModal() {
-    subtitle.style.color = "#f00";
-  }
 
   function closeModal() {
     setIsOpen(false);
@@ -514,11 +539,13 @@ export default function CustomizedTable() {
       transform: "translate(-50%, -50%)",
     },
   };
+
+  Modal.setAppElement("#root");
+
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
         isOpen={modalIsOpen}
-        onAfterOpen={afterOpenModal}
         onRequestClose={closeModal}
         style={customStyles}
       >
@@ -574,6 +601,7 @@ export default function CustomizedTable() {
             if (
               tableName !== "status" &&
               tableName !== "version" &&
+              tableName !== "resultTOB" &&
               tableName !== "comment"
             ) {
               let table = Object.values(selectedTable[tableName]);
@@ -655,22 +683,21 @@ export default function CustomizedTable() {
           </button>
         )}
 
-        {endPoint !== "view" && (
+        {/* {endPoint !== "view" && (
           <button
             onClick={handleDelete}
             className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
           >
             Delete
           </button>
-        )}
-        {endPoint === "view" && (
-          <button
-            onClick={handleClose}
-            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-          >
-            Close
-          </button>
-        )}
+        )} */}
+
+        <button
+          onClick={handleClose}
+          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+        >
+          Close
+        </button>
       </div>
     </div>
   );
