@@ -77,35 +77,31 @@ router.post("/update", auth, async (req, res) => {
   try {
     const { uuid, tableData } = req.body;
 
-    console.log("tableData", tableData);
+    const previousFileData = await readDataFromFile(
+      `TBData/processed/${uuid}.json`
+    );
 
-    // const previousFileData = await readDataFromFile(
-    //   `TBData/processed/${uuid}.json`
-    // );
-
-    // console.log("previousFileData", previousFileData);
-
-    // const newTableData = {};
-    // Object.keys(tableData).forEach((category) => {
-    //   if (
-    //     tableData[category]["status"] === "Processed" &&
-    //     tableData[category]["version"] > previousFileData[category]["version"]
-    //   ) {
-    //     console.log("========true", previousFileData[category]["version"]);
-    //     newTableData[category] = {
-    //       ...previousFileData[category],
-    //       version: tableData[category]["version"],
-    //     };
-    //   }
-    // });
-
-    // console.log("newTableData", newTableData);
+    const newTableData = {};
+    Object.keys(tableData).forEach((category) => {
+      if (
+        tableData[category].status === "Revised" &&
+        tableData[category].version > previousFileData[category].version
+      ) {
+        console.log("true");
+        newTableData[category] = {
+          ...previousFileData[category],
+          version: tableData[category].version,
+        };
+      } else {
+        newTableData[category] = tableData[category];
+      }
+    });
 
     const filepath = `TBData/reviewed/${uuid}.json`;
 
-    await saveDataToFile(tableData, filepath);
+    await saveDataToFile(newTableData, filepath);
 
-    let statusByCategory = Object.keys(tableData).map((category) => {
+    let statusByCategory = Object.keys(newTableData).map((category) => {
       return {
         category: category,
         status: tableData[category].status,

@@ -1,20 +1,24 @@
 {
   "cat_a": {
-    "status": "Processed",
-    "version": 0,
+    "status": "Generated",
+    "version": 5,
     "comment": "",
     "General Benefit": [
       {
         "benefit": "Area of Cover",
         "limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Area of Cover",
+        "New Limit": "Worldwide excluding USA and Canada subject to reasonable and customary charges of applicable network in UAE"
       },
       {
         "benefit": "Overall Annual Limit",
         "limit": "AED 250,000",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Overall Annual Limit",
+        "New Limit": "AED 250,000"
       }
     ],
     "In patient Benefit": [
@@ -34,13 +38,17 @@
         "benefit": "Surgical fees, including anesthesia & theatre charges",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Surgical fees, including anesthesia & theatre charges",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Physician, surgeon, & anesthetist fees",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Physician, surgeon, & anesthetist fees",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Surgical appliances and prosthesis (if surgically required)",
@@ -119,7 +127,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -143,7 +151,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -197,7 +205,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -251,7 +259,7 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -380,7 +388,7 @@
   },
   "cat_b": {
     "status": "Processed",
-    "version": 0,
+    "version": 2,
     "comment": "",
     "General Benefit": [
       {
