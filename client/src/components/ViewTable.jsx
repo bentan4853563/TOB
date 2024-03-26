@@ -1,4 +1,7 @@
 import Proptypes from "prop-types";
+import { Tooltip } from "react-tooltip";
+
+import { MdOutlineInsertComment } from "react-icons/md";
 
 const ViewTable = ({ tableData }) => {
   function findLargestObjectColumns(tableData) {
@@ -14,14 +17,18 @@ const ViewTable = ({ tableData }) => {
   }
 
   const columns = findLargestObjectColumns(tableData);
-
+  console.log(tableData);
   // Render the table
   return (
     <table className="w-full">
       <thead>
         <tr>
           {columns.map((column, index) => {
-            if (column === "status") {
+            if (
+              column === "status" ||
+              column === "color" ||
+              column === "comment"
+            ) {
               return null;
             }
             return (
@@ -37,29 +44,59 @@ const ViewTable = ({ tableData }) => {
         {tableData.map((row, rowIndex) => (
           <tr key={rowIndex}>
             {columns.map((column, columnIndex) => {
-              if (column === "status") {
+              if (
+                column === "status" ||
+                column === "color" ||
+                column === "comment"
+              ) {
                 return null;
               }
-              return (
-                <td key={columnIndex}>
-                  <input
-                    type="text"
-                    value={row[column]}
-                    readOnly
-                    className={`${
-                      row.status === "checked" ? "bg-green-100" : "bg-red-100"
-                    } w-full focus:outline-none p-2 rounded-md`}
-                  />
+              return columnIndex < 2 ? (
+                <td
+                  key={columnIndex}
+                  className={`${
+                    row.color === "green" ? "bg-green-300" : "bg-red-300"
+                  } focus:outline-none border border-gray-100`}
+                >
+                  {row[column]}
                 </td>
+              ) : (
+                <td>{row[column]}</td>
               );
             })}
-            <td>
-              <input
-                type="checkbox"
-                className="w-5 h-5"
-                readOnly
-                checked={row.status === "checked"}
-              />
+            <td className="w-[2rem]">
+              <div className="flex gap-4 justify-end">
+                {row["comment"] && (
+                  <>
+                    <MdOutlineInsertComment
+                      data-tip
+                      data-tooltip-id={`comment-${rowIndex}`}
+                      className="text-green-500 focus:outline-none"
+                    />
+                    <Tooltip
+                      id={`comment-${rowIndex}`}
+                      place="bottom"
+                      effect="solid"
+                      content={row["comment"]}
+                      style={{
+                        width: "240px",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        backgroundColor: "#595959",
+                        color: "white",
+                        borderRadius: "4px",
+                        padding: "8px",
+                      }}
+                    />
+                  </>
+                )}
+                <input
+                  type="checkbox"
+                  className="w-5 h-5"
+                  readOnly
+                  checked={row.status === "checked"}
+                />
+              </div>
             </td>
           </tr>
         ))}

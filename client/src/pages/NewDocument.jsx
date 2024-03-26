@@ -54,34 +54,37 @@ const NewDocument = () => {
 
   const companyList = [
     "ABU DHABI NATIONAL INSURANCE COMPANY",
-    "SUKOON",
+    "ABU DHABI NATIONAL TAKAFUL COMPANY PSC",
+    "AL BUHAIRA INSURANCE COMPANY",
+    "AL SAGR",
     "ARAB ORIENT",
-    "METLIFE",
+    "ARABIA INSURANCE COMPANY",
     "CIGNA",
-    "GIG GULF",
-    "RAS AL KHAIMAH INSURANCE COMPANY",
-    "NATIONAL GENERAL INSURANCE",
+    "DAMAN",
+    "DNIRC",
     "DUBAI INSURANCE COMPANY",
     "DUBAI NATIONAL INSURANCE & REINSURANCE PSC",
-    "LIVA",
-    "ABU DHABI NATIONAL TAKAFUL COMPANY PSC",
-    "NOW HEALTH",
-    "SALAMA",
-    "DNIRC",
-    "WATANIA TAKAFUL",
-    "INSURANCE HOUSE",
-    "AL BUHAIRA INSURANCE COMPANY",
-    "UNION",
-    "MEDGULF",
-    "AL SAGR",
-    "DAMAN",
-    "MEDITERRANEAN & GULF INSURANCE COMPANY",
-    "ARABIA INSURANCE COMPANY",
     "FIDELITY UNITED INSURANCE COMPANY",
-    "WILLIAM RUSSELL",
-    "ORIENTAL INSURANCE COMPANY",
+    "GIG GULF",
     "GLOBAL CARE",
+    "INSURANCE HOUSE",
+    "LIVA",
+    "MEDGULF",
+    "MEDITERRANEAN & GULF INSURANCE COMPANY",
+    "METLIFE",
+    "NATIONAL GENERAL INSURANCE",
+    "NOW HEALTH",
+    "ORIENTAL INSURANCE COMPANY",
+    "RAS AL KHAIMAH INSURANCE COMPANY",
+    "SALAMA",
+    "SUKOON",
+    "UNION",
+    "WATANIA TAKAFUL",
+    "WILLIAM RUSSELL",
   ];
+
+  // To ensure alphabetical order, we sort the array
+  companyList.sort();
 
   useEffect(() => {
     setTobType(TobTypeList[0]);
@@ -110,6 +113,7 @@ const NewDocument = () => {
       setMetaFormErrors(newErrors);
       // Check if there are no errors in the newErrors object
       if (Object.keys(newErrors).length === 0) {
+        newMetaData.tobType = tobType;
         newMetaData.client = client;
         // Only add the 'broker' key if 'broker' is not an empty string
         if (insurer !== "") {

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { confirmAlert } from "react-confirm-alert";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
+import { Tooltip } from "react-tooltip";
+import { MdOutlineInsertComment } from "react-icons/md";
+
 import "react-toastify/dist/ReactToastify.css";
 
 import { BsEye } from "react-icons/bs";
-import { BsTrash3 } from "react-icons/bs";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 
@@ -37,14 +38,6 @@ const DisplayTable = () => {
     currentRow: null,
     expanded: false,
   });
-  // const status = useLocation().state;
-
-  // useEffect(() => {
-  //   if (status) {
-  //     const filteredData = dbTableData.filter((row) => row.status === status);
-  //     setShowData(filteredData);
-  //   }
-  // }, [status, dbTableData]);
 
   useEffect(() => {
     dispatch(clearTableData());
@@ -84,56 +77,43 @@ const DisplayTable = () => {
   ];
 
   const subColumns = [
-    { label: "Category", key: "catetory" },
+    { label: "Category", key: "category" },
     { label: "Result TOB", key: "resultTOB" },
     { label: "Version", key: "version" },
     { label: "Status", key: "status" },
   ];
 
-  const handleDelete = async (id) => {
-    confirmAlert({
-      title: "Confirm!",
-      message: "Are you sure to delete this row?",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: async () => {
-            try {
-              dispatch(setLoading());
-              const response = await fetch(
-                `${node_server_url}/api/table/delete/${id}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    "x-auth-token": token,
-                    "ngrok-skip-browser-warning": true,
-                  },
-                }
-              );
-              if (response.ok) {
-                const result = await response.json();
-                setDBTableData((previousData) =>
-                  previousData.filter((item) => item._id !== result._id)
-                );
-                toast.success("Successfully deleted!", {
-                  position: "top-right",
-                });
-              }
-              dispatch(clearLoading());
-            } catch (error) {
-              toast.error("Error occurred while deleting the item!", {
-                position: "top-right",
-              });
-            }
-          },
-        },
-        {
-          label: "No",
-          onClick: () => console.log("no"),
-        },
-      ],
-    });
-  };
+  const TobTypeList = ["Elite Care", "Gulf Care", "Al Madallah", "Thiqa"];
+  const companyList = [
+    "ABU DHABI NATIONAL INSURANCE COMPANY",
+    "ABU DHABI NATIONAL TAKAFUL COMPANY PSC",
+    "AL BUHAIRA INSURANCE COMPANY",
+    "AL SAGR",
+    "ARAB ORIENT",
+    "ARABIA INSURANCE COMPANY",
+    "CIGNA",
+    "DAMAN",
+    "DNIRC",
+    "DUBAI INSURANCE COMPANY",
+    "DUBAI NATIONAL INSURANCE & REINSURANCE PSC",
+    "FIDELITY UNITED INSURANCE COMPANY",
+    "GIG GULF",
+    "GLOBAL CARE",
+    "INSURANCE HOUSE",
+    "LIVA",
+    "MEDGULF",
+    "MEDITERRANEAN & GULF INSURANCE COMPANY",
+    "METLIFE",
+    "NATIONAL GENERAL INSURANCE",
+    "NOW HEALTH",
+    "ORIENTAL INSURANCE COMPANY",
+    "RAS AL KHAIMAH INSURANCE COMPANY",
+    "SALAMA",
+    "SUKOON",
+    "UNION",
+    "WATANIA TAKAFUL",
+    "WILLIAM RUSSELL",
+  ];
 
   // const handleClickUpload = () => {
   // 	setSettingModalOpen(true);
@@ -249,37 +229,6 @@ const DisplayTable = () => {
   //   }
   // };
 
-  const insuranceCompanies = [
-    "ABU DHABI NATIONAL INSURANCE COMPANY",
-    "SUKOON",
-    "ARAB ORIENT",
-    "METLIFE",
-    "CIGNA",
-    "GIG GULF",
-    "RAS AL KHAIMAH INSURANCE COMPANY",
-    "NATIONAL GENERAL INSURANCE",
-    "DUBAI INSURANCE COMPANY",
-    "DUBAI NATIONAL INSURANCE & REINSURANCE PSC",
-    "LIVA",
-    "ABU DHABI NATIONAL TAKAFUL COMPANY PSC",
-    "NOW HEALTH",
-    "SALAMA",
-    "DNIRC",
-    "WATANIA TAKAFUL",
-    "INSURANCE HOUSE",
-    "AL BUHAIRA INSURANCE COMPANY",
-    "UNION",
-    "MEDGULF",
-    "AL SAGR",
-    "DAMAN",
-    "MEDITERRANEAN & GULF INSURANCE COMPANY",
-    "ARABIA INSURANCE COMPANY",
-    "FIDELITY UNITED INSURANCE COMPANY",
-    "WILLIAM RUSSELL",
-    "ORIENTAL INSURANCE COMPANY",
-    "GLOBAL CARE",
-  ];
-
   return (
     <div className="w-full h-full bg-gray-100 px-8 lg:px-24 flex flex-col items-start justify-start">
       {/* Header */}
@@ -301,6 +250,28 @@ const DisplayTable = () => {
         <div className="w-full px-8 py-4 flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label className="text-black" htmlFor="insurer">
+              Type of TOB
+            </label>
+            <select
+              name="tobType"
+              id="tobType"
+              onChange={(e) =>
+                setSearchValues({ ...searchValues, tobType: e.target.value })
+              }
+              className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
+            >
+              <option value=""></option>
+              {TobTypeList.map((item, index) => {
+                return (
+                  <option key={index} value={item}>
+                    {item}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-black" htmlFor="tobType">
               Insurer
             </label>
             <select
@@ -312,7 +283,7 @@ const DisplayTable = () => {
               className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
             >
               <option value=""></option>
-              {insuranceCompanies.map((item, index) => {
+              {companyList.map((item, index) => {
                 return (
                   <option key={index} value={item}>
                     {item}
@@ -391,7 +362,7 @@ const DisplayTable = () => {
                     dbTableData.map((row, rowIndex) => (
                       <>
                         <tr
-                          key={`main-${rowIndex}`}
+                          key={`main-${row.uuid}`}
                           className="hover:bg-gray-100"
                         >
                           <td
@@ -428,11 +399,6 @@ const DisplayTable = () => {
                                 size={20}
                                 onClick={() => handleEdit(row.uuid)}
                               />
-                              <BsTrash3
-                                className="cursor-pointer hover:text-purple-600"
-                                size={20}
-                                onClick={() => handleDelete(row._id)}
-                              />
                             </div>
                           </td>
                         </tr>
@@ -456,9 +422,9 @@ const DisplayTable = () => {
                                         </th>
                                       )
                                     )}
-                                    {/* <th className="py-2 bg-gray-200">
-                                      Actions
-                                    </th> */}
+                                    <th className="py-2 bg-gray-200">
+                                      Comment
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -472,14 +438,34 @@ const DisplayTable = () => {
                                             </td>
                                           )
                                         )}
-                                        {/* <td>
-                                          {subRow["status"] === "Processed" && (
-                                            <button className="p-1 bg-red-500 text-white">
-                                              Review
-                                            </button>
-                                          )}
+                                        <td>
+                                          {subRow["comment"] &&
+                                            subRow["comment"] !== "" && (
+                                              <>
+                                                <MdOutlineInsertComment
+                                                  data-tip
+                                                  data-tooltip-id={`comment-${rowIndex}`}
+                                                  className="text-green-500 focus:outline-none cursor-pointer"
+                                                />
+                                                <Tooltip
+                                                  id={`comment-${rowIndex}`}
+                                                  place="bottom"
+                                                  effect="solid"
+                                                  content={subRow["comment"]}
+                                                  style={{
+                                                    width: "240px",
+                                                    textAlign: "left",
+                                                    fontSize: "14px",
+                                                    backgroundColor: "#595959",
+                                                    color: "white",
+                                                    borderRadius: "4px",
+                                                    padding: "8px",
+                                                  }}
+                                                />
+                                              </>
+                                            )}
                                         </td>
-                                        <button>Generate</button>
+                                        {/* <button>Generate</button>
                                         <button>Revise</button> */}
                                       </tr>
                                     )

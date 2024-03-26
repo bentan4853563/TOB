@@ -91,7 +91,7 @@ export default function Cell({
         <ContentEditable
           html={(value.value && value.value.toString()) || ""}
           onChange={onChange}
-          onClick={handleFocus}
+          // onClick={handleFocus}
           onBlur={() => setValue((old) => ({ value: old.value, update: true }))}
           className="data-input"
         />

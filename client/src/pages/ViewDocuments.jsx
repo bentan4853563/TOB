@@ -1,36 +1,52 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import ScrollToTop from "react-scroll-to-top";
+import Select from "react-select";
 
 import ViewTable from "../components/ViewTable";
+import { useNavigate } from "react-router-dom";
 
 export default function CustomizedTable() {
+  const navigate = useNavigate();
+
   const { table } = useSelector((state) => state.table);
   const { metaData } = useSelector((state) => state.table);
-  const [selectedCategory, setSlectedCategory] = useState("");
+  const [selectedCategory, setselectedCategory] = useState("");
   const [selectedTable, setSelectedTable] = useState({});
   const [tableData, setTableData] = useState({});
 
+  const categoryOptions = Object.keys(table).map((category) => ({
+    value: category,
+    label: category,
+  }));
+
   useEffect(() => {
     if (Object.keys(table).length > 0) {
-      setSlectedCategory(Object.keys(table)[0]);
+      setselectedCategory(Object.keys(table)[0]);
       setTableData(table);
     }
   }, [table]);
+
   useEffect(() => {
     if (tableData && selectedCategory !== null) {
       setSelectedTable(tableData[selectedCategory]);
     }
   }, [tableData, selectedCategory]);
 
-  console.log("meta", metaData);
+  const handleClickEdit = () => {
+    navigate("/tb/edit");
+  };
+
+  const handleCategoryChange = (selectedOption) => {
+    setselectedCategory(selectedOption.value);
+  };
 
   return (
     <div className="w-full h-full bg-gray-100 px-8 md:px-16 xl:px-24 flex flex-col items-start justify-start">
       <div className="w-full px-8 py-4 my-4 flex justify-between items-center bg-white rounded-lg">
         <span className="text-2xl">Documents</span>
         <button
-          // onClick={handleNewAndEdit}
+          onClick={handleClickEdit}
           className="w-32 py-2 bg-indigo-600 text-white border-none focus:outline-none"
         >
           Edit
@@ -41,9 +57,19 @@ export default function CustomizedTable() {
           <span className="text-xl font-bold font-sans">View Document</span>
         </div>
         <div className="w-full px-8 py-4 flex flex-col gap-3">
+          {metaData.tobType && (
+            <div className="flex flex-col gap-1">
+              <label className="text-black font-medium" htmlFor="client">
+                Type of TOB
+              </label>
+              <span className="ml-4">
+                {metaData.tobType ? metaData.tobType : "None"}
+              </span>
+            </div>
+          )}
           {metaData.client && (
             <div className="flex flex-col gap-1">
-              <label className="text-black" htmlFor="client">
+              <label className="text-black font-medium" htmlFor="client">
                 Client
               </label>
               <span className="ml-4">
@@ -53,7 +79,7 @@ export default function CustomizedTable() {
           )}
           {metaData.insurer && (
             <div className="flex flex-col gap-1">
-              <label className="text-black" htmlFor="insurer">
+              <label className="text-black font-medium" htmlFor="insurer">
                 Insurer
               </label>
               <span className="ml-4">
@@ -64,7 +90,7 @@ export default function CustomizedTable() {
 
           {metaData.broker && (
             <div className="flex flex-col gap-1">
-              <label className="text-black" htmlFor="broker">
+              <label className="text-black font-medium" htmlFor="broker">
                 Broker
               </label>
               <span className="ml-4">
@@ -75,7 +101,7 @@ export default function CustomizedTable() {
 
           {metaData.sourceTOB && (
             <div className="flex flex-col gap-1">
-              <label className="text-black" htmlFor="sourceTOB">
+              <label className="text-black font-medium" htmlFor="sourceTOB">
                 Source TOB
               </label>
               <span className="ml-4">
@@ -87,30 +113,24 @@ export default function CustomizedTable() {
       </div>
 
       <div className="w-full mt-4 flex items-end gap-8">
-        <div className="w-1/2 flex flex-col">
+        <div className="w-1/2 flex flex-col items-start gap-2">
           <label htmlFor="category" className="font-bold">
             Category
           </label>
-          <select
-            name="category"
+          <Select
             id="category"
-            onChange={(e) => setSlectedCategory(e.target.value)}
-            className="w-full p-3 gap-4 text-xl focus:outline-none rounded-md"
-          >
-            {table &&
-              Object.keys(table).map((category, index) => {
-                return (
-                  <option key={index} value={category} className="py-2 text-lg">
-                    {category}
-                  </option>
-                );
-              })}
-          </select>
+            options={categoryOptions}
+            onChange={handleCategoryChange}
+            value={categoryOptions.find(
+              (option) => option.value === selectedCategory
+            )}
+            className="w-full"
+          />
         </div>
         {selectedTable && (
-          <button className="text-lg bg-white" disabled>
+          <span className="text-lg bg-white px-4 py-1 rounded-md" disabled>
             {selectedTable["status"]}
-          </button>
+          </span>
         )}
       </div>
 
@@ -118,7 +138,12 @@ export default function CustomizedTable() {
       <div className="w-full flex flex-col gap-4 my-4">
         {selectedTable &&
           Object.keys(selectedTable).map((tableName, index) => {
-            if (tableName !== "status") {
+            if (
+              tableName !== "status" &&
+              tableName !== "comment" &&
+              tableName !== "version" &&
+              tableName !== "check"
+            ) {
               let table = Object.values(selectedTable[tableName]);
               return (
                 <div

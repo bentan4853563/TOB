@@ -59,13 +59,21 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
         const data = await response.json();
         const initialized = Object.keys(data).reduce(
           (accumulator, category) => {
-            accumulator[category] = {
-              ...data[category],
-              status: "Processed",
-            };
-            if (accumulator !== "") {
-              return accumulator;
-            }
+            accumulator[category] = Object.keys(data[category]).reduce(
+              (innerAccum, subCategory) => {
+                innerAccum[subCategory] = data[category][subCategory].map(
+                  (benefit) => {
+                    return {
+                      ...benefit,
+                      color: benefit.status === "checked" ? "green" : "red",
+                    };
+                  }
+                );
+                return innerAccum;
+              },
+              { status: "Processed", version: 0, comment: "" }
+            );
+            return accumulator;
           },
           {}
         );
