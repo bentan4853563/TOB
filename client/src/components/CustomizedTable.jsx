@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// import autoTable from "jspdf-autotable";
 
 import Select from "react-select";
 
@@ -385,44 +385,73 @@ export default function CustomizedTable() {
   };
 
   const handleSaveToCSV = async () => {
-    const tableData = Object.values(selectedTable).slice(0, -1);
+    const addSectionToCSV = (title, data, csvColumns) => {
+      csvColumns = csvColumns.filter((col) => data.some((item) => item[col]));
+      const headers = csvColumns.map((header) => capitalizeFirstLetter(header));
 
-    const convertToCSV = (arr) => {
-      return arr
-        .map((row) =>
-          Object.values(row)
-            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-            .join(",")
-        )
-        .join("\n");
+      if (Array.isArray(data) && data.length > 0) {
+        let csvContent = `"${title}"\n`;
+        csvContent += headers.join(",") + "\n";
+        csvContent +=
+          data
+            .map((item) =>
+              csvColumns
+                .map((col) => `"${String(item[col]).replace(/"/g, '""')}"`)
+                .join(",")
+            )
+            .join("\n") + "\n\n";
+
+        return csvContent;
+      } else {
+        console.error(
+          `No data provided for title "${title}", skipping section.`
+        );
+        return "";
+      }
     };
 
-    let csvContent = "data:text/csv;charset=utf-8,";
-    tableData.forEach((sectionData, index) => {
-      if (sectionData.length > 0) {
-        const sectionTitles = [
-          "General Benefit",
-          "In Patient Benefit",
-          "Other Benefit",
-          "Out Patient Benefit",
-        ];
-        const headers = Object.keys(sectionData[0]);
-        csvContent += `${sectionTitles[index]}\n`;
-        csvContent += headers.join(",") + "\n";
-        csvContent += convertToCSV(sectionData) + "\n\n";
+    const titleMap = [
+      "General Benefit",
+      "In Patient Benefit",
+      "Other Benefit",
+      "Out Patient Benefit",
+    ];
+
+    const columns = ["benefit", "limit", "New Benefit", "New Limit"];
+
+    let csvData = "data:text/csv;charset=utf-8,";
+
+    // Iterate over each section to append its respective data
+    titleMap.forEach((title) => {
+      console.log(`Selected Category: ${selectedCategory}, Title: ${title}`);
+
+      const sectionData =
+        tableData[selectedCategory] && tableData[selectedCategory][title];
+
+      if (sectionData) {
+        csvData += addSectionToCSV(title, sectionData, columns);
+      } else {
+        console.error(
+          `No data found for category "${selectedCategory}" and title "${title}". Skipping this section.`
+        );
       }
     });
 
-    const fileName = createFileNameWithPrefix(metaData.client);
-    const encodedUri = encodeURI(csvContent);
+    // Use the same file-naming convention as saveToPDF
+    const fileName = `${
+      metaData.client
+    }-${selectedCategory}-${new Date().toISOString()}.csv`;
+
+    // Encode the entire CSV data
+    const encodedUri = encodeURI(csvData);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${fileName}.csv`);
+    link.setAttribute("download", fileName);
     document.body.appendChild(link); // Required for Firefox
     link.click();
     document.body.removeChild(link);
 
-    await handleGenerate();
+    await handleGenerate(fileName);
 
     toast.success("Successfully generated CSV!", {
       position: "top-right",
@@ -431,7 +460,6 @@ export default function CustomizedTable() {
 
   const update = async (temp) => {
     try {
-      localStorage.setItem("last-category", selectedCategory);
       const response = await fetch(`${node_server_url}/api/table/update`, {
         method: "POST",
         headers: {
@@ -470,7 +498,7 @@ export default function CustomizedTable() {
       case "handleSaveToPDF":
         handleSaveToPDF();
         break;
-      case "handleSaveToSVG":
+      case "handleSaveToCSV":
         handleSaveToCSV(); // Assuming this is typo, it should match the function name
         break;
       case "handleRevise":
@@ -479,32 +507,6 @@ export default function CustomizedTable() {
       default:
         setIsOpen(false);
     }
-  };
-
-  const createFileNameWithPrefix = (clientName) => {
-    // Prefix
-    const prefix = "QIC";
-
-    // Function to sanitize input to ensure it's safe for file names
-    function sanitizeInput(input) {
-      // Replace any character not allowed in file names with an underscore
-      return input.replace(/[\\/\\:*?"<>|\s]+/g, "_");
-    }
-
-    // Sanitize the client name
-    const safeClientName = sanitizeInput(clientName);
-
-    // Get today's date and format it as yyyy_dd_mm
-    const today = new Date();
-    const year = today.getFullYear();
-    const day = String(today.getDate()).padStart(2, "0");
-    const month = String(today.getMonth() + 1).padStart(2, "0"); // January is 0!
-    const dateStr = `${year}_${day}_${month}`;
-
-    // Construct the file name with prefix, sanitized client name, and formatted date
-    const fileName = `${prefix}_${safeClientName}_${dateStr}`;
-
-    return fileName;
   };
 
   const handleClose = () => {
