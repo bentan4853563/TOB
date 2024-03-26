@@ -16,7 +16,7 @@ router.get("/readAll", async (req, res) => {
 router.post("/getOne", auth, async (req, res) => {
   try {
     const uuid = req.body.uuid;
-    const path = `TBData/${uuid}.json`;
+    const path = `TBData/reviewed/${uuid}.json`;
 
     // Use await here because readDataFromFile now returns a Promise
     const fileData = await readDataFromFile(path);
@@ -38,14 +38,16 @@ router.post("/insert", auth, async (req, res) => {
     // } else {
     //   newResultTOB = Math.random().toString(36).substring(2, 15);
     // }
-    console.log("metaData", metaData, uuid);
 
-    const filepath = `TBData/${uuid}.json`;
-    await saveDataToFile(tableData, filepath);
+    const processPath = `TBData/processed/${uuid}.json`;
+    const reviewedPath = `TBData/reviewed/${uuid}.json`;
+    await saveDataToFile(tableData, processPath);
+    await saveDataToFile(tableData, reviewedPath);
 
     let statusByCategory = Object.keys(tableData).map((category) => {
       return {
         category: category,
+        comment: "",
         status: "Processed",
         version: 0,
       };
@@ -56,6 +58,8 @@ router.post("/insert", auth, async (req, res) => {
       ...metaData, // Spreads metaData properties into inputData
       statusByCategory, // Array constructed above
     };
+
+    console.log("inputData", inputData);
 
     result = await Table.insertMany(inputData, {
       new: true,
@@ -72,23 +76,43 @@ router.post("/insert", auth, async (req, res) => {
 router.post("/update", auth, async (req, res) => {
   try {
     const { uuid, tableData } = req.body;
+
     console.log("tableData", tableData);
-    const filepath = `TBData/${uuid}.json`;
+
+    // const previousFileData = await readDataFromFile(
+    //   `TBData/processed/${uuid}.json`
+    // );
+
+    // console.log("previousFileData", previousFileData);
+
+    // const newTableData = {};
+    // Object.keys(tableData).forEach((category) => {
+    //   if (
+    //     tableData[category]["status"] === "Processed" &&
+    //     tableData[category]["version"] > previousFileData[category]["version"]
+    //   ) {
+    //     console.log("========true", previousFileData[category]["version"]);
+    //     newTableData[category] = {
+    //       ...previousFileData[category],
+    //       version: tableData[category]["version"],
+    //     };
+    //   }
+    // });
+
+    // console.log("newTableData", newTableData);
+
+    const filepath = `TBData/reviewed/${uuid}.json`;
+
     await saveDataToFile(tableData, filepath);
 
     let statusByCategory = Object.keys(tableData).map((category) => {
       return {
-        version: 0,
-        catetory: category,
-        status: tableData[category].status
-          ? tableData[category].status === "Revise"
-            ? "Processed"
-            : tableData[category].status
-          : "Processed",
+        category: category,
+        status: tableData[category].status,
+        version: tableData[category].version,
+        comment: tableData[category].comment,
       };
     });
-
-    console.log("statusByCategory", statusByCategory);
 
     const result = await Table.findOneAndUpdate(
       { uuid: uuid },
@@ -98,7 +122,6 @@ router.post("/update", auth, async (req, res) => {
         upsert: true,
       }
     );
-    console.log("result", result);
 
     res.json({ metaData: result, tableData });
   } catch (error) {
@@ -258,22 +281,6 @@ const readDataFromFile = (filePath) => {
     });
   });
 };
-
-router.put("/update", auth, async (req, res) => {
-  const { _id, firstName, lastName, email, state } = req.body;
-
-  try {
-    const updatedTableEntry = await Table.findByIdAndUpdate({ _id }, req.body, {
-      new: true,
-    });
-    if (!updatedTableEntry) {
-      return res.status(404).json({ message: "Table entry not found" });
-    }
-    res.status(200).json(updatedTableEntry);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
 
 // DELETE endpoint to handle record deletion
 router.delete("/delete/:id", auth, async (req, res) => {
