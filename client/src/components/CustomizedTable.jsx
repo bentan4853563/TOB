@@ -165,33 +165,6 @@ export default function CustomizedTable() {
     toast.success("Successfuly deleted you selected");
   };
 
-  const update = async (temp) => {
-    try {
-      const response = await fetch(`${node_server_url}/api/table/update`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-auth-token": token, // Include the token in the Authorization header
-          "ngrok-skip-browser-warning": true,
-        },
-        body: JSON.stringify({
-          uuid: metaData.uuid,
-          tableData: temp,
-        }),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const { metaData, tableData } = result;
-        dispatch(setMetaData(metaData));
-        dispatch(storeTableData(tableData));
-      } else {
-        console.error("Error:", response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error("Fetch Error:", error);
-    }
-  };
-
   const handleClickStatusChangeButton = (buttonName) => {
     setClickedButton(buttonName);
     setIsOpen(true);
@@ -277,6 +250,7 @@ export default function CustomizedTable() {
         version: tableData[selectedCategory].version + 1,
       },
     };
+    setComment("");
     setSelectedTable(tempData[selectedCategory]);
     update(tempData);
 
@@ -365,8 +339,6 @@ export default function CustomizedTable() {
     }
   };
 
-  console.log(clickedButton, "tableName", tableName);
-
   const handleSaveToPDF = async () => {
     await handleGenerate();
 
@@ -452,6 +424,33 @@ export default function CustomizedTable() {
     });
   };
 
+  const update = async (temp) => {
+    try {
+      const response = await fetch(`${node_server_url}/api/table/update`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-auth-token": token, // Include the token in the Authorization header
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({
+          uuid: metaData.uuid,
+          tableData: temp,
+        }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const { metaData, tableData } = result;
+        dispatch(setMetaData(metaData));
+        dispatch(storeTableData(tableData));
+      } else {
+        console.error("Error:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    }
+  };
+
   const createFileNameWithPrefix = (clientName) => {
     // Prefix
     const prefix = "QIC";
@@ -502,7 +501,7 @@ export default function CustomizedTable() {
 
   function closeModal() {
     setIsOpen(false);
-    setTableData("");
+    setTableName("");
   }
 
   const customStyles = {
