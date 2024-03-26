@@ -142,6 +142,7 @@ export default function CustomizedTable() {
               tableName !== "status" &&
               tableName !== "comment" &&
               tableName !== "version" &&
+              tableName !== "resultTOB" &&
               tableName !== "check"
             ) {
               let table = Object.values(selectedTable[tableName]);
