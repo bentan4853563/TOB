@@ -49,17 +49,7 @@ export default function CustomizedTable() {
   };
 
   useEffect(() => {
-    setselectedCategory(localStorage.getItem("last-category"));
-    console.log("1", localStorage.getItem("last-category"));
-    return () => {
-      console.log("2", localStorage.getItem("last-category"));
-
-      localStorage.removeItem("last-category");
-    };
-  }, []);
-
-  useEffect(() => {
-    if (Object.keys(table).length > 0 && !selectedCategory) {
+    if (Object.keys(table).length > 0) {
       setselectedCategory(Object.keys(table)[0]);
       setTableData(table);
     }
@@ -369,6 +359,8 @@ export default function CustomizedTable() {
     const columns = ["benefit", "limit", "New Benefit", "New Limit"];
 
     titleMap.forEach((title) => {
+      console.log(`Selected Category: ${selectedCategory}, Title: ${title}`);
+
       const sectionData =
         tableData[selectedCategory] && tableData[selectedCategory][title];
       if (sectionData) {
@@ -467,6 +459,7 @@ export default function CustomizedTable() {
 
   const handleCommentForCategory = () => {
     if (!clickedButton) return;
+    console.log("Clicked Button in handle Functin", clickedButton);
     switch (clickedButton) {
       case "handleReview":
         handleReview();
@@ -548,8 +541,6 @@ export default function CustomizedTable() {
   };
 
   Modal.setAppElement("#root");
-
-  console.log(selectedTable);
 
   return (
     <div className="w-full flex flex-col mt-8">

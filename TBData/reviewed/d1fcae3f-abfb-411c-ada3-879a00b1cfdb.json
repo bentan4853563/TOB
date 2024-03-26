@@ -1,7 +1,7 @@
 {
   "cat_a": {
-    "status": "Generated",
-    "version": 27,
+    "status": "Reviewed",
+    "version": 28,
     "comment": "",
     "General Benefit": [
       {
@@ -382,7 +382,7 @@
   "cat_b": {
     "status": "Reviewed",
     "version": 4,
-    "comment": "",
+    "comment": "sdfsf",
     "General Benefit": [
       {
         "benefit": "Area of Cover",
