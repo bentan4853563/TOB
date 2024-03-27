@@ -105,3 +105,45 @@ th {
 td {
   padding: 8px 16px;
 }
+
+
+.table-header {
+  background-color: #324960; /* Dark header for contrast */
+  color: #ffffff;
+}
+
+.table-row {
+  background-color: #f9f9f9; /* Light color for rows */
+}
+
+.table-row:hover {
+  background-color: #e0e0e0; /* Slightly darker on hover for interactivity */
+}
+
+.status-checked {
+  background-color: #c8e6c9; /* Green for checked status */
+}
+
+.status-unchecked {
+  background-color: #ffcdd2; /* Red for unchecked status */
+}
+
+.action-cell {
+  background-color: #fafafa; /* Neutral color for the action cell */
+}
+
+.input-cell {
+  background-color: #ffffff; /* White for input fields for clarity */
+}
+
+input[type='checkbox']:checked + label {
+  color: #4caf50; /* Green color when checked */
+}
+
+.comment-icon {
+  color: #009688; /* Teal color for comment icon */
+}
+
+.delete-icon {
+  color: #f44336; /* Red color for delete icon */
+}

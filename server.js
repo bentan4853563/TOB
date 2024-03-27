@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+require("dotenv").config();
 
 const app = express();
 
@@ -17,8 +18,8 @@ app.use("/api/table", require("./routes/table"));
 
 // app.use("/TBData", require("./routes/fileUpload"));
 app.use(express.static("TBData"));
+
 if (process.env.NODE_ENV === "production") {
-  // Set static folder
   app.use(express.static("client/dist"));
 
   app.get("*", (req, res) => {
@@ -26,7 +27,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const PORT = 5009;
+const PORT = process.env.PORT || 5009;
 
 app.listen(PORT, async () => {
   console.log(`Server started on ${PORT}`);

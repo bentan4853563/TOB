@@ -50,7 +50,7 @@ const EditableTable = ({
   // Render the table
   return (
     <table className="w-full">
-      <thead>
+      <thead className="table-header">
         <tr className="">
           {columns.map((column, index) => {
             if (
@@ -74,7 +74,7 @@ const EditableTable = ({
       </thead>
       <tbody>
         {tableData.map((row, rowIndex) => (
-          <tr key={rowIndex}>
+          <tr key={rowIndex} className="table-row">
             {columns.map((column, columnIndex) => {
               if (
                 column === "status" ||
@@ -88,13 +88,15 @@ const EditableTable = ({
                   key={columnIndex}
                   onClick={() => handleFocus(tableName, rowIndex, columnIndex)}
                   className={`${
-                    row.color === "green" ? "bg-green-300" : "bg-red-300"
+                    row.color === "green"
+                      ? "status-checked"
+                      : "status-unchecked"
                   } focus:outline-none border border-gray-200`}
                 >
                   {row[column]}
                 </td>
               ) : (
-                <td className="w-1/4 border border-gray-200">
+                <td className="input-cell w-1/4 border border-gray-200">
                   <input
                     type="text"
                     value={row[column]}
@@ -109,14 +111,14 @@ const EditableTable = ({
                 </td>
               );
             })}
-            <td className="w-[4rem] border border-gray-200">
+            <td className="w-[4rem] border border-gray-200 input-cell">
               <div className="flex gap-4 items-center justify-end">
                 {row["comment"] && (
                   <>
                     <MdOutlineInsertComment
                       data-tip
                       data-tooltip-id={`comment-${rowIndex}`}
-                      className="text-green-500 focus:outline-none"
+                      className="comment-icon focus:outline-none"
                     />
                     <Tooltip
                       id={`comment-${rowIndex}`}
@@ -143,7 +145,7 @@ const EditableTable = ({
                 />
                 <FaTrash
                   onClick={() => onClickDeleteIcon(rowIndex)}
-                  className="h-4 w-4 cursor-pointer"
+                  className="h-4 w-4 cursor-pointer delete-icon"
                 />
               </div>
             </td>

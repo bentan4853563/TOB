@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 import Select from "react-select";
 
@@ -544,6 +544,13 @@ export default function CustomizedTable() {
 
   Modal.setAppElement("#root");
 
+  const titleMap = [
+    "General Benefit",
+    "In Patient Benefit",
+    "Out Patient Benefit",
+    "Other Benefit",
+  ];
+
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
@@ -599,7 +606,7 @@ export default function CustomizedTable() {
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
         {selectedTable &&
-          Object.keys(selectedTable).map((tableName, index) => {
+          titleMap.map((tableName, index) => {
             if (
               tableName !== "status" &&
               tableName !== "version" &&

@@ -1,5 +1,5 @@
 {
-  "cat_a": {
+  "Cat A": {
     "status": "Processed",
     "version": 0,
     "comment": "",
@@ -378,7 +378,7 @@
       }
     ]
   },
-  "cat_b": {
+  "Cat B": {
     "status": "Processed",
     "version": 0,
     "comment": "",
