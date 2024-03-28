@@ -21,8 +21,6 @@ const download = function (data) {
 };
 
 export const Makecsv = async function (jsondata) {
-  console.log("jsondata", jsondata);
-
   const data = jsondata.map((row) => ({
     firstName: row.firstName,
     lastName: row.lastName,
@@ -30,7 +28,6 @@ export const Makecsv = async function (jsondata) {
     age: row.age,
     music: row.deaths,
   }));
-  console.log(data);
   const csvdata = csvmaker(data);
   download(csvdata);
 };

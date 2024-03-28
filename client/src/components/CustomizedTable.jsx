@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
+// eslint-disable-next-line no-unused-vars
+import autoTable from "jspdf-autotable";
 
 import Select from "react-select";
 
@@ -35,6 +36,7 @@ export default function CustomizedTable() {
   const [comment, setComment] = useState("");
   const [rowNumber, setRowNumber] = useState(0);
   const [tableName, setTableName] = useState("");
+  const [column, setColumn] = useState("");
   const [clickedButton, setClickedButton] = useState("");
 
   const [enableReview, setEnableReview] = useState(true);
@@ -63,6 +65,7 @@ export default function CustomizedTable() {
 
   useEffect(() => {
     if (selectedTable) {
+      console.log("selected Table", selectedTable);
       setTableData((currentTableData) => ({
         ...currentTableData,
         [selectedCategory]: selectedTable,
@@ -75,7 +78,7 @@ export default function CustomizedTable() {
           tableName !== "comment" &&
           tableName !== "resultTOB" &&
           selectedTable[tableName].map((row) => {
-            if (row.status === "unchecked") uncheckedCount = uncheckedCount + 1;
+            if (row.Reviewed === false) uncheckedCount = uncheckedCount + 1;
           });
       });
       if (uncheckedCount !== 0) {
@@ -110,46 +113,63 @@ export default function CustomizedTable() {
     }));
   };
 
-  const handleFocusCell = (tableName, rowIndex) => {
+  // const handleFocusCell = (tableName, rowIndex) => {
+  //   setSelectedTable((currentTableData) => ({
+  //     ...currentTableData,
+  //     [tableName]: currentTableData[tableName].map((row, index) => {
+  //       if (index === rowIndex) {
+  //         const updatedRow = { ...row };
+  //         if (
+  //           !updatedRow["New Benefit"] ||
+  //           updatedRow["New Benefit"].trim() === ""
+  //         ) {
+  //           updatedRow["New Benefit"] = row["benefit"];
+  //           if (
+  //             !updatedRow["New Limit"] ||
+  //             updatedRow["New Limit"].trim() === ""
+  //           ) {
+  //             updatedRow["New Limit"] = row["limit"];
+  //           }
+  //         }
+  //         return updatedRow;
+  //       }
+  //       return row;
+  //     }),
+  //   }));
+  // };
+  const handleNewRow = (tableName, rowIndex) => {
     setSelectedTable((currentTableData) => ({
       ...currentTableData,
-      [tableName]: currentTableData[tableName].map((row, index) => {
-        if (index === rowIndex) {
-          let columns = Object.keys(row);
-          const updatedRow = { ...row };
-          if (
-            !updatedRow["New Benefit"] ||
-            updatedRow["New Benefit"].trim() === ""
-          ) {
-            updatedRow["New Benefit"] = row[columns[0]];
-            if (
-              !updatedRow["New Limit"] ||
-              updatedRow["New Limit"].trim() === ""
-            ) {
-              updatedRow["New Limit"] = row[columns[1]];
-            }
-          }
-          return updatedRow;
-        }
-        return row;
-      }),
+      [tableName]: [
+        ...currentTableData[tableName].slice(0, rowIndex + 1),
+        {
+          benefit: "",
+          limit: "",
+          color: "yellow",
+          edit: false,
+          "New Benefit": "",
+          "New Limit": "",
+          EditReason: "",
+          ReviewRequired: false,
+          Reviewed: false,
+          ReviewComment: "",
+        },
+        ...currentTableData[tableName].slice(rowIndex + 1, -1),
+      ],
     }));
   };
 
-  const handleConfirm = (tableName, rowIndex) => {
+  const handleConfirm = (tableName, rowIndex, column) => {
     setSelectedTable((currentTableData) => ({
       ...currentTableData,
       [tableName]: currentTableData[tableName].map((row, index) => {
         if (rowIndex === index) {
-          if (row.status === "unchecked") {
+          if (row[column] === false) {
             setIsOpen(true);
             setRowNumber(rowIndex);
             setTableName(tableName);
+            setColumn(column);
           }
-          return {
-            ...row,
-            status: row.status === "checked" ? "unchecked" : "checked",
-          };
         }
         return row;
       }),
@@ -240,23 +260,33 @@ export default function CustomizedTable() {
 
   const handleSaveCommentForRow = async () => {
     setIsOpen(false);
-
     setSelectedTable((currentTableData) => ({
       ...currentTableData,
       [tableName]: currentTableData[tableName].map((row, index) => {
-        if (index === rowNumber) {
+        if (index === rowNumber && column === "edit") {
           return {
             ...row,
-            comment: comment,
+            ["New Benefit"]: row["benefit"],
+            ["New Limit"]: row["limit"],
+            edit: true,
+            ReviewRequired: true,
+            EditReason: comment,
           };
+        } else if (index === rowNumber && column === "Reviewed") {
+          return {
+            ...row,
+            Reviewed: true,
+            ReviewComment: comment,
+          };
+        } else {
+          return row;
         }
-        return row;
       }),
     }));
-
     setComment("");
     setTableName("");
     setRowNumber(null);
+    setColumn("");
   };
 
   // const handleDelete = async () => {
@@ -359,8 +389,6 @@ export default function CustomizedTable() {
     const columns = ["benefit", "limit", "New Benefit", "New Limit"];
 
     titleMap.forEach((title) => {
-      console.log(`Selected Category: ${selectedCategory}, Title: ${title}`);
-
       const sectionData =
         tableData[selectedCategory] && tableData[selectedCategory][title];
       if (sectionData) {
@@ -423,8 +451,6 @@ export default function CustomizedTable() {
 
     // Iterate over each section to append its respective data
     titleMap.forEach((title) => {
-      console.log(`Selected Category: ${selectedCategory}, Title: ${title}`);
-
       const sectionData =
         tableData[selectedCategory] && tableData[selectedCategory][title];
 
@@ -542,6 +568,13 @@ export default function CustomizedTable() {
     },
   };
 
+  const titleMap = [
+    "General Benefit",
+    "In patient Benefit",
+    "Out Patient Benefit",
+    "Other Benefit",
+  ];
+
   Modal.setAppElement("#root");
 
   return (
@@ -551,13 +584,22 @@ export default function CustomizedTable() {
         onRequestClose={closeModal}
         style={customStyles}
       >
-        <div className="w-full flex flex-col items-center px-4 gap-4">
-          <h2 className="text-2xl">Please leave your comment.</h2>
+        <div className="w-full flex flex-col items-center gap-4">
+          {column !== "" && column === "edit" ? (
+            <h2 className="text-2xl">Edit</h2>
+          ) : column !== "" && column === "Reviewed" ? (
+            <h2 className="text-2xl">Review</h2>
+          ) : (
+            ""
+          )}
           <textarea
             name="comment"
             id="comment"
             cols="30"
             rows="10"
+            placeholder={
+              column !== "" && column === "edit" ? "Reason for Editing" : ""
+            }
             value={comment}
             autoFocus
             className="w-full h-24 p-2 border border-gray-300 focus:outline-none"
@@ -565,7 +607,7 @@ export default function CustomizedTable() {
           />
           <div className="flex gap-2">
             <button
-              className="bg-gray-200 px-4 py-2"
+              className="bg-gray-200 px-2 py-1 rounded-md"
               onClick={
                 tableName !== ""
                   ? handleSaveCommentForRow
@@ -574,7 +616,10 @@ export default function CustomizedTable() {
             >
               Comment
             </button>
-            <button className="bg-gray-200 px-4 py-2" onClick={closeModal}>
+            <button
+              className="bg-gray-200 px-2 py-1 rounded-md"
+              onClick={closeModal}
+            >
               Close
             </button>
           </div>
@@ -599,33 +644,26 @@ export default function CustomizedTable() {
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
         {selectedTable &&
-          Object.keys(selectedTable).map((tableName, index) => {
-            if (
-              tableName !== "status" &&
-              tableName !== "version" &&
-              tableName !== "resultTOB" &&
-              tableName !== "comment"
-            ) {
-              let table = Object.values(selectedTable[tableName]);
-              return (
-                <div
-                  key={index}
-                  className="w-full p-4 bg-white flex flex-col items-start"
-                >
-                  <h1 className="text-3xl text-black font-bold m-4">
-                    {tableName}
-                  </h1>
-                  <EditableTable
-                    tableName={tableName}
-                    tableData={table}
-                    handleEdit={handleEdit}
-                    handleFocus={handleFocusCell}
-                    handleConfirm={handleConfirm}
-                    handleDelete={handleDeleteRow}
-                  />
-                </div>
-              );
-            }
+          titleMap.map((tableName, index) => {
+            let table = Object.values(selectedTable[tableName]);
+            return (
+              <div
+                key={index}
+                className="w-full p-8 bg-white flex flex-col items-start"
+              >
+                <h1 className="text-3xl text-black font-bold m-4">
+                  {tableName}
+                </h1>
+                <EditableTable
+                  tableName={tableName}
+                  tableData={table}
+                  handleEdit={handleEdit}
+                  newRow={handleNewRow}
+                  handleConfirm={handleConfirm}
+                  handleDelete={handleDeleteRow}
+                />
+              </div>
+            );
           })}
       </div>
 

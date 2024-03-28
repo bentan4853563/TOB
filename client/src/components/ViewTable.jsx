@@ -17,7 +17,6 @@ const ViewTable = ({ tableData }) => {
   }
 
   const columns = findLargestObjectColumns(tableData);
-  console.log(tableData);
   // Render the table
   return (
     <table className="w-full">

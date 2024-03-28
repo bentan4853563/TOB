@@ -1,7 +1,7 @@
 {
   "cat_a": {
-    "status": "Processed",
-    "version": 6,
+    "status": "Generated",
+    "version": 7,
     "comment": "",
     "General Benefit": [
       {
@@ -119,7 +119,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -143,7 +143,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -197,7 +197,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -251,7 +251,7 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -376,7 +376,8 @@
         "status": "checked",
         "color": "green"
       }
-    ]
+    ],
+    "resultTOB": "My client-cat_a-2024-03-27T07:54:12.709Z"
   },
   "cat_b": {
     "status": "Reviewed",

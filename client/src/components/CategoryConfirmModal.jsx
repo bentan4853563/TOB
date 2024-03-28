@@ -26,7 +26,6 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
 
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
   const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
-  console.log("metaData", metaData);
   useEffect(() => {
     setCategoryList(list);
   }, [list]);
@@ -66,6 +65,13 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
                     return {
                       ...benefit,
                       color: benefit.status === "checked" ? "green" : "red",
+                      edit: false,
+                      "New Benefit": "",
+                      "New Limit": "",
+                      EditReason: "",
+                      ReviewRequired: false,
+                      Reviewed: false,
+                      ReviewComment: "",
                     };
                   }
                 );

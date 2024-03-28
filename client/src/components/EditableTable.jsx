@@ -1,32 +1,31 @@
 import Proptypes from "prop-types";
-import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
+import { confirmAlert } from "react-confirm-alert";
 import { Tooltip } from "react-tooltip";
 
 import { FaTrash } from "react-icons/fa";
 import { MdOutlineInsertComment } from "react-icons/md";
+import { GoPlus } from "react-icons/go";
 
 const EditableTable = ({
   tableName,
   tableData,
   handleEdit,
   handleConfirm,
-  handleFocus,
+  newRow,
   handleDelete,
 }) => {
-  function findLargestObjectColumns(tableData) {
-    if (tableData.length === 0) {
-      return [];
-    }
-    let largestObject = tableData.reduce((maxObj, currentObj) => {
-      return Object.keys(currentObj).length > Object.keys(maxObj).length
-        ? currentObj
-        : maxObj;
-    });
-    return Object.keys(largestObject);
-  }
-
-  const columns = findLargestObjectColumns(tableData);
+  const columns = [
+    "benefit",
+    "limit",
+    "edit",
+    "New Benefit",
+    "New Limit",
+    "EditReason",
+    "ReviewRequired",
+    "Reviewed",
+    "ReviewComment",
+  ];
 
   const onClickDeleteIcon = (rowIndex) => {
     confirmAlert({
@@ -50,105 +49,213 @@ const EditableTable = ({
   // Render the table
   return (
     <table className="w-full">
-      <thead>
+      <thead className="table-header">
         <tr className="">
+          <th className="px-2">New</th>
           {columns.map((column, index) => {
-            if (
-              column === "status" ||
-              column === "color" ||
-              column === "comment"
-            ) {
-              return null;
-            }
             return (
               <th
                 key={index}
-                className="p-4 first-letter:capitalize border border-gray-200"
+                className="p-2 first-letter:capitalize border border-gray-200"
               >
                 {column}
               </th>
             );
           })}
-          <th className="border border-gray-200">Actions</th>
+          <th>Del</th>
         </tr>
       </thead>
       <tbody>
         {tableData.map((row, rowIndex) => (
-          <tr key={rowIndex}>
+          <tr key={rowIndex} className="w-full">
+            <td className="border border-gray-200">
+              <GoPlus
+                onClick={() => newRow(tableName, rowIndex)}
+                className="cursor-pointer"
+              />
+            </td>
             {columns.map((column, columnIndex) => {
-              if (
-                column === "status" ||
-                column === "color" ||
-                column === "comment"
-              ) {
-                return null;
+              if (columnIndex < 2) {
+                if (row.color !== "yellow") {
+                  return (
+                    <td
+                      key={columnIndex}
+                      // onClick={() =>
+                      //   handleFocus(tableName, rowIndex, columnIndex)
+                      // }
+                      className={`w-1/4 ${
+                        row.color === "green"
+                          ? "status-checked"
+                          : "status-unchecked"
+                      } focus:outline-none border border-gray-200`}
+                    >
+                      {row[column]}
+                    </td>
+                  );
+                } else {
+                  return (
+                    <td
+                      key={columnIndex}
+                      // onClick={() =>
+                      //   handleFocus(tableName, rowIndex, columnIndex)
+                      // }
+                      className={`w-1/4 status-unchecked focus:outline-none border border-gray-200`}
+                    >
+                      <input
+                        type="text"
+                        value={row[column]}
+                        onChange={(e) =>
+                          handleEdit(
+                            tableName,
+                            e.target.value,
+                            rowIndex,
+                            column
+                          )
+                        }
+                        className="w-full bg-transparent focus:outline-none text-wrap"
+                      />
+                    </td>
+                  );
+                }
               }
-              return columnIndex < 2 ? (
-                <td
-                  key={columnIndex}
-                  onClick={() => handleFocus(tableName, rowIndex, columnIndex)}
-                  className={`${
-                    row.color === "green" ? "bg-green-300" : "bg-red-300"
-                  } focus:outline-none border border-gray-200`}
-                >
-                  {row[column]}
-                </td>
-              ) : (
-                <td className="w-1/4 border border-gray-200">
-                  <input
-                    type="text"
-                    value={row[column]}
-                    onFocus={() =>
-                      handleFocus(tableName, rowIndex, columnIndex)
-                    }
-                    onChange={(e) =>
-                      handleEdit(tableName, e.target.value, rowIndex, column)
-                    }
-                    className="w-full focus:outline-none text-wrap"
-                  />
-                </td>
-              );
+              if (columnIndex === 2) {
+                return (
+                  <td key={columnIndex} className="border border-gray-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      onChange={() =>
+                        handleConfirm(tableName, rowIndex, column)
+                      }
+                      checked={row.edit}
+                    />
+                  </td>
+                );
+              }
+              if (columnIndex > 2 && columnIndex < 5) {
+                return (
+                  <td
+                    key={columnIndex}
+                    className="w-1/4 border border-gray-200"
+                  >
+                    <input
+                      type="text"
+                      value={row[column]}
+                      onChange={(e) =>
+                        handleEdit(tableName, e.target.value, rowIndex, column)
+                      }
+                      className="w-full focus:outline-none text-wrap"
+                    />
+                  </td>
+                );
+              }
+              if (columnIndex === 5) {
+                return (
+                  <td
+                    key={column}
+                    className="w-[4rem] px-2 mx-auto border border-gray-200"
+                  >
+                    {row[column] !== "" && (
+                      <>
+                        <MdOutlineInsertComment
+                          data-tip
+                          data-tooltip-id={`comment-${rowIndex}-${columnIndex}`}
+                          className="comment-icon focus:outline-none"
+                        />
+                        <Tooltip
+                          id={`comment-${rowIndex}-${columnIndex}`}
+                          place="bottom"
+                          effect="solid"
+                          content={row["EditReason"]}
+                          style={{
+                            width: "240px",
+                            textAlign: "left",
+                            fontSize: "14px",
+                            backgroundColor: "#595959",
+                            color: "white",
+                            borderRadius: "4px",
+                            padding: "8px",
+                          }}
+                        />
+                      </>
+                    )}
+                  </td>
+                );
+              }
+              if (columnIndex === 6) {
+                return (
+                  <td key={columnIndex} className="border border-gray-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      // onChange={() =>
+                      //   handleConfirm(tableName, rowIndex, column)
+                      // }
+                      checked={row.ReviewRequired}
+                    />
+                  </td>
+                );
+              }
+              if (columnIndex === 7) {
+                return (
+                  <td key={columnIndex} className="px-2 border border-gray-200">
+                    {row.ReviewRequired && (
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        onChange={() =>
+                          handleConfirm(tableName, rowIndex, column)
+                        }
+                        checked={row.Reviewed}
+                      />
+                    )}
+                  </td>
+                );
+              }
+              if (columnIndex === 8) {
+                return (
+                  <td
+                    key={`comment-cell-${rowIndex}`}
+                    className="px-2 border border-gray-200"
+                  >
+                    {row["ReviewComment"] !== "" && (
+                      <>
+                        <MdOutlineInsertComment
+                          data-tip
+                          data-tooltip-id={`ReviewComment-${rowIndex}`} // changed to `data-for` to match Tooltip's expected prop
+                          className="comment-icon focus:outline-none"
+                        />
+                        <Tooltip
+                          id={`ReviewComment-${rowIndex}`}
+                          place="bottom"
+                          effect="solid"
+                          className="tooltip-custom" // use a className for styling instead of inline styles
+                        >
+                          {row["ReviewComment"]}
+                        </Tooltip>
+                      </>
+                    )}
+                  </td>
+                );
+              }
             })}
-            <td className="w-[4rem] border border-gray-200">
-              <div className="flex gap-4 items-center justify-end">
-                {row["comment"] && (
-                  <>
-                    <MdOutlineInsertComment
-                      data-tip
-                      data-tooltip-id={`comment-${rowIndex}`}
-                      className="text-green-500 focus:outline-none"
-                    />
-                    <Tooltip
-                      id={`comment-${rowIndex}`}
-                      place="bottom"
-                      effect="solid"
-                      content={row["comment"]}
-                      style={{
-                        width: "240px",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        backgroundColor: "#595959",
-                        color: "white",
-                        borderRadius: "4px",
-                        padding: "8px",
-                      }}
-                    />
-                  </>
-                )}
-                <input
-                  type="checkbox"
-                  className="h-4 w-4"
-                  onChange={() => handleConfirm(tableName, rowIndex)}
-                  checked={row.status === "checked"}
-                />
-                <FaTrash
-                  onClick={() => onClickDeleteIcon(rowIndex)}
-                  className="h-4 w-4 cursor-pointer"
-                />
-              </div>
+            <td key={`delete-${rowIndex}`} className="border border-gray-200">
+              <FaTrash
+                onClick={() => onClickDeleteIcon(rowIndex)}
+                className="h-4 w-4 cursor-pointer delete-icon"
+              />
             </td>
           </tr>
         ))}
+        {/* <tr key={`${tableName}-newRow`} className="w-full">
+          <td className="border border-gray-200">
+            <GoPlus
+              onClick={() => newRow(tableName)}
+              className="cursor-pointer"
+            />
+          </td>
+          <td colSpan={9} className="border border-gray-200"></td>
+        </tr> */}
       </tbody>
     </table>
   );
@@ -159,7 +266,7 @@ EditableTable.propTypes = {
   tableData: Proptypes.array.isRequired,
   handleEdit: Proptypes.func.isRequired,
   handleConfirm: Proptypes.func.isRequired,
-  handleFocus: Proptypes.func.isRequired,
+  newRow: Proptypes.func.isRequired,
   handleDelete: Proptypes.func.isRequired,
 };
 

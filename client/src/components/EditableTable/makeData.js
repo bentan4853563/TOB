@@ -1,6 +1,5 @@
 export default function MakeData(table) {
   const tableList = Object.keys(table);
-  console.log(table);
   let columns = [];
   if (tableList && tableList.length > 0) {
     tableList.forEach((name) => {
