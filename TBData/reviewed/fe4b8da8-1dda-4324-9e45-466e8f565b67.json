@@ -1,8 +1,8 @@
 {
-  "cat_a": {
-    "status": "Processed",
-    "version": 0,
-    "comment": "",
+  "CAT_A": {
+    "status": "Generated",
+    "version": 1,
+    "comment": "PDF generated",
     "General Benefit": [
       {
         "benefit": "Area of Cover",
@@ -119,7 +119,7 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -143,7 +143,7 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -197,7 +197,7 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked",
+        "status": "checked",
         "color": "red"
       },
       {
@@ -251,8 +251,11 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked",
-        "color": "red"
+        "status": "checked",
+        "color": "red",
+        "New Benefit": "Hepatitis Safe",
+        "New Limit": "Covered",
+        "comment": "Confirmed"
       },
       {
         "benefit": "Mindset",
@@ -350,13 +353,17 @@
         "benefit": "Specialists fees",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Specialists fees",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Prescription drugs",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Prescription drugs",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Alternative Treatments",
@@ -376,11 +383,12 @@
         "status": "checked",
         "color": "green"
       }
-    ]
+    ],
+    "resultTOB": "Client-CAT_A-2024-03-27T07:52:02.170Z.csv"
   },
-  "cat_b": {
-    "status": "Processed",
-    "version": 0,
+  "CAT_B": {
+    "status": "Generated",
+    "version": 1,
     "comment": "",
     "General Benefit": [
       {
@@ -498,8 +506,10 @@
       {
         "benefit": "Influenza Vaccine (once in a year)",
         "limit": "Covered",
-        "status": "unchecked",
-        "color": "red"
+        "status": "checked",
+        "color": "red",
+        "New Benefit": "Influenza Vaccine (once in a year)",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Deviated Nasal Septum",
@@ -522,8 +532,10 @@
       {
         "benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
         "limit": "Covered",
-        "status": "unchecked",
-        "color": "red"
+        "status": "checked",
+        "color": "red",
+        "New Benefit": "Rehabilitation (Inpatient, day-care and Outpatient treatment",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Reconstructive Surgery",
@@ -576,8 +588,10 @@
       {
         "benefit": "Psychiatric Treatment",
         "limit": "Covered",
-        "status": "unchecked",
-        "color": "red"
+        "status": "checked",
+        "color": "red",
+        "New Benefit": "Psychiatric Treatment",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Work Related Injuries",
@@ -630,8 +644,10 @@
       {
         "benefit": "Hepatitis Safe",
         "limit": "Covered",
-        "status": "unchecked",
-        "color": "red"
+        "status": "checked",
+        "color": "red",
+        "New Benefit": "Hepatitis Safe",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Mindset",
@@ -741,20 +757,27 @@
         "benefit": "Alternative Treatments",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Alternative Treatments",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Other Services",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Other Services",
+        "New Limit": "Covered"
       },
       {
         "benefit": "Deductible payable by the Insured ",
         "limit": "Covered",
         "status": "checked",
-        "color": "green"
+        "color": "green",
+        "New Benefit": "Deductible payable by the Insured ",
+        "New Limit": "Covered"
       }
-    ]
+    ],
+    "resultTOB": "Client-CAT_B-2024-03-27T07:57:13.505Z"
   }
 }
