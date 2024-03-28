@@ -355,6 +355,32 @@ export default function CustomizedTable() {
     return word;
   }
 
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`${node_server_url}/api/table/file-save`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-auth-token": token, // Include the token in the Authorization header
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({
+          uuid: metaData.uuid,
+          tableData,
+        }),
+      });
+      if (response.ok) {
+        toast.success("Successfuly saved", {
+          position: "top-right",
+        });
+      } else {
+        console.error("Error:", response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    }
+  };
+
   const handleSaveToPDF = async () => {
     const doc = new jsPDF();
 
@@ -677,6 +703,12 @@ export default function CustomizedTable() {
       </div>
 
       <div className="flex gap-4 my-8">
+        <button
+          onClick={handleSave}
+          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+        >
+          Save
+        </button>
         {selectedTable &&
           enableReview &&
           (selectedTable.status === "Processed" ||

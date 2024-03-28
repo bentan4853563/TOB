@@ -53,13 +53,13 @@ router.post("/insert", auth, async (req, res) => {
       };
     });
 
-    const inputData = {
-      uuid, // uuid from outer scope
-      ...metaData, // Spreads metaData properties into inputData
-      statusByCategory, // Array constructed above
-    };
+    Console.log(statusByCategory);
 
-    console.log("inputData", inputData);
+    const inputData = {
+      uuid,
+      ...metaData,
+      statusByCategory,
+    };
 
     result = await Table.insertMany(inputData, {
       new: true,
@@ -67,6 +67,21 @@ router.post("/insert", auth, async (req, res) => {
     });
 
     res.json({ metaData: result, tableData });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ success: false, message: "Error saving data" });
+  }
+});
+
+router.post("/file-save", auth, async (req, res) => {
+  try {
+    const { uuid, tableData } = req.body;
+
+    const filepath = `TBData/reviewed/${uuid}.json`;
+
+    await saveDataToFile(tableData, filepath);
+
+    res.json({ message: "Susscess!!!" });
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: "Error saving data" });
