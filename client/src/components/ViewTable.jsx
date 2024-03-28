@@ -54,7 +54,7 @@ const ViewTable = ({ tableData }) => {
                 <td
                   key={columnIndex}
                   className={`${
-                    row.color === "green" ? "bg-green-300" : "bg-red-300"
+                    row.color === "green" ? "bg-emerald-300" : "bg-red-400"
                   } focus:outline-none border border-gray-100`}
                 >
                   {row[column]}

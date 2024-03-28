@@ -626,19 +626,28 @@ export default function CustomizedTable() {
         </div>
       </Modal>
       <ToastContainer />
-      <div className="flex flex-col items-start gap-2">
-        <label htmlFor="category" className="font-bold">
-          Category
-        </label>
-        <Select
-          id="category"
-          options={categoryOptions}
-          onChange={handleCategoryChange}
-          value={categoryOptions.find(
-            (option) => option.value === selectedCategory
-          )}
-          className="w-full md:w-2/3 lg:w-1/2"
-        />
+      <div className="flex items-end gap-8">
+        <div className="w-full md:w-2/3 lg:w-1/2 flex flex-col">
+          <label htmlFor="category" className="font-bold">
+            Category
+          </label>
+          <Select
+            id="category"
+            options={categoryOptions}
+            onChange={handleCategoryChange}
+            value={categoryOptions.find(
+              (option) => option.value === selectedCategory
+            )}
+            className=""
+          />
+        </div>
+
+        <span className="mb-2">
+          <b>Status:</b> {tableData && tableData[selectedCategory].status}
+        </span>
+        <span className="mb-2">
+          <b>Version:</b> {tableData && tableData[selectedCategory].version}
+        </span>
       </div>
 
       {/* Table Group */}
