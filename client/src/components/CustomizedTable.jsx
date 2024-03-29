@@ -80,7 +80,8 @@ export default function CustomizedTable() {
           tableName !== "comment" &&
           tableName !== "resultTOB" &&
           selectedTable[tableName].map((row) => {
-            if (row.Reviewed === false) uncheckedCount = uncheckedCount + 1;
+            if (row.color === "red" && row.Reviewed === false)
+              uncheckedCount = uncheckedCount + 1;
           });
       });
       if (uncheckedCount !== 0) {
@@ -148,7 +149,7 @@ export default function CustomizedTable() {
           benefit: "",
           limit: "",
           color: "yellow",
-          edit: false,
+          edit: true,
           "New Benefit": "",
           "New Limit": "",
           "Edit Reason": "",
@@ -638,7 +639,11 @@ export default function CustomizedTable() {
         return <h2 className="text-2xl mb-4">Review</h2>;
       }
     } else {
-      return <h2 className="text-2xl mb-4">Edit</h2>;
+      if (column === "edit") {
+        return <h2 className="text-2xl mb-4">Edit</h2>;
+      } else if (column === "Reviewed") {
+        return <h2 className="text-2xl mb-4">Review</h2>;
+      }
     }
   };
 
@@ -705,13 +710,18 @@ export default function CustomizedTable() {
             )}
           />
         </div>
-
-        <span className="bg-cyan-200 px-4 py-2 rounded-full">
-          {tableData && tableData[selectedCategory].status}
-        </span>
-        <span className="bg-orange-200 px-4 py-2 rounded-full">
-          Version {tableData && tableData[selectedCategory].version}
-        </span>
+        <div className="flex flex-col">
+          <label htmlFor="status">Status</label>
+          <span id="status" className="bg-cyan-200 px-4 py-2 rounded-full">
+            {tableData && tableData[selectedCategory].status}
+          </span>
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="version">Version</label>
+          <span id="version" className="bg-orange-200 px-8 py-2 rounded-full">
+            {tableData && tableData[selectedCategory].version}
+          </span>
+        </div>
       </div>
 
       {/* Table Group */}

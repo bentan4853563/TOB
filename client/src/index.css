@@ -121,11 +121,11 @@ td {
 }
 
 .status-checked {
-  background-color: #c8e6c9; /* Green for checked status */
+  background-color: #ccffd8; /* Green for checked status */
 }
 
 .status-unchecked {
-  background-color: #ffcdd2; /* Red for unchecked status */
+  background-color: #ffd7d5; /* Red for unchecked status */
 }
 
 .action-cell {
