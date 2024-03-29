@@ -32,13 +32,6 @@ router.post("/insert", auth, async (req, res) => {
   try {
     const { uuid, metaData, tableData } = req.body;
 
-    // let newResultTOB;
-    // if (metaData.sourceTOB) {
-    //   newResultTOB = createFileNameWithPrefix(metaData.client);
-    // } else {
-    //   newResultTOB = Math.random().toString(36).substring(2, 15);
-    // }
-
     const processPath = `TBData/processed/${uuid}.json`;
     const reviewedPath = `TBData/reviewed/${uuid}.json`;
     await saveDataToFile(tableData, processPath);
@@ -52,8 +45,6 @@ router.post("/insert", auth, async (req, res) => {
         version: 0,
       };
     });
-
-    Console.log(statusByCategory);
 
     const inputData = {
       uuid,

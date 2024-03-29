@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ScrollToTop from "react-scroll-to-top";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { setMetaData } from "../redux/reducers/tableSlice";
@@ -21,6 +23,7 @@ const NewDocument = () => {
   const [tempFileName, setTempFileName] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [enableNew, setEnableNew] = useState(true);
 
   const [metaFormErrors, setMetaFormErrors] = useState({
     client: "",
@@ -91,6 +94,12 @@ const NewDocument = () => {
   }, []);
 
   useEffect(() => {
+    if (Object.keys(table).length > 0) {
+      setEnableNew(false);
+    }
+  }, [table]);
+
+  useEffect(() => {
     if (tobType === TobTypeList[0]) {
       setInsurer(companyList[0]);
     } else if (tobType === TobTypeList[1]) {
@@ -146,10 +155,33 @@ const NewDocument = () => {
   };
 
   const handleFileInput = (e) => {
-    const newFile =
-      e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    setFile(newFile);
-    setSourceTOB(newFile.name);
+    if (Object.keys(table).length !== 0) {
+      confirmAlert({
+        title: "Confirm!",
+        message: "Are you sure to upload another file?",
+        buttons: [
+          {
+            label: "Yes",
+            onClick: async () => {
+              setEnableNew(true);
+              const newFile =
+                e.target.files && e.target.files[0] ? e.target.files[0] : null;
+              setFile(newFile);
+              setSourceTOB(newFile.name);
+            },
+          },
+          {
+            label: "No",
+            onClick: () => {},
+          },
+        ],
+      });
+    } else {
+      const newFile =
+        e.target.files && e.target.files[0] ? e.target.files[0] : null;
+      setFile(newFile);
+      setSourceTOB(newFile.name);
+    }
   };
 
   const handleFetch = async () => {
@@ -421,7 +453,10 @@ const NewDocument = () => {
 
           <button
             onClick={handleProcess}
-            className="w-full md:w-72 lg-w-2/3 mt-2 py-3 bg-indigo-600 text-white focus:outline-none"
+            disabled={!enableNew}
+            className={`w-full md:w-72 lg-w-2/3 mt-2 py-3  text-white focus:outline-none ${
+              enableNew ? "bg-indigo-600" : "bg-indigo-600/70"
+            }`}
           >
             Process
           </button>

@@ -3,8 +3,8 @@ import { useSelector } from "react-redux";
 import ScrollToTop from "react-scroll-to-top";
 import Select from "react-select";
 
-import ViewTable from "../components/ViewTable";
 import { useNavigate } from "react-router-dom";
+import ViewTable from "../components/ViewTable";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ export default function CustomizedTable() {
   }));
 
   useEffect(() => {
-    if (Object.keys(table).length > 0) {
+    console.log(table);
+    if (table && Object.keys(table).length > 0) {
       setselectedCategory(Object.keys(table)[0]);
       setTableData(table);
     }
@@ -40,6 +41,13 @@ export default function CustomizedTable() {
   const handleCategoryChange = (selectedOption) => {
     setselectedCategory(selectedOption.value);
   };
+
+  const titleMap = [
+    "General Benefit",
+    "In patient Benefit",
+    "Other Benefit",
+    "Out Patient Benefit",
+  ];
 
   return (
     <div className="w-full h-full bg-gray-100 px-8 md:px-16 xl:px-24 flex flex-col items-start justify-start">
@@ -113,51 +121,55 @@ export default function CustomizedTable() {
       </div>
 
       <div className="w-full mt-4 flex items-end gap-8">
-        <div className="w-1/2 flex flex-col items-start gap-2">
-          <label htmlFor="category" className="font-bold">
-            Category
-          </label>
-          <Select
-            id="category"
-            options={categoryOptions}
-            onChange={handleCategoryChange}
-            value={categoryOptions.find(
-              (option) => option.value === selectedCategory
-            )}
-            className="w-full"
-          />
-        </div>
-        {selectedTable && (
-          <span className="text-lg bg-white px-4 py-1 rounded-md" disabled>
-            {selectedTable["status"]}
+        <div className="w-full flex items-end gap-8">
+          {/* Category Selector */}
+          <div className="w-1/2 flex flex-col">
+            <label htmlFor="category" className="font-bold">
+              Category
+            </label>
+            <Select
+              id="category"
+              options={categoryOptions}
+              onChange={handleCategoryChange}
+              value={categoryOptions.find(
+                (option) => option.value === selectedCategory
+              )}
+            />
+          </div>
+
+          {/* Status */}
+          <span className="bg-cyan-200 px-4 py-2 rounded-full">
+            {Object.keys(tableData).length > 0 &&
+              tableData[selectedCategory].status}
           </span>
-        )}
+          {/* Version */}
+          <span className="bg-orange-200 px-4 py-2 rounded-full">
+            Version{" "}
+            {Object.keys(tableData).length > 0 &&
+              tableData[selectedCategory].version}
+          </span>
+        </div>
       </div>
 
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
         {selectedTable &&
-          Object.keys(selectedTable).map((tableName, index) => {
-            if (
-              tableName !== "status" &&
-              tableName !== "comment" &&
-              tableName !== "version" &&
-              tableName !== "resultTOB" &&
-              tableName !== "check"
-            ) {
-              let table = Object.values(selectedTable[tableName]);
-              return (
-                <div
-                  key={index}
-                  className="w-full p-4 bg-white flex flex-col items-start"
-                >
-                  <h1 className="text-3xl text-black font-bold m-4">
-                    {tableName}
-                  </h1>
-                  <ViewTable tableData={table} />
-                </div>
-              );
-            }
+          titleMap.map((tableName, index) => {
+            return (
+              <div
+                key={index}
+                className="w-full p-4 bg-white flex flex-col items-start"
+              >
+                <h1 className="text-3xl text-black font-bold m-4">
+                  {tableName}
+                </h1>
+                {selectedTable && Object.keys(selectedTable).length > 0 && (
+                  <ViewTable
+                    tableData={(tableName, selectedTable[tableName])}
+                  />
+                )}
+              </div>
+            );
           })}
       </div>
 

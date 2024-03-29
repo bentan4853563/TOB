@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import { Tooltip } from "react-tooltip";
 import { MdOutlineInsertComment } from "react-icons/md";
 
@@ -42,9 +42,9 @@ const DisplayTable = () => {
   useEffect(() => {
     dispatch(clearTableData());
     dispatch(clearMetaData());
+    dispatch(setLoading());
     const fetchData = async () => {
       try {
-        dispatch(setLoading());
         const response = await fetch(`${node_server_url}/api/table/readAll`, {
           method: "GET",
           headers: {
@@ -133,27 +133,42 @@ const DisplayTable = () => {
     });
     const result = await response.json();
     dispatch(setMetaData(result.metaData));
+    console.log(result.fileData);
     dispatch(storeTableData(result.fileData));
     navigate("/tb/view");
     dispatch(clearLoading());
   };
 
   const handleEdit = async (uuid) => {
-    dispatch(setLoading());
-    const response = await fetch(`${node_server_url}/api/table/getOne`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-auth-token": token,
-        "ngrok-skip-browser-warning": true,
-      },
-      body: JSON.stringify({ uuid: uuid }),
-    });
-    const result = await response.json();
-    dispatch(setMetaData(result.metaData));
-    dispatch(storeTableData(result.fileData));
-    navigate("/tb/edit");
-    dispatch(clearLoading());
+    try {
+      dispatch(setLoading());
+      const response = await fetch(`${node_server_url}/api/table/getOne`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": token,
+          "ngrok-skip-browser-warning": true,
+        },
+        body: JSON.stringify({ uuid: uuid }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        dispatch(setMetaData(result.metaData));
+        dispatch(storeTableData(result.fileData));
+        navigate("/tb/edit");
+      } else {
+        if (response.status === 401) {
+          navigate("/");
+          toast.error("Please sign in!!!", {
+            position: "top-right",
+          });
+        }
+        console.log(response.body);
+      }
+      dispatch(clearLoading());
+    } catch (error) {
+      console.log("Error", error);
+    }
   };
 
   const handleNew = () => {

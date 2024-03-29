@@ -8,7 +8,7 @@ import autoTable from "jspdf-autotable";
 import Select from "react-select";
 
 import { toast, ToastContainer } from "react-toastify";
-// import { confirmAlert } from "react-confirm-alert";
+import { confirmAlert } from "react-confirm-alert";
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
@@ -39,6 +39,7 @@ export default function CustomizedTable() {
   const [column, setColumn] = useState("");
   const [clickedButton, setClickedButton] = useState("");
 
+  const [saved, setSaved] = useState(false);
   const [enableReview, setEnableReview] = useState(true);
 
   const categoryOptions = Object.keys(table).map((category) => ({
@@ -64,8 +65,9 @@ export default function CustomizedTable() {
   }, [tableData, selectedCategory]);
 
   useEffect(() => {
+    setSaved(false);
+
     if (selectedTable) {
-      console.log("selected Table", selectedTable);
       setTableData((currentTableData) => ({
         ...currentTableData,
         [selectedCategory]: selectedTable,
@@ -149,10 +151,10 @@ export default function CustomizedTable() {
           edit: false,
           "New Benefit": "",
           "New Limit": "",
-          EditReason: "",
-          ReviewRequired: false,
+          "Edit Reason": "",
+          "Review Required": false,
           Reviewed: false,
-          ReviewComment: "",
+          "Review Comment": "",
         },
         ...currentTableData[tableName].slice(rowIndex + 1, -1),
       ],
@@ -269,14 +271,14 @@ export default function CustomizedTable() {
             ["New Benefit"]: row["benefit"],
             ["New Limit"]: row["limit"],
             edit: true,
-            ReviewRequired: true,
-            EditReason: comment,
+            "Review Required": true,
+            "Edit Reason": comment,
           };
         } else if (index === rowNumber && column === "Reviewed") {
           return {
             ...row,
             Reviewed: true,
-            ReviewComment: comment,
+            "Review Comment": comment,
           };
         } else {
           return row;
@@ -373,6 +375,7 @@ export default function CustomizedTable() {
         toast.success("Successfuly saved", {
           position: "top-right",
         });
+        setSaved(true);
       } else {
         console.error("Error:", response.status, response.statusText);
       }
@@ -562,7 +565,32 @@ export default function CustomizedTable() {
   };
 
   const handleClose = () => {
-    navigate("/tb/dbtable");
+    if (!saved) {
+      confirmAlert({
+        title: "Confirm!",
+        message: "There are unsaved changes, Are you sure?",
+        buttons: [
+          {
+            label: "Save",
+            onClick: async () => {
+              handleSave();
+            },
+          },
+          {
+            label: "Close",
+            onClick: async () => {
+              navigate("/tb/dbtable");
+            },
+          },
+          {
+            label: "Cancel",
+            onClick: () => {},
+          },
+        ],
+      });
+    } else {
+      navigate("/tb/dbtable");
+    }
   };
 
   // const getEndPoint = () => {
@@ -593,7 +621,7 @@ export default function CustomizedTable() {
       transform: "translate(-50%, -50%)",
     },
   };
-
+  console.log(saved);
   const titleMap = [
     "General Benefit",
     "In patient Benefit",
@@ -603,6 +631,19 @@ export default function CustomizedTable() {
 
   Modal.setAppElement("#root");
 
+  const modalHeather = () => {
+    console.log(column);
+    if (column === "") {
+      if (clickedButton === "handleReview") {
+        return <h2 className="text-2xl mb-4">Review</h2>;
+      }
+    } else {
+      return <h2 className="text-2xl mb-4">Edit</h2>;
+    }
+  };
+
+  console.log(metaData);
+
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
@@ -610,21 +651,19 @@ export default function CustomizedTable() {
         onRequestClose={closeModal}
         style={customStyles}
       >
+        {modalHeather()}
         <div className="w-full flex flex-col items-center gap-4">
-          {column !== "" && column === "edit" ? (
-            <h2 className="text-2xl">Edit</h2>
-          ) : column !== "" && column === "Reviewed" ? (
-            <h2 className="text-2xl">Review</h2>
-          ) : (
-            ""
-          )}
           <textarea
             name="comment"
             id="comment"
             cols="30"
             rows="10"
             placeholder={
-              column !== "" && column === "edit" ? "Reason for Editing" : ""
+              column !== "" && column === "edit"
+                ? "Reason for Editing"
+                : clickedButton === "handleReview"
+                ? "Review Comment"
+                : ""
             }
             value={comment}
             autoFocus
@@ -640,7 +679,7 @@ export default function CustomizedTable() {
                   : handleCommentForCategory
               }
             >
-              Comment
+              Submit
             </button>
             <button
               className="bg-gray-200 px-2 py-1 rounded-md"
@@ -664,15 +703,14 @@ export default function CustomizedTable() {
             value={categoryOptions.find(
               (option) => option.value === selectedCategory
             )}
-            className=""
           />
         </div>
 
-        <span className="mb-2">
-          <b>Status:</b> {tableData && tableData[selectedCategory].status}
+        <span className="bg-cyan-200 px-4 py-2 rounded-full">
+          {tableData && tableData[selectedCategory].status}
         </span>
-        <span className="mb-2">
-          <b>Version:</b> {tableData && tableData[selectedCategory].version}
+        <span className="bg-orange-200 px-4 py-2 rounded-full">
+          Version {tableData && tableData[selectedCategory].version}
         </span>
       </div>
 
@@ -703,16 +741,22 @@ export default function CustomizedTable() {
       </div>
 
       <div className="flex gap-4 my-8">
-        <button
-          onClick={handleSave}
-          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-        >
-          Save
-        </button>
+        {!saved &&
+          selectedTable &&
+          selectedTable.status !== "Generated" &&
+          selectedTable.status !== "Reviewed" && (
+            <button
+              onClick={handleSave}
+              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+            >
+              Save
+            </button>
+          )}
         {selectedTable &&
           enableReview &&
           (selectedTable.status === "Processed" ||
-            selectedTable.status === "Revised") && (
+            selectedTable.status === "Revised") &&
+          saved && (
             <button
               onClick={() => handleClickStatusChangeButton("handleReview")}
               className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"

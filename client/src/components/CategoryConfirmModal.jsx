@@ -68,10 +68,10 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
                       edit: false,
                       "New Benefit": "",
                       "New Limit": "",
-                      EditReason: "",
-                      ReviewRequired: false,
+                      "Edit Reason": "",
+                      "Review Required": false,
                       Reviewed: false,
-                      ReviewComment: "",
+                      "Review Comment": "",
                     };
                   }
                 );
@@ -115,6 +115,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
       if (response.ok) {
         const result = await response.json();
         const { metaData, tableData } = result;
+        console.log("result", result);
         dispatch(setMetaData(metaData[0]));
         dispatch(storeTableData(tableData));
       } else {

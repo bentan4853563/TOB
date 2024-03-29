@@ -21,10 +21,10 @@ const EditableTable = ({
     "edit",
     "New Benefit",
     "New Limit",
-    "EditReason",
-    "ReviewRequired",
+    "Edit Reason",
+    "Review Required",
     "Reviewed",
-    "ReviewComment",
+    "Review Comment",
   ];
 
   const onClickDeleteIcon = (rowIndex) => {
@@ -153,18 +153,18 @@ const EditableTable = ({
                     key={column}
                     className="w-[4rem] px-2 mx-auto border border-gray-200"
                   >
-                    {row[column] !== "" && (
+                    {row["Edit Reason"] !== "" && (
                       <>
                         <MdOutlineInsertComment
                           data-tip
                           data-tooltip-id={`comment-${rowIndex}-${columnIndex}`}
-                          className="comment-icon focus:outline-none"
+                          className="comment-icon focus:outline-none cursor-pointer"
                         />
                         <Tooltip
                           id={`comment-${rowIndex}-${columnIndex}`}
                           place="bottom"
                           effect="solid"
-                          content={row["EditReason"]}
+                          content={row["Edit Reason"]}
                           style={{
                             width: "240px",
                             textAlign: "left",
@@ -189,7 +189,7 @@ const EditableTable = ({
                       // onChange={() =>
                       //   handleConfirm(tableName, rowIndex, column)
                       // }
-                      checked={row.ReviewRequired}
+                      checked={row["Review Required"]}
                     />
                   </td>
                 );
@@ -197,7 +197,7 @@ const EditableTable = ({
               if (columnIndex === 7) {
                 return (
                   <td key={columnIndex} className="px-2 border border-gray-200">
-                    {row.ReviewRequired && (
+                    {row["Review Required"] && (
                       <input
                         type="checkbox"
                         className="h-4 w-4"
@@ -216,12 +216,12 @@ const EditableTable = ({
                     key={`comment-cell-${rowIndex}`}
                     className="px-2 border border-gray-200"
                   >
-                    {row["ReviewComment"] !== "" && (
+                    {row["Review Comment"] !== "" && (
                       <>
                         <MdOutlineInsertComment
                           data-tip
                           data-tooltip-id={`ReviewComment-${rowIndex}`} // changed to `data-for` to match Tooltip's expected prop
-                          className="comment-icon focus:outline-none"
+                          className="comment-icon focus:outline-none cursor-pointer"
                         />
                         <Tooltip
                           id={`ReviewComment-${rowIndex}`}
@@ -229,7 +229,7 @@ const EditableTable = ({
                           effect="solid"
                           className="tooltip-custom" // use a className for styling instead of inline styles
                         >
-                          {row["ReviewComment"]}
+                          {row["Review Comment"]}
                         </Tooltip>
                       </>
                     )}
@@ -245,15 +245,6 @@ const EditableTable = ({
             </td>
           </tr>
         ))}
-        {/* <tr key={`${tableName}-newRow`} className="w-full">
-          <td className="border border-gray-200">
-            <GoPlus
-              onClick={() => newRow(tableName)}
-              className="cursor-pointer"
-            />
-          </td>
-          <td colSpan={9} className="border border-gray-200"></td>
-        </tr> */}
       </tbody>
     </table>
   );

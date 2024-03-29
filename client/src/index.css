@@ -154,3 +154,4 @@ input[type='checkbox']:checked + label {
   text-overflow: ellipsis;
   max-width: 150px; /* You can set the max-width as per your design */
 }
+
