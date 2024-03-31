@@ -44,7 +44,7 @@ export default function CustomizedTable() {
 
   const titleMap = [
     "General Benefit",
-    "In patient Benefit",
+    "In Patient Benefit",
     "Other Benefit",
     "Out Patient Benefit",
   ];
@@ -164,9 +164,7 @@ export default function CustomizedTable() {
                   {tableName}
                 </h1>
                 {selectedTable && Object.keys(selectedTable).length > 0 && (
-                  <ViewTable
-                    tableData={(tableName, selectedTable[tableName])}
-                  />
+                  <ViewTable tableData={selectedTable[tableName]} />
                 )}
               </div>
             );

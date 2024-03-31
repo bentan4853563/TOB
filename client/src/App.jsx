@@ -8,7 +8,6 @@ import {
 import { useSelector } from "react-redux";
 
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
 import Loading from "./components/Loading";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -33,7 +32,6 @@ function App() {
   return (
     <>
       <Loading loading={loading} />
-      <ToastContainer />
       <Router>
         <Routes>
           <Route element={<ProtectedRoute />}>

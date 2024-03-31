@@ -16,8 +16,8 @@ const ViewTable = ({ tableData }) => {
     "Reviewed",
     "Review Comment",
   ];
-  console.log(tableData);
   // Render the table
+  console.log("==>", tableData);
   return (
     <table className="w-full">
       <thead className="table-header">
@@ -44,7 +44,9 @@ const ViewTable = ({ tableData }) => {
                     <td
                       key={columnIndex}
                       className={`w-1/4 ${
-                        row.color === "green" ? "bg-emerald-300" : "bg-red-400"
+                        row.color === "green"
+                          ? "status-checked"
+                          : "status-unchecked"
                       } focus:outline-none border border-gray-200`}
                     >
                       {row[column]}
@@ -54,7 +56,7 @@ const ViewTable = ({ tableData }) => {
                   return (
                     <td
                       key={columnIndex}
-                      className={`w-1/4 bg-red-400 focus:outline-none border border-gray-200`}
+                      className={`w-1/4 bg-white focus:outline-none border border-gray-200`}
                     >
                       <input
                         type="text"

@@ -44,6 +44,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
   };
 
   const handleSubmit = async () => {
+    dispatch(setLoading());
     const formData = new FormData();
     formData.append("category_list", JSON.stringify(categoryList));
     formData.append("file_name", JSON.stringify(file_name));
@@ -95,6 +96,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
   };
 
   const saveStatusByCategory = async (tableData) => {
+    dispatch(setLoading());
     const uuid = crypto.randomUUID();
     dispatch(setUUID(uuid));
 
@@ -115,7 +117,6 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
       if (response.ok) {
         const result = await response.json();
         const { metaData, tableData } = result;
-        console.log("result", result);
         dispatch(setMetaData(metaData[0]));
         dispatch(storeTableData(tableData));
       } else {
@@ -124,6 +125,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
     } catch (error) {
       console.error("Fetch Error:", error);
     }
+    dispatch(clearLoading);
   };
 
   return (

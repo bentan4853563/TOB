@@ -56,6 +56,7 @@ router.post("/insert", auth, async (req, res) => {
       new: true,
       upsert: true,
     });
+    console.log("result", result);
 
     res.json({ metaData: result, tableData });
   } catch (error) {
@@ -72,7 +73,7 @@ router.post("/file-save", auth, async (req, res) => {
 
     await saveDataToFile(tableData, filepath);
 
-    res.json({ message: "Susscess!!!" });
+    res.json(tableData);
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: "Error saving data" });

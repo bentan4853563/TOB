@@ -4,8 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
 // eslint-disable-next-line no-unused-vars
 import autoTable from "jspdf-autotable";
-import { utils, writeFile } from "xlsx";
-
 import Select from "react-select";
 import Modal from "react-modal";
 import { toast, ToastContainer } from "react-toastify";
@@ -18,7 +16,6 @@ import "react-toastify/dist/ReactToastify.css";
 import EditableTable from "./EditableTable";
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
-import ViewTable from "./ViewTable";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
@@ -30,9 +27,9 @@ export default function CustomizedTable() {
   const { token } = useSelector((state) => state.auth);
   const { metaData } = useSelector((state) => state.table);
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  // const [filteredTable, setFilteredTable] = useState({});
-  const [tableData, setTableData] = useState({});
+  const [selectedCategory, setselectedCategory] = useState();
+  const [selectedTable, setSelectedTable] = useState();
+  const [tableData, setTableData] = useState();
 
   const [comment, setComment] = useState("");
   const [rowNumber, setRowNumber] = useState(0);
@@ -40,9 +37,9 @@ export default function CustomizedTable() {
   const [column, setColumn] = useState("");
   const [clickedButton, setClickedButton] = useState("");
 
-  const [saved, setSaved] = useState(true);
+  const [saved, setSaved] = useState(false);
   const [enableReview, setEnableReview] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedFilter, setSelectedFilter] = useState();
 
   const categoryOptions = Object.keys(table).map((category) => ({
     value: category,
@@ -58,7 +55,6 @@ export default function CustomizedTable() {
     { value: "reviewed", label: "Reviewed" },
     { value: "review-pending", label: "Review Pending" },
   ];
-
   const titleMap = [
     "General Benefit",
     "In Patient Benefit",
@@ -66,10 +62,8 @@ export default function CustomizedTable() {
     "Other Benefit",
   ];
 
-  console.log("selectedFilter", selectedFilter);
-
   const handleCategoryChange = (selectedOption) => {
-    setSelectedCategory(selectedOption.value);
+    setselectedCategory(selectedOption.value);
   };
 
   const handleFilterChange = (selectedOption) => {
@@ -78,19 +72,103 @@ export default function CustomizedTable() {
 
   useEffect(() => {
     if (Object.keys(table).length > 0) {
-      setSelectedCategory(Object.keys(table)[0]);
+      setselectedCategory(Object.keys(table)[0]);
       setTableData(table);
     }
   }, [table]);
 
+  // useEffect(() => {
+  //   if (tableData && Object.keys(tableData).length > 0) {
+  //     setselectedCategory(Object.keys(tableData)[0]);
+  //   }
+  // }, [tableData]);
+
   useEffect(() => {
-    if (tableData && Object.keys(tableData).length > 0) {
+    if (
+      tableData &&
+      Object.keys(tableData).length > 0 &&
+      selectedCategory !== null
+    ) {
+      setSelectedTable(tableData[selectedCategory]);
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedFilter && tableData) {
+      let filteredTables = {};
+
+      titleMap.forEach((tableName) => {
+        switch (selectedFilter) {
+          case "all":
+            filteredTables[tableName] = tableData[selectedCategory][tableName];
+            break;
+          case "not-edited":
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter((row) => !row.edit && row.color === "green");
+            break;
+          case "to-be-edited":
+            // Assuming 'toBeEdited' is a property which indicates if a row needs editing
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter((row) => !row.edit && row.color === "red");
+            break;
+          case "edited":
+            // Assuming 'edit' is a property which indicates if a row has been edited
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter((row) => row.edit === true);
+            break;
+          case "review-required":
+            // Assuming there is a 'reviewRequired' property
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter((row) => row["Review Required"] === true);
+            break;
+          case "reviewed":
+            // Assuming there is a 'reviewed' property
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter((row) => row.Reviewed === true);
+            break;
+          case "review-pending":
+            // Assuming there is a 'reviewPending' property
+            filteredTables[tableName] = tableData[selectedCategory][
+              tableName
+            ].filter(
+              (row) => row["Review Required"] === true && row.Reviewed === false
+            );
+            break;
+          default:
+            filteredTables[tableName] = tableData[selectedCategory][tableName];
+            break;
+        }
+      });
+
+      // Now you can set the filtered result into state or use it as needed
+      setSelectedTable(filteredTables);
+    }
+  }, [selectedFilter]);
+
+  useEffect(() => {
+    setSaved(false);
+
+    if (selectedTable) {
+      // setTableData((currentTableData) => ({
+      //   ...currentTableData,
+      //   [selectedCategory]: selectedTable,
+      // }));
+      const tableList = Object.keys(selectedTable);
       let uncheckedCount = 0;
-      titleMap.map((tableName) => {
-        tableData[selectedCategory][tableName].map((row) => {
-          if (row.color === "red" && row["Review Required"] === false)
-            uncheckedCount = uncheckedCount + 1;
-        });
+      tableList.map((tableName) => {
+        tableName !== "status" &&
+          tableName !== "version" &&
+          tableName !== "comment" &&
+          tableName !== "resultTOB" &&
+          selectedTable[tableName].map((row) => {
+            if (row.color === "red" && row["Review Required"] === false)
+              uncheckedCount = uncheckedCount + 1;
+          });
       });
       if (uncheckedCount !== 0) {
         setEnableReview(false);
@@ -98,141 +176,110 @@ export default function CustomizedTable() {
         setEnableReview(true);
       }
     }
-  }, [tableData]);
+  }, [selectedTable, selectedCategory]);
 
-  // useEffect(() => {
-  //   if (selectedCategory !== "") {
-  //     setSelectedFilter(filterOptions[0].value);
-  //   }
-  // }, [selectedCategory]);
-
-  // useEffect(() => {
-  //   if (
-  //     selectedCategory !== "" &&
-  //     selectedFilter !== "" &&
-  //     Object.keys(tableData).length > 0
-  //   ) {
-  //     const newFilteredTable = tableData[selectedCategory];
-  //     newFilteredTable.filter((currentTable) => ({
-  //       ...currentTable,
-
-  //     }))
-  //     setFilteredTable();
-  //   }
-  // }, [selectedCategory, selectedFilter, tableData]);
-
-  const handleEdit = (tableName, value, rowIndex, fieldName) => {
-    setTableData((currentTableData) => ({
-      ...currentTableData,
+  // Manage Table
+  // Function to handle changes in input fields
+  const handleEdit = (tableName, value, index, fieldName) => {
+    const newTableData = {
+      ...tableData,
       [selectedCategory]: {
         ...tableData[selectedCategory],
         [tableName]: tableData[selectedCategory][tableName].map(
-          (row, index) => {
-            if (index === rowIndex) {
-              return {
+          (row, rowIndex) => {
+            if (rowIndex === index) {
+              console.log(fieldName, value);
+              const updatedRow = {
                 ...row,
                 [fieldName]: value,
               };
+              updatedRow.status =
+                updatedRow["benefit"] === updatedRow["New Benefit"] &&
+                updatedRow["limit"] === updatedRow["New Limit"]
+                  ? "checked"
+                  : "unchecked";
+              return updatedRow;
             }
             return row;
           }
         ),
       },
-    }));
-    setSaved(false);
+    };
+    console.log("New", newTableData);
+    setTableData(newTableData);
   };
 
+  // const handleFocusCell = (tableName, rowIndex) => {
+  //   setSelectedTable((currentTableData) => ({
+  //     ...currentTableData,
+  //     [tableName]: currentTableData[tableName].map((row, index) => {
+  //       if (index === rowIndex) {
+  //         const updatedRow = { ...row };
+  //         if (
+  //           !updatedRow["New Benefit"] ||
+  //           updatedRow["New Benefit"].trim() === ""
+  //         ) {
+  //           updatedRow["New Benefit"] = row["benefit"];
+  //           if (
+  //             !updatedRow["New Limit"] ||
+  //             updatedRow["New Limit"].trim() === ""
+  //           ) {
+  //             updatedRow["New Limit"] = row["limit"];
+  //           }
+  //         }
+  //         return updatedRow;
+  //       }
+  //       return row;
+  //     }),
+  //   }));
+  // };
   const handleNewRow = (tableName, rowIndex) => {
-    setTableData((currentTableData) => ({
+    setSelectedTable((currentTableData) => ({
       ...currentTableData,
-      [selectedCategory]: {
-        ...currentTableData[selectedCategory],
-        [tableName]: [
-          ...currentTableData[selectedCategory][tableName].slice(
-            0,
-            rowIndex + 1
-          ),
-          {
-            benefit: "",
-            limit: "",
-            color: "yellow",
-            edit: true,
-            "New Benefit": "",
-            "New Limit": "",
-            "Edit Reason": "",
-            "Review Required": false,
-            Reviewed: false,
-            "Review Comment": "",
-          },
-          // This should likely be currentTableData[selectedCategory][tableName].length
-          ...currentTableData[selectedCategory][tableName].slice(
-            rowIndex + 1,
-            currentTableData[selectedCategory][tableName].length
-          ),
-        ],
-      },
+      [tableName]: [
+        ...currentTableData[tableName].slice(0, rowIndex + 1),
+        {
+          benefit: "",
+          limit: "",
+          color: "yellow",
+          edit: true,
+          "New Benefit": "",
+          "New Limit": "",
+          "Edit Reason": "",
+          "Review Required": false,
+          Reviewed: false,
+          "Review Comment": "",
+        },
+        ...currentTableData[tableName].slice(rowIndex + 1, -1),
+      ],
     }));
   };
 
   const handleConfirm = (tableName, rowIndex, column) => {
-    setTableData((currentTableData) => {
-      const rows = currentTableData[selectedCategory][tableName];
-      // Check if condition before opening modal
-      if (rows[rowIndex][column] === false) {
-        setIsOpen(true);
-        setRowNumber(rowIndex);
-        setTableName(tableName);
-        setColumn(column);
-      }
-      return currentTableData; // We return the current state directly since there's no modification
-    });
-    setSaved(false);
-  };
-
-  const handleSaveCommentForRow = () => {
-    setTableData((currentTableData) => ({
+    setSelectedTable((currentTableData) => ({
       ...currentTableData,
-      [selectedCategory]: {
-        ...tableData[selectedCategory],
-        [tableName]: tableData[selectedCategory][tableName].map(
-          (row, index) => {
-            if (index === rowNumber && column === "edit") {
-              return {
-                ...row,
-                ["New Benefit"]: row["benefit"],
-                ["New Limit"]: row["limit"],
-                edit: true,
-                "Review Required": true,
-                "Edit Reason": comment,
-              };
-            } else if (index === rowNumber && column === "Reviewed") {
-              return {
-                ...row,
-                Reviewed: true,
-                "Review Comment": comment,
-              };
-            } else {
-              return row;
-            }
+      [tableName]: currentTableData[tableName].map((row, index) => {
+        if (rowIndex === index) {
+          if (row[column] === false) {
+            setIsOpen(true);
+            setRowNumber(rowIndex);
+            setTableName(tableName);
+            setColumn(column);
           }
-        ),
-      },
+        }
+        return row;
+      }),
     }));
-    setIsOpen(false);
-    setComment("");
   };
 
   const handleDeleteRow = (tableName, rowIndex) => {
-    setTableData((currentTableData) => ({
+    setSelectedTable((currentTableData) => ({
       ...currentTableData,
-      [selectedCategory]: {
-        ...currentTableData[selectedCategory],
-        [tableName]: currentTableData[selectedCategory][tableName].filter(
-          (_, index) => index !== rowIndex
-        ),
-      },
+      [tableName]: currentTableData[tableName].filter(
+        (row, index) => index !== rowIndex
+      ),
     }));
-    toast.success("Successfully deleted your selected");
+    toast.success("Successfuly deleted you selected");
   };
 
   const handleClickStatusChangeButton = (buttonName) => {
@@ -240,12 +287,25 @@ export default function CustomizedTable() {
     setIsOpen(true);
   };
 
+  // const updateCategoryStatusAndVersion = async (newStatus) => {
+  //   const tempData = {
+  //     ...tableData,
+  //     [selectedCategory]: {
+  //       ...tableData[selectedCategory],
+  //       status: newStatus,
+  //       version: tableData[selectedCategory].version + 1,
+  //     },
+  //   };
+  //   setSelectedTable(tempData[selectedCategory]);
+  //   update(tempData);
+  // };
+
   const handleReview = async () => {
     setIsOpen(false);
     let required = 0;
     let reviewed = 0;
     titleMap.forEach((title) => {
-      tableData[selectedCategory][title].forEach((row) => {
+      selectedTable[title].forEach((row) => {
         if (row["Review Required"]) required++;
         if (row.Reviewed) reviewed++;
       });
@@ -260,14 +320,13 @@ export default function CustomizedTable() {
     };
     update(tempData);
     setComment("");
-    console.log(required, reviewed);
     if (required === reviewed) {
       toast.success("Successfuly Reviewed!!!", {
         position: "top-right",
       });
     } else {
       toast.warning(
-        `${required} / ${required - reviewed} Record still under review.`,
+        `There are ${required} / ${required - reviewed} yet reviewed records.`,
         {
           position: "top-right",
         }
@@ -277,33 +336,130 @@ export default function CustomizedTable() {
 
   const handleGenerate = async (fileName) => {
     setIsOpen(false);
-    setTableData((currentTableData) => ({
-      ...currentTableData,
+    const tempData = {
+      ...tableData,
       [selectedCategory]: {
-        ...currentTableData[selectedCategory],
+        ...tableData[selectedCategory],
         resultTOB: fileName,
         status: "Generated",
         comment: comment || "",
-        version: currentTableData[selectedCategory].version + 1,
+        version: tableData[selectedCategory].version + 1,
       },
-    }));
+    };
     setComment("");
+    setSelectedTable(tempData[selectedCategory]);
+    update(tempData);
   };
 
   const handleRevise = async () => {
     setIsOpen(false);
-    setTableData((currentTableData) => ({
-      ...currentTableData,
+    const tempData = {
+      ...tableData,
       [selectedCategory]: {
-        ...currentTableData[selectedCategory],
+        ...tableData[selectedCategory],
         status: "Revised",
         comment: comment || "",
-        version: currentTableData[selectedCategory].version + 1,
+        version: tableData[selectedCategory].version + 1,
       },
+    };
+    setComment("");
+    setSelectedTable(tempData[selectedCategory]);
+    update(tempData);
+
+    toast.success("Successfuly Revised!!!", {
+      position: "top-right",
+    });
+  };
+
+  const handleSaveCommentForRow = async () => {
+    setIsOpen(false);
+    setSelectedTable((currentTableData) => ({
+      ...currentTableData,
+      [tableName]: currentTableData[tableName].map((row, index) => {
+        if (index === rowNumber && column === "edit") {
+          return {
+            ...row,
+            ["New Benefit"]: row["benefit"],
+            ["New Limit"]: row["limit"],
+            edit: true,
+            "Review Required": true,
+            "Edit Reason": comment,
+          };
+        } else if (index === rowNumber && column === "Reviewed") {
+          return {
+            ...row,
+            Reviewed: true,
+            "Review Comment": comment,
+          };
+        } else {
+          return row;
+        }
+      }),
     }));
     setComment("");
-    toast.success("Successfully Revised!!!", { position: "top-right" });
+    setTableName("");
+    setRowNumber(null);
+    setColumn("");
   };
+
+  // const handleDelete = async () => {
+  //   confirmAlert({
+  //     title: "Confirm!",
+  //     message: "Are you sure to do this.",
+  //     buttons: [
+  //       {
+  //         label: "Yes",
+  //         onClick: async () => {
+  //           deleteProcess();
+  //         },
+  //       },
+  //       {
+  //         label: "No",
+  //         onClick: () => console.log("no"),
+  //       },
+  //     ],
+  //   });
+  // };
+
+  // const deleteProcess = async () => {
+  //   try {
+  //     const response = await fetch(`${node_server_url}/api/table/delete`, {
+  //       method: "DELETE",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "x-auth-token": token, // Assuming Bearer scheme for auth tokens
+  //         "ngrok-skip-browser-warning": true,
+  //       },
+  //       body: JSON.stringify({ uuid: metaData.uuid }),
+  //     });
+
+  //     if (response.ok) {
+  //       dispatch(clearMetaData());
+  //       toast.success("Successfully Deleted!", {
+  //         position: "top-right",
+  //         autoClose: 1000,
+  //       });
+  //       navigate("/home");
+  //     } else {
+  //       // Handle non-2xx responses here
+  //       const errorData = await response.json();
+  //       console.error(
+  //         "Error:",
+  //         response.status,
+  //         response.statusText,
+  //         errorData
+  //       );
+  //       toast.error(`Deletion failed: ${errorData.message}`, {
+  //         position: "top-right",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Fetch Error:", error);
+  //     toast.error("Deletion failed due to a network error.", {
+  //       position: "top-right",
+  //     });
+  //   }
+  // };
 
   function capitalizeFirstLetter(word) {
     if (word && typeof word === "string") {
@@ -329,9 +485,6 @@ export default function CustomizedTable() {
       });
       if (response.ok) {
         setSaved(true);
-        const savedTableData = await response.json();
-        console.log("savedTableData", savedTableData);
-        dispatch(setTableData(savedTableData));
         toast.success("Successfuly saved", {
           position: "top-right",
         });
@@ -363,6 +516,7 @@ export default function CustomizedTable() {
             40
           );
         }
+
         // Calculate startY based on the last text element
         let startY = 50;
         doc.autoTable({
@@ -419,34 +573,20 @@ export default function CustomizedTable() {
 
   const handleSaveToCSV = async () => {
     dispatch(setLoading());
-    const addSectionToCSV = (title, data) => {
-      if (Array.isArray(data) && data.length > 0) {
-        // Include client name and category for the 'General Benefit'
-        let csvContent =
-          title === "General Benefit"
-            ? `"Client: ${metaData.client}", "Category: ${selectedCategory}"\n`
-            : "";
-        csvContent += `"${title}"\n`;
+    const addSectionToCSV = (title, data, csvColumns) => {
+      csvColumns = csvColumns.filter((col) => data.some((item) => item[col]));
+      const headers = csvColumns.map((header) => capitalizeFirstLetter(header));
 
-        // Only include the headers for 'S No', 'Benefit', and 'Limit'
-        csvContent += `"S No","Benefit","Limit"\n`;
+      if (Array.isArray(data) && data.length > 0) {
+        let csvContent = `"${title}"\n`;
+        csvContent += headers.join(",") + "\n";
         csvContent +=
           data
-            .map((item, index) => {
-              const serialNumber = (index + 1).toString();
-              let benefit, limit;
-              if (item.edit === true) {
-                benefit = item["New Benefit"]?.toString() || "";
-                limit = item["New Limit"]?.toString() || "";
-              } else {
-                benefit = item["benefit"]?.toString() || "";
-                limit = item["limit"]?.toString() || "";
-              }
-              return `"${serialNumber}","${benefit.replace(
-                /"/g,
-                '""'
-              )}","${limit.replace(/"/g, '""')}"`;
-            })
+            .map((item) =>
+              csvColumns
+                .map((col) => `"${String(item[col]).replace(/"/g, '""')}"`)
+                .join(",")
+            )
             .join("\n") + "\n\n";
 
         return csvContent;
@@ -465,6 +605,8 @@ export default function CustomizedTable() {
       "Out Patient Benefit",
     ];
 
+    const columns = ["benefit", "limit", "New Benefit", "New Limit"];
+
     let csvData = "data:text/csv;charset=utf-8,";
 
     // Iterate over each section to append its respective data
@@ -473,7 +615,7 @@ export default function CustomizedTable() {
         tableData[selectedCategory] && tableData[selectedCategory][title];
 
       if (sectionData) {
-        csvData += addSectionToCSV(title, sectionData);
+        csvData += addSectionToCSV(title, sectionData, columns);
       } else {
         console.error(
           `No data found for category "${selectedCategory}" and title "${title}". Skipping this section.`
@@ -496,56 +638,11 @@ export default function CustomizedTable() {
     document.body.removeChild(link);
 
     await handleGenerate(fileName);
-    dispatch(clearLoading());
+    dispatch(clearLoading);
 
     toast.success("Successfully generated CSV!", {
       position: "top-right",
     });
-  };
-
-  const handleSaveToXLS = async () => {
-    dispatch(setLoading());
-
-    const workBook = utils.book_new();
-
-    titleMap.forEach((title) => {
-      const sectionData =
-        tableData[selectedCategory] && tableData[selectedCategory][title];
-      if (sectionData) {
-        const headers = ["S No"];
-        const workSheetData = sectionData.map((item, index) => ({
-          "S No": (index + 1).toString(),
-          Benefit: item.edit
-            ? item["New Benefit"] || ""
-            : item["benefit"] || "",
-          Limit: item.edit ? item["New Limit"] || "" : item["limit"] || "",
-        }));
-
-        // Create worksheet with headers and data
-        const workSheet = utils.json_to_sheet(workSheetData, {
-          header: headers,
-          skipHeader: false, // Include headers in the worksheet
-        });
-
-        // Append worksheet to workbook
-        utils.book_append_sheet(workBook, workSheet, title);
-      } else {
-        console.error(
-          `No data found for category "${selectedCategory}" and title "${title}". Skipping this section.`
-        );
-      }
-    });
-
-    // Generate file name and write the workbook
-    const fileName = `${
-      metaData.client
-    }-${selectedCategory}-${new Date().toISOString()}.xlsx`;
-    writeFile(workBook, fileName);
-
-    // After saving the file perform any cleanup or follow-up actions
-    await handleGenerate(fileName);
-    dispatch(clearLoading());
-    toast.success("Successfully generated!");
   };
 
   const update = async (temp) => {
@@ -590,9 +687,6 @@ export default function CustomizedTable() {
         break;
       case "handleSaveToCSV":
         handleSaveToCSV(); // Assuming this is typo, it should match the function name
-        break;
-      case "handleSaveToXLS":
-        handleSaveToXLS(); // Assuming this is typo, it should match the function name
         break;
       case "handleRevise":
         handleRevise();
@@ -743,10 +837,7 @@ export default function CustomizedTable() {
             id="status"
             className="bg-cyan-200 w-24 px-4 py-2 flex justify-center rounded-full"
           >
-            {tableData &&
-              Object.keys(tableData).length > 0 &&
-              selectedCategory !== "" &&
-              tableData[selectedCategory].status}
+            {tableData && tableData[selectedCategory].status}
           </span>
         </div>
         <div className="flex flex-col">
@@ -755,9 +846,7 @@ export default function CustomizedTable() {
             id="version"
             className="bg-orange-200 w-24 px-4 py-2 flex justify-center rounded-full"
           >
-            {tableData &&
-              Object.keys(tableData).length > 0 &&
-              tableData[selectedCategory].version}
+            {tableData && tableData[selectedCategory].version}
           </span>
         </div>
         {/* Filter */}
@@ -778,10 +867,9 @@ export default function CustomizedTable() {
 
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
-        {tableData &&
-          Object.keys(tableData).length > 0 &&
+        {selectedTable &&
           titleMap.map((tableName, index) => {
-            let table = Object.values(tableData[selectedCategory][tableName]);
+            let table = Object.values(selectedTable[tableName]);
             return (
               <div
                 key={index}
@@ -790,41 +878,32 @@ export default function CustomizedTable() {
                 <h1 className="text-3xl text-black font-bold m-4">
                   {tableName}
                 </h1>
-                {tableData[selectedCategory].status !== "Generated" ||
-                tableData[selectedCategory].status !== "Revised" ? (
-                  <EditableTable
-                    tableName={tableName}
-                    tableData={table}
-                    handleEdit={handleEdit}
-                    newRow={handleNewRow}
-                    handleConfirm={handleConfirm}
-                    handleDelete={handleDeleteRow}
-                  />
-                ) : (
-                  <ViewTable tableData={table} />
-                )}
+                <EditableTable
+                  tableName={tableName}
+                  tableData={table}
+                  handleEdit={handleEdit}
+                  newRow={handleNewRow}
+                  handleConfirm={handleConfirm}
+                  handleDelete={handleDeleteRow}
+                />
               </div>
             );
           })}
       </div>
 
       <div className="flex gap-4 my-8">
-        {!saved &&
-          tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status !== "Generated" && (
-            <button
-              onClick={handleSave}
-              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-            >
-              Save
-            </button>
-          )}
-        {tableData &&
-          tableData[selectedCategory] &&
+        {!saved && selectedTable && selectedTable.status !== "Generated" && (
+          <button
+            onClick={handleSave}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Save
+          </button>
+        )}
+        {selectedTable &&
           enableReview &&
-          (tableData[selectedCategory].status === "Processed" ||
-            tableData[selectedCategory].status === "Revised") &&
+          (selectedTable.status === "Processed" ||
+            selectedTable.status === "Revised") &&
           saved && (
             <button
               onClick={() => handleClickStatusChangeButton("handleReview")}
@@ -834,11 +913,9 @@ export default function CustomizedTable() {
             </button>
           )}
 
-        {tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Reviewed" &&
-          tableData[selectedCategory].status !== "Generated" &&
-          saved && (
+        {selectedTable &&
+          selectedTable.status === "Reviewed" &&
+          selectedTable.status !== "Generated" && (
             <div className="relative">
               <Menu
                 menuButton={
@@ -851,37 +928,33 @@ export default function CustomizedTable() {
                 align="end"
               >
                 <MenuItem
-                  onClick={handleSaveToPDF}
+                  onClick={() =>
+                    handleClickStatusChangeButton("handleSaveToPDF")
+                  }
                   className="flex justify-center"
                 >
                   Save to PDF
                 </MenuItem>
                 <MenuItem
                   className="flex justify-center"
-                  onClick={handleSaveToCSV}
+                  onClick={() =>
+                    handleClickStatusChangeButton("handleSaveToCSV")
+                  }
                 >
                   Save to CSV
-                </MenuItem>
-                <MenuItem
-                  className="flex justify-center"
-                  onClick={handleSaveToXLS}
-                >
-                  Save to XLS
                 </MenuItem>
               </Menu>
             </div>
           )}
 
-        {tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Generated" && (
-            <button
-              onClick={() => handleReview}
-              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-            >
-              Revise
-            </button>
-          )}
+        {selectedTable && selectedTable.status === "Generated" && (
+          <button
+            onClick={() => handleClickStatusChangeButton("handleRevise")}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Revise
+          </button>
+        )}
 
         {/* {endPoint !== "view" && (
           <button

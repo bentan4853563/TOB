@@ -56,7 +56,7 @@ const EditableTable = ({
             return (
               <th
                 key={index}
-                className="p-2 first-letter:capitalize border border-gray-200"
+                className="p-2 first-letter:capitalize border border-gray-300"
               >
                 {column}
               </th>
@@ -68,7 +68,7 @@ const EditableTable = ({
       <tbody>
         {tableData.map((row, rowIndex) => (
           <tr key={rowIndex} className="w-full">
-            <td className="border border-gray-200">
+            <td className="border border-gray-300">
               <GoPlus
                 onClick={() => newRow(tableName, rowIndex)}
                 className="cursor-pointer"
@@ -87,7 +87,7 @@ const EditableTable = ({
                         row.color === "green"
                           ? "status-checked"
                           : "status-unchecked"
-                      } focus:outline-none border border-gray-200`}
+                      } focus:outline-none border border-gray-300`}
                     >
                       {row[column]}
                     </td>
@@ -99,7 +99,7 @@ const EditableTable = ({
                       // onClick={() =>
                       //   handleFocus(tableName, rowIndex, columnIndex)
                       // }
-                      className={`w-1/4 bg-white focus:outline-none border border-gray-200`}
+                      className={`w-1/4 bg-white focus:outline-none border border-gray-300`}
                     >
                       <input
                         type="text"
@@ -120,7 +120,7 @@ const EditableTable = ({
               }
               if (columnIndex === 2) {
                 return (
-                  <td key={columnIndex} className="border border-gray-200">
+                  <td key={columnIndex} className="border border-gray-300">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
@@ -136,16 +136,25 @@ const EditableTable = ({
                 return (
                   <td
                     key={columnIndex}
-                    className="w-1/4 border border-gray-200"
+                    className="w-1/4 border border-gray-300"
                   >
-                    <input
-                      type="text"
-                      value={row[column]}
-                      onChange={(e) =>
-                        handleEdit(tableName, e.target.value, rowIndex, column)
-                      }
-                      className="w-full focus:outline-none text-wrap"
-                    />
+                    {row["edit"] === true ? (
+                      <input
+                        type="text"
+                        value={row[column]}
+                        onChange={(e) =>
+                          handleEdit(
+                            tableName,
+                            e.target.value,
+                            rowIndex,
+                            column
+                          )
+                        }
+                        className="w-full focus:outline-none text-wrap"
+                      />
+                    ) : (
+                      row[column]
+                    )}
                   </td>
                 );
               }
@@ -153,7 +162,7 @@ const EditableTable = ({
                 return (
                   <td
                     key={column}
-                    className="w-[4rem] px-2 mx-auto border border-gray-200"
+                    className="w-[4rem] px-2 mx-auto border border-gray-300"
                   >
                     {row["Edit Reason"] !== "" && (
                       <>
@@ -184,13 +193,14 @@ const EditableTable = ({
               }
               if (columnIndex === 6) {
                 return (
-                  <td key={columnIndex} className="border border-gray-200">
+                  <td key={columnIndex} className="border border-gray-300">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
                       // onChange={() =>
                       //   handleConfirm(tableName, rowIndex, column)
                       // }
+                      readOnly
                       checked={row["Review Required"]}
                     />
                   </td>
@@ -198,7 +208,7 @@ const EditableTable = ({
               }
               if (columnIndex === 7) {
                 return (
-                  <td key={columnIndex} className="px-2 border border-gray-200">
+                  <td key={columnIndex} className="px-2 border border-gray-300">
                     {row["Review Required"] && (
                       <input
                         type="checkbox"
@@ -216,7 +226,7 @@ const EditableTable = ({
                 return (
                   <td
                     key={`comment-cell-${rowIndex}`}
-                    className="px-2 border border-gray-200"
+                    className="px-2 border border-gray-300"
                   >
                     {row["Review Comment"] !== "" && (
                       <>
@@ -239,7 +249,7 @@ const EditableTable = ({
                 );
               }
             })}
-            <td key={`delete-${rowIndex}`} className="border border-gray-200">
+            <td key={`delete-${rowIndex}`} className="border border-gray-300">
               <FaTrash
                 onClick={() => onClickDeleteIcon(rowIndex)}
                 className="h-4 w-4 cursor-pointer delete-icon"
