@@ -84,31 +84,17 @@ router.post("/update", auth, async (req, res) => {
   try {
     const { uuid, tableData } = req.body;
 
-    const previousFileData = await readDataFromFile(
-      `TBData/processed/${uuid}.json`
-    );
-
-    const newTableData = {};
-    Object.keys(tableData).forEach((category) => {
-      if (
-        tableData[category].status === "Revised" &&
-        tableData[category].version > previousFileData[category].version
-      ) {
-        console.log("true");
-        newTableData[category] = {
-          ...previousFileData[category],
-          version: tableData[category].version,
-        };
-      } else {
-        newTableData[category] = tableData[category];
-      }
-    });
-
     const filepath = `TBData/reviewed/${uuid}.json`;
 
-    await saveDataToFile(newTableData, filepath);
+    // const updatedStatusByCategory = await updateVersionAndSave(
+    //   uuid,
+    //   tableData,
+    //   []
+    // );
 
-    let statusByCategory = Object.keys(newTableData).map((category) => {
+    await saveDataToFile(tableData, filepath);
+
+    let statusByCategory = Object.keys(tableData).map((category) => {
       return {
         category: category,
         status: tableData[category].status,
@@ -127,7 +113,7 @@ router.post("/update", auth, async (req, res) => {
       }
     );
 
-    res.json({ metaData: result, tableData, newTableData });
+    res.json({ metaData: result, tableData });
   } catch (error) {
     console.error(error);
     res.status(500).send({ success: false, message: "Error saving data" });

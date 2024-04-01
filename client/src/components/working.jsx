@@ -699,7 +699,7 @@ export default function CustomizedTable() {
   const handleClose = () => {
     if (!saved) {
       confirmAlert({
-        title: "Confirm!",
+        title: "Save!",
         message: "There are unsaved changes, Are you sure?",
         buttons: [
           {

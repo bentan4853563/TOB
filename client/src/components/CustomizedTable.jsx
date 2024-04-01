@@ -66,10 +66,9 @@ export default function CustomizedTable() {
     "Other Benefit",
   ];
 
-  console.log("selectedFilter", selectedFilter);
-
   const handleCategoryChange = (selectedOption) => {
     setSelectedCategory(selectedOption.value);
+    localStorage.setItem("saved-category", selectedOption.value);
   };
 
   const handleFilterChange = (selectedOption) => {
@@ -77,8 +76,22 @@ export default function CustomizedTable() {
   };
 
   useEffect(() => {
+    return () => {
+      console.log("5678");
+      localStorage.setItem("category", selectedCategory);
+      localStorage.setItem("uuid", metaData.uuid);
+    };
+  });
+
+  useEffect(() => {
+    const savedCategory = localStorage.getItem("category");
+    const savedUuid = localStorage.getItem("uuid");
     if (Object.keys(table).length > 0) {
-      setSelectedCategory(Object.keys(table)[0]);
+      if (savedUuid === metaData.uuid && savedCategory) {
+        setSelectedCategory(savedCategory);
+      } else {
+        setSelectedCategory(Object.keys(table)[0]);
+      }
       setTableData(table);
     }
   }, [table]);
@@ -137,6 +150,7 @@ export default function CustomizedTable() {
             return row;
           }
         ),
+        status: "Processed",
       },
     }));
     setSaved(false);
@@ -170,6 +184,7 @@ export default function CustomizedTable() {
             currentTableData[selectedCategory][tableName].length
           ),
         ],
+        status: "Processed",
       },
     }));
   };
@@ -216,10 +231,12 @@ export default function CustomizedTable() {
             }
           }
         ),
+        status: "Processed",
       },
     }));
     setIsOpen(false);
     setComment("");
+    setColumn("");
   };
 
   const handleDeleteRow = (tableName, rowIndex) => {
@@ -230,6 +247,7 @@ export default function CustomizedTable() {
         [tableName]: currentTableData[selectedCategory][tableName].filter(
           (_, index) => index !== rowIndex
         ),
+        status: "Processed",
       },
     }));
     toast.success("Successfully deleted your selected");
@@ -258,10 +276,9 @@ export default function CustomizedTable() {
         comment: comment || "",
       },
     };
-    update(tempData);
-    setComment("");
-    console.log(required, reviewed);
+
     if (required === reviewed) {
+      update(tempData);
       toast.success("Successfuly Reviewed!!!", {
         position: "top-right",
       });
@@ -273,36 +290,100 @@ export default function CustomizedTable() {
         }
       );
     }
+    setComment("");
+    setClickedButton("");
   };
 
   const handleGenerate = async (fileName) => {
     setIsOpen(false);
-    setTableData((currentTableData) => ({
-      ...currentTableData,
+
+    // Assuming tableData is an array and updated correctly
+    const updatedData = {
+      ...table,
       [selectedCategory]: {
-        ...currentTableData[selectedCategory],
-        resultTOB: fileName,
-        status: "Generated",
-        comment: comment || "",
-        version: currentTableData[selectedCategory].version + 1,
+        ...table[selectedCategory],
+        resultTOB: fileName, // Set the filename in the right category
+        status: "Generated", // Update the status
+        comment: comment || "", // Use current comment or empty string if undefined
       },
-    }));
+    };
+    // Call the update function with the new data
+    update(updatedData);
+
+    // Reset the comment after updating the table data
     setComment("");
   };
 
-  const handleRevise = async () => {
-    setIsOpen(false);
-    setTableData((currentTableData) => ({
-      ...currentTableData,
+  const reviseProcess = async () => {
+    const updatedData = {
+      ...table,
       [selectedCategory]: {
-        ...currentTableData[selectedCategory],
-        status: "Revised",
+        ...tableData[selectedCategory],
+        // Loop over all tables within the selected category
+        ...Object.keys(tableData[selectedCategory]).reduce((acc, title) => {
+          if (
+            title !== "status" &&
+            title !== "comment" &&
+            title !== "version"
+          ) {
+            const isDataArray = Array.isArray(
+              tableData[selectedCategory][title]
+            );
+            console.log(isDataArray, tableData[selectedCategory][title]);
+            // Ensure the data structure is an array before mapping
+            if (isDataArray) {
+              acc[title] = tableData[selectedCategory][title].map((row) => {
+                // If the row is edited/reviewed, replace Benefit and Limit with New Benefit and New Limit
+                if (row.edit === true || row.Reviewed === true) {
+                  return {
+                    ...row,
+                    benefit: row["New Benefit"],
+                    limit: row["New Limit"],
+                    color: "green", // Set the color to green
+                  };
+                }
+                return { ...row, color: "green" }; // Set the color to green for all rows
+              });
+            } else {
+              console.error(
+                `Expected an array for ${title}, but received:`,
+                tableData[selectedCategory][title]
+              );
+              // Handle non-array data here as needed
+              acc[title] = tableData[selectedCategory][title];
+            }
+          }
+          return acc;
+        }, {}),
+        status: "Processed",
         comment: comment || "",
-        version: currentTableData[selectedCategory].version + 1,
+        version: tableData[selectedCategory].version + 1,
       },
-    }));
+    };
+    console.log("updatedData", updatedData);
+
+    update(updatedData);
     setComment("");
     toast.success("Successfully Revised!!!", { position: "top-right" });
+  };
+
+  const handleRevise = async () => {
+    confirmAlert({
+      title: "Revise!",
+      message: "Are you sure?",
+      buttons: [
+        {
+          label: "Revise",
+          onClick: async () => {
+            reviseProcess();
+          },
+        },
+        {
+          label: "Close",
+          onClick: async () => {},
+        },
+      ],
+    });
   };
 
   function capitalizeFirstLetter(word) {
@@ -331,8 +412,8 @@ export default function CustomizedTable() {
         setSaved(true);
         const savedTableData = await response.json();
         console.log("savedTableData", savedTableData);
-        dispatch(setTableData(savedTableData));
-        toast.success("Successfuly saved", {
+        dispatch(storeTableData(savedTableData));
+        toast.success("Successfuly saved!!!", {
           position: "top-right",
         });
       } else {
@@ -407,7 +488,10 @@ export default function CustomizedTable() {
 
     const fileName = `${
       metaData.client
-    }-${selectedCategory}-${new Date().toISOString()}`;
+    }-${selectedCategory}-${new Date().toISOString()}-V${
+      tableData[selectedCategory].version
+    }`;
+
     doc.save(`${fileName}.pdf`);
 
     await handleGenerate(fileName);
@@ -564,9 +648,9 @@ export default function CustomizedTable() {
       });
       if (response.ok) {
         const result = await response.json();
-        const { metaData, newTableData } = result;
+        const { metaData, tableData } = result;
         dispatch(setMetaData(metaData));
-        dispatch(storeTableData(newTableData));
+        dispatch(storeTableData(tableData));
       } else {
         console.error("Error:", response.status, response.statusText);
       }
@@ -577,7 +661,6 @@ export default function CustomizedTable() {
 
   const handleCommentForCategory = () => {
     if (!clickedButton) return;
-    console.log("Clicked Button in handle Functin", clickedButton);
     switch (clickedButton) {
       case "handleReview":
         handleReview();
@@ -605,7 +688,7 @@ export default function CustomizedTable() {
   const handleClose = () => {
     if (!saved) {
       confirmAlert({
-        title: "Confirm!",
+        title: "Close!",
         message: "There are unsaved changes, Are you sure?",
         buttons: [
           {
@@ -648,6 +731,8 @@ export default function CustomizedTable() {
     setIsOpen(false);
     setTableName("");
   }
+
+  console.log("tableData", selectedCategory, tableData);
 
   const customStyles = {
     content: {
@@ -706,7 +791,7 @@ export default function CustomizedTable() {
             <button
               className="bg-gray-200 px-2 py-1 rounded-md"
               onClick={
-                tableName !== ""
+                column !== ""
                   ? handleSaveCommentForRow
                   : handleCommentForCategory
               }
@@ -790,7 +875,7 @@ export default function CustomizedTable() {
                 <h1 className="text-3xl text-black font-bold m-4">
                   {tableName}
                 </h1>
-                {tableData[selectedCategory].status !== "Generated" ||
+                {tableData[selectedCategory].status !== "Generated" &&
                 tableData[selectedCategory].status !== "Revised" ? (
                   <EditableTable
                     tableName={tableName}
@@ -820,11 +905,11 @@ export default function CustomizedTable() {
               Save
             </button>
           )}
+
         {tableData &&
           tableData[selectedCategory] &&
           enableReview &&
-          (tableData[selectedCategory].status === "Processed" ||
-            tableData[selectedCategory].status === "Revised") &&
+          tableData[selectedCategory].status === "Processed" &&
           saved && (
             <button
               onClick={() => handleClickStatusChangeButton("handleReview")}
@@ -836,9 +921,7 @@ export default function CustomizedTable() {
 
         {tableData &&
           tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Reviewed" &&
-          tableData[selectedCategory].status !== "Generated" &&
-          saved && (
+          tableData[selectedCategory].status === "Reviewed" && (
             <div className="relative">
               <Menu
                 menuButton={
@@ -876,7 +959,7 @@ export default function CustomizedTable() {
           tableData[selectedCategory] &&
           tableData[selectedCategory].status === "Generated" && (
             <button
-              onClick={() => handleReview}
+              onClick={handleRevise}
               className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
             >
               Revise

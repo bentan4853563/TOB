@@ -29,7 +29,7 @@ const EditableTable = ({
 
   const onClickDeleteIcon = (rowIndex) => {
     confirmAlert({
-      title: "Confirm!",
+      title: "Delete!",
       message: "Are you sure to delete this row?",
       buttons: [
         {
