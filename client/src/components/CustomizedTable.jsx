@@ -31,7 +31,7 @@ export default function CustomizedTable() {
   const { metaData } = useSelector((state) => state.table);
 
   const [selectedCategory, setSelectedCategory] = useState("");
-  // const [filteredTable, setFilteredTable] = useState({});
+  const [filteredTable, setFilteredTable] = useState({});
   const [tableData, setTableData] = useState({});
 
   const [comment, setComment] = useState("");
@@ -42,6 +42,7 @@ export default function CustomizedTable() {
 
   const [saved, setSaved] = useState(true);
   const [enableReview, setEnableReview] = useState(true);
+  const [enableRevise, setEnableRevise] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
   const categoryOptions = Object.keys(table).map((category) => ({
@@ -51,7 +52,7 @@ export default function CustomizedTable() {
 
   const filterOptions = [
     { value: "all", label: "All" },
-    { value: "not-edited", label: "Not Edited" },
+    { value: "may-not-bt-edited", label: "May Not Be Edited" },
     { value: "to-be-edited", label: "To Be Edited" },
     { value: "edited", label: "Edited" },
     { value: "review-required", label: "Review Required" },
@@ -77,7 +78,6 @@ export default function CustomizedTable() {
 
   useEffect(() => {
     return () => {
-      console.log("5678");
       localStorage.setItem("category", selectedCategory);
       localStorage.setItem("uuid", metaData.uuid);
     };
@@ -99,6 +99,7 @@ export default function CustomizedTable() {
   useEffect(() => {
     if (tableData && Object.keys(tableData).length > 0) {
       let uncheckedCount = 0;
+      let generated = 0;
       titleMap.map((tableName) => {
         tableData[selectedCategory][tableName].map((row) => {
           if (row.color === "red" && row["Review Required"] === false)
@@ -110,96 +111,158 @@ export default function CustomizedTable() {
       } else {
         setEnableReview(true);
       }
+      Object.keys(tableData).map((category) => {
+        if (tableData[category].status === "Generated") {
+          generated = generated + 1;
+        }
+      });
+      if (Object.keys(tableData).length === generated) {
+        setEnableRevise(true);
+      }
     }
   }, [tableData]);
 
-  // useEffect(() => {
-  //   if (selectedCategory !== "") {
-  //     setSelectedFilter(filterOptions[0].value);
-  //   }
-  // }, [selectedCategory]);
+  useEffect(() => {
+    if (
+      selectedCategory !== "" &&
+      selectedFilter !== "" &&
+      Object.keys(tableData).length > 0
+    ) {
+      filterTableData();
+    }
+  }, [selectedCategory, selectedFilter, tableData]);
 
-  // useEffect(() => {
-  //   if (
-  //     selectedCategory !== "" &&
-  //     selectedFilter !== "" &&
-  //     Object.keys(tableData).length > 0
-  //   ) {
-  //     const newFilteredTable = tableData[selectedCategory];
-  //     newFilteredTable.filter((currentTable) => ({
-  //       ...currentTable,
+  function filterTableData() {
+    const newFilteredTable = {};
 
-  //     }))
-  //     setFilteredTable();
-  //   }
-  // }, [selectedCategory, selectedFilter, tableData]);
+    titleMap.map((tableName) => {
+      switch (selectedFilter) {
+        case "all":
+          newFilteredTable[tableName] = tableData[selectedCategory][tableName];
+          break;
+        case "may-not-bt-edited":
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => row.color === "green" && !row.edit);
+          break;
+        case "to-be-edited":
+          // Define what constitutes a row "to-be-edited"
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => row.color === "red" && !row.edit);
+          break;
+        case "edited":
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => row.edit);
+          break;
+        case "review-required":
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => !row["Review Required"]);
+          break;
+        case "reviewed":
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => row.Reviewed);
+          break;
+        case "review-pending":
+          // Define your own logic for "review pending" status
+          newFilteredTable[tableName] = tableData[selectedCategory][
+            tableName
+          ].filter((row) => row["Review Required"] && !row.Reviewed);
+          break;
+        default:
+          newFilteredTable[tableName] = tableData[selectedCategory][tableName];
+      }
+    });
 
-  const handleEdit = (tableName, value, rowIndex, fieldName) => {
+    setFilteredTable(newFilteredTable);
+  }
+
+  console.log("filteredTable", filteredTable);
+
+  const handleEdit = (tableName, value, rowId, fieldName) => {
     setTableData((currentTableData) => ({
       ...currentTableData,
       [selectedCategory]: {
         ...tableData[selectedCategory],
-        [tableName]: tableData[selectedCategory][tableName].map(
-          (row, index) => {
-            if (index === rowIndex) {
-              return {
-                ...row,
-                [fieldName]: value,
-              };
-            }
-            return row;
+        [tableName]: tableData[selectedCategory][tableName].map((row) => {
+          if (row.id === rowId) {
+            return {
+              ...row,
+              [fieldName]: value,
+            };
           }
-        ),
+          return row;
+        }),
         status: "Processed",
       },
     }));
     setSaved(false);
   };
 
-  const handleNewRow = (tableName, rowIndex) => {
-    setTableData((currentTableData) => ({
-      ...currentTableData,
-      [selectedCategory]: {
-        ...currentTableData[selectedCategory],
-        [tableName]: [
-          ...currentTableData[selectedCategory][tableName].slice(
-            0,
-            rowIndex + 1
-          ),
-          {
-            benefit: "",
-            limit: "",
-            color: "yellow",
-            edit: true,
-            "New Benefit": "",
-            "New Limit": "",
-            "Edit Reason": "",
-            "Review Required": false,
-            Reviewed: false,
-            "Review Comment": "",
-          },
-          // This should likely be currentTableData[selectedCategory][tableName].length
-          ...currentTableData[selectedCategory][tableName].slice(
-            rowIndex + 1,
-            currentTableData[selectedCategory][tableName].length
-          ),
-        ],
-        status: "Processed",
-      },
-    }));
+  const handleNewRow = (tableName, rowId) => {
+    setTableData((currentTableData) => {
+      // Find the index of the row with the corresponding rowId
+      const rowIndex = currentTableData[selectedCategory][tableName].findIndex(
+        (row) => row.id === rowId
+      );
+
+      // If the rowId is not found, return the original currentTableData without changes
+      if (rowIndex === -1) {
+        return currentTableData;
+      }
+
+      const newRow = {
+        id: crypto.randomUUID(), // Generate a new unique ID for the new row
+        benefit: "",
+        limit: "",
+        color: "yellow",
+        edit: true,
+        "New Benefit": "",
+        "New Limit": "",
+        "Edit Reason": "",
+        "Review Required": false,
+        Reviewed: false,
+        "Review Comment": "",
+      };
+
+      // Create the new table data with the new row inserted at the correct position
+      const updatedTableData = {
+        ...currentTableData,
+        [selectedCategory]: {
+          ...currentTableData[selectedCategory],
+          [tableName]: [
+            ...currentTableData[selectedCategory][tableName].slice(
+              0,
+              rowIndex + 1
+            ),
+            newRow,
+            ...currentTableData[selectedCategory][tableName].slice(
+              rowIndex + 1
+            ),
+          ],
+          status: "Processed",
+        },
+      };
+
+      return updatedTableData;
+    });
   };
 
-  const handleConfirm = (tableName, rowIndex, column) => {
+  const handleConfirm = (tableName, rowId, column) => {
     setTableData((currentTableData) => {
       const rows = currentTableData[selectedCategory][tableName];
-      // Check if condition before opening modal
-      if (rows[rowIndex][column] === false) {
+      const rowIndex = rows.findIndex((row) => row.id === rowId);
+
+      if (rowIndex !== -1 && rows[rowIndex][column] === false) {
         setIsOpen(true);
-        setRowNumber(rowIndex);
+        setRowNumber(rowIndex); // Assuming you still need the index for other purposes
         setTableName(tableName);
         setColumn(column);
       }
-      return currentTableData; // We return the current state directly since there's no modification
+      return currentTableData;
     });
     setSaved(false);
   };
@@ -239,18 +302,18 @@ export default function CustomizedTable() {
     setColumn("");
   };
 
-  const handleDeleteRow = (tableName, rowIndex) => {
+  const handleDeleteRow = (tableName, rowId) => {
     setTableData((currentTableData) => ({
       ...currentTableData,
       [selectedCategory]: {
         ...currentTableData[selectedCategory],
         [tableName]: currentTableData[selectedCategory][tableName].filter(
-          (_, index) => index !== rowIndex
+          (row) => row.id !== rowId
         ),
-        status: "Processed",
       },
     }));
-    toast.success("Successfully deleted your selected");
+    toast.success("Successfully deleted the selected row");
+    setSaved(false);
   };
 
   const handleClickStatusChangeButton = (buttonName) => {
@@ -315,51 +378,45 @@ export default function CustomizedTable() {
   };
 
   const reviseProcess = async () => {
-    const updatedData = {
-      ...table,
-      [selectedCategory]: {
-        ...tableData[selectedCategory],
-        // Loop over all tables within the selected category
-        ...Object.keys(tableData[selectedCategory]).reduce((acc, title) => {
+    const updatedData = Object.keys(tableData).reduce((acc, category) => {
+      acc[category] = {
+        ...tableData[category],
+        ...Object.keys(tableData[category]).reduce((innerAcc, title) => {
           if (
             title !== "status" &&
             title !== "comment" &&
             title !== "version"
           ) {
-            const isDataArray = Array.isArray(
-              tableData[selectedCategory][title]
-            );
-            console.log(isDataArray, tableData[selectedCategory][title]);
-            // Ensure the data structure is an array before mapping
+            const isDataArray = Array.isArray(tableData[category][title]);
             if (isDataArray) {
-              acc[title] = tableData[selectedCategory][title].map((row) => {
-                // If the row is edited/reviewed, replace Benefit and Limit with New Benefit and New Limit
+              innerAcc[title] = tableData[category][title].map((row) => {
                 if (row.edit === true || row.Reviewed === true) {
                   return {
                     ...row,
                     benefit: row["New Benefit"],
                     limit: row["New Limit"],
-                    color: "green", // Set the color to green
+                    color: "green",
                   };
                 }
-                return { ...row, color: "green" }; // Set the color to green for all rows
+                return { ...row, color: "green" };
               });
             } else {
               console.error(
                 `Expected an array for ${title}, but received:`,
-                tableData[selectedCategory][title]
+                tableData[category][title]
               );
-              // Handle non-array data here as needed
-              acc[title] = tableData[selectedCategory][title];
+              innerAcc[title] = tableData[category][title];
             }
           }
-          return acc;
+          return innerAcc;
         }, {}),
         status: "Processed",
         comment: comment || "",
-        version: tableData[selectedCategory].version + 1,
-      },
-    };
+        version: tableData[category].version + 1,
+      };
+      return acc;
+    }, {});
+
     console.log("updatedData", updatedData);
 
     update(updatedData);
@@ -732,8 +789,6 @@ export default function CustomizedTable() {
     setTableName("");
   }
 
-  console.log("tableData", selectedCategory, tableData);
-
   const customStyles = {
     content: {
       top: "50%",
@@ -822,8 +877,12 @@ export default function CustomizedTable() {
             )}
           />
         </div>
-        <div className="flex flex-col">
-          <label htmlFor="status">Status</label>
+
+        {/* Status */}
+        <div className="flex flex-col items-center">
+          <label htmlFor="status" className="font-bold">
+            Status
+          </label>
           <span
             id="status"
             className="bg-cyan-200 w-24 px-4 py-2 flex justify-center rounded-full"
@@ -834,8 +893,12 @@ export default function CustomizedTable() {
               tableData[selectedCategory].status}
           </span>
         </div>
-        <div className="flex flex-col">
-          <label htmlFor="version">Version</label>
+
+        {/* Version */}
+        <div className="flex flex-col items-center">
+          <label htmlFor="version" className="font-bold">
+            Version
+          </label>
           <span
             id="version"
             className="bg-orange-200 w-24 px-4 py-2 flex justify-center rounded-full"
@@ -845,6 +908,7 @@ export default function CustomizedTable() {
               tableData[selectedCategory].version}
           </span>
         </div>
+
         {/* Filter */}
         <div className="w-full md:w-2/3 lg:w-1/2 flex flex-col">
           <label htmlFor="filter" className="font-bold">
@@ -863,10 +927,10 @@ export default function CustomizedTable() {
 
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
-        {tableData &&
-          Object.keys(tableData).length > 0 &&
+        {filteredTable &&
+          Object.keys(filteredTable).length > 0 &&
           titleMap.map((tableName, index) => {
-            let table = Object.values(tableData[selectedCategory][tableName]);
+            let table = Object.values(filteredTable[tableName]);
             return (
               <div
                 key={index}
@@ -875,8 +939,8 @@ export default function CustomizedTable() {
                 <h1 className="text-3xl text-black font-bold m-4">
                   {tableName}
                 </h1>
-                {tableData[selectedCategory].status !== "Generated" &&
-                tableData[selectedCategory].status !== "Revised" ? (
+                {filteredTable.status !== "Generated" &&
+                filteredTable.status !== "Revised" ? (
                   <EditableTable
                     tableName={tableName}
                     tableData={table}
@@ -955,16 +1019,14 @@ export default function CustomizedTable() {
             </div>
           )}
 
-        {tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Generated" && (
-            <button
-              onClick={handleRevise}
-              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-            >
-              Revise
-            </button>
-          )}
+        {enableRevise && (
+          <button
+            onClick={handleRevise}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Revise
+          </button>
+        )}
 
         {/* {endPoint !== "view" && (
           <button

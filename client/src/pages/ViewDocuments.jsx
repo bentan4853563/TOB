@@ -67,7 +67,7 @@ export default function CustomizedTable() {
         <div className="w-full px-8 py-4 flex flex-col gap-3">
           {metaData.tobType && (
             <div className="flex flex-col gap-1">
-              <label className="text-black font-medium" htmlFor="client">
+              <label className="text-black font-bold" htmlFor="client">
                 Type of TOB
               </label>
               <span className="ml-4">
@@ -77,7 +77,7 @@ export default function CustomizedTable() {
           )}
           {metaData.client && (
             <div className="flex flex-col gap-1">
-              <label className="text-black font-medium" htmlFor="client">
+              <label className="text-black font-bold" htmlFor="client">
                 Client
               </label>
               <span className="ml-4">
@@ -87,7 +87,7 @@ export default function CustomizedTable() {
           )}
           {metaData.insurer && (
             <div className="flex flex-col gap-1">
-              <label className="text-black font-medium" htmlFor="insurer">
+              <label className="text-black font-bold" htmlFor="insurer">
                 Insurer
               </label>
               <span className="ml-4">
@@ -98,7 +98,7 @@ export default function CustomizedTable() {
 
           {metaData.broker && (
             <div className="flex flex-col gap-1">
-              <label className="text-black font-medium" htmlFor="broker">
+              <label className="text-black font-bold" htmlFor="broker">
                 Broker
               </label>
               <span className="ml-4">
@@ -109,7 +109,7 @@ export default function CustomizedTable() {
 
           {metaData.sourceTOB && (
             <div className="flex flex-col gap-1">
-              <label className="text-black font-medium" htmlFor="sourceTOB">
+              <label className="text-black font-bold" htmlFor="sourceTOB">
                 Source TOB
               </label>
               <span className="ml-4">
@@ -138,16 +138,34 @@ export default function CustomizedTable() {
           </div>
 
           {/* Status */}
-          <span className="bg-cyan-200 px-4 py-2 rounded-full">
-            {Object.keys(tableData).length > 0 &&
-              tableData[selectedCategory].status}
-          </span>
+          <div className="flex flex-col">
+            <label htmlFor="status" className="font-bold">
+              Status
+            </label>
+            <span
+              id="status"
+              className="bg-cyan-200 w-24 px-4 py-1.5 flex justify-center rounded-full"
+            >
+              {tableData &&
+                Object.keys(tableData).length > 0 &&
+                selectedCategory !== "" &&
+                tableData[selectedCategory].status}
+            </span>
+          </div>
           {/* Version */}
-          <span className="bg-orange-200 px-4 py-2 rounded-full">
-            Version{" "}
-            {Object.keys(tableData).length > 0 &&
-              tableData[selectedCategory].version}
-          </span>
+          <div className="flex flex-col">
+            <label htmlFor="version" className="font-bold">
+              Version
+            </label>
+            <span
+              id="version"
+              className="bg-orange-200 w-24 px-4 py-1.5 flex justify-center rounded-full"
+            >
+              {tableData &&
+                Object.keys(tableData).length > 0 &&
+                tableData[selectedCategory].version}
+            </span>
+          </div>
         </div>
       </div>
 

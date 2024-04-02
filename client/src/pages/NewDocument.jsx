@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ScrollToTop from "react-scroll-to-top";
 import { confirmAlert } from "react-confirm-alert";
+import Select from "react-select";
 import "react-confirm-alert/src/react-confirm-alert.css";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
@@ -16,7 +17,8 @@ const NewDocument = () => {
   const [file, setFile] = useState(null);
   const [broker, setBroker] = useState("");
   const [client, setClient] = useState("");
-  const [insurer, setInsurer] = useState("");
+  const [insurer, setInsurer] = useState({});
+  const [tobType, setTobType] = useState({});
   const [sourceTOB, setSourceTOB] = useState("");
 
   const [categoryList, setCategoryList] = useState([]);
@@ -30,7 +32,6 @@ const NewDocument = () => {
     sourceTOB: "",
   });
 
-  const [tobType, setTobType] = useState("");
   const [gulfPlan, setGulfPlan] = useState("");
   const [AIPlan, setAIPlan] = useState("");
   const [ThiqaPlan, setThiqaPlan] = useState("");
@@ -46,6 +47,7 @@ const NewDocument = () => {
   const regulagorList = ["DHA", "DOH"];
   const AIPlanList = [];
   const ThiqaPlanList = [];
+
   for (let i = 1; i < 15; i++) {
     AIPlanList.push(`Plan ${i}`);
   }
@@ -88,6 +90,16 @@ const NewDocument = () => {
 
   // To ensure alphabetical order, we sort the array
   companyList.sort();
+
+  const typeOfTOBOptions = TobTypeList.map((tobType) => ({
+    value: tobType,
+    label: tobType,
+  }));
+
+  const insurerOptions = companyList.map((company) => ({
+    label: company,
+    value: company,
+  }));
 
   useEffect(() => {
     setTobType(TobTypeList[0]);
@@ -213,18 +225,12 @@ const NewDocument = () => {
         return (
           <div className="flex flex-col">
             <label htmlFor="insurer">Insurer</label>
-            <select
-              name="insurer"
-              id="insurer"
+            <Select
+              id="tobType"
+              options={insurerOptions}
+              onChange={(selectedOption) => setInsurer(selectedOption.value)}
               value={insurer}
-              onClick={handleFocus}
-              onChange={(e) => setInsurer(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
-            >
-              {companyList.map((option, index) => {
-                return <option key={index}>{option}</option>;
-              })}
-            </select>
+            />
             {metaFormErrors.insurer && (
               <p className="w-full text-red-400 text-xs text-left">
                 {metaFormErrors.insurer}
@@ -243,7 +249,7 @@ const NewDocument = () => {
                 value={gulfPlan}
                 onClick={handleFocus}
                 onChange={(e) => setGulfPlan(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {gulfPlanList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -258,7 +264,7 @@ const NewDocument = () => {
                 value={regulator}
                 onClick={handleFocus}
                 onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {regulagorList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -278,7 +284,7 @@ const NewDocument = () => {
                 value={AIPlan}
                 onClick={handleFocus}
                 onChange={(e) => setAIPlan(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {AIPlanList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -293,7 +299,7 @@ const NewDocument = () => {
                 value={regulator}
                 onClick={handleFocus}
                 onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {regulagorList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -318,7 +324,7 @@ const NewDocument = () => {
                 value={ThiqaPlan}
                 onClick={handleFocus}
                 onChange={(e) => setThiqaPlan(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {ThiqaPlanList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -333,7 +339,7 @@ const NewDocument = () => {
                 value={regulator}
                 onClick={handleFocus}
                 onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
+                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
               >
                 {regulagorList.map((value, index) => {
                   return <option key={index}>{value}</option>;
@@ -354,112 +360,108 @@ const NewDocument = () => {
         <div className="py-2 px-8">
           <span className="text-xl font-bold font-sans">New Document</span>
         </div>
-        <div className="w-full px-8 py-2 flex flex-col gap-4">
-          {/* tobType */}
-          <div className="flex flex-col">
-            <label htmlFor="tobType">Type of TOB</label>
-            <select
-              name="tobType"
-              id="tobType"
-              value={tobType}
-              onClick={handleFocus}
-              onChange={(e) => setTobType(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 px-3 py-3.5 outline-none focus:border-sky-700"
-            >
-              {TobTypeList.map((item, index) => (
-                <option id="tobType" key={index} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {renderContent()}
-
-          {/* Client */}
-          <div className="flex flex-col">
-            <label htmlFor="client">Client</label>
-            <input
-              type="text"
-              name="client"
-              id="client"
-              value={client}
-              onFocus={handleFocus}
-              onChange={(e) => setClient(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 p-3 outline-none focus:border-sky-700"
-            />
-            {metaFormErrors.client && (
-              <p className="w-full text-red-400 text-xs text-left">
-                {metaFormErrors.client}
-              </p>
-            )}
-          </div>
-
-          {/* Broker */}
-          <div className="flex flex-col">
-            <label htmlFor="broker">Broker</label>
-            <input
-              type="text"
-              name="broker"
-              id="broker"
-              value={broker}
-              onChange={(e) => setBroker(e.target.value)}
-              className="border border-gray-200 rounded-lg w-full lg:w-2/3 p-3 outline-none focus:border-sky-700"
-            />
-          </div>
-
-          {/* sourceTOB */}
-          {tobType === TobTypeList[0] && (
+        <div className="w-full p-8">
+          <div className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col gap-2">
+            {/* tobType */}
             <div className="flex flex-col">
-              <label className="text-black" htmlFor="sourceTOB">
-                Source TOB File
-              </label>
-              <div className="flex gap-4 w-full lg:w-2/3">
-                <div className="flex flex-col flex-1">
-                  <input
-                    type="text"
-                    value={sourceTOB ? sourceTOB : ""}
-                    onFocus={handleFocus}
-                    disabled
-                    readOnly // Since this input is not intended to be modified directly by the user
-                    className="w-full p-3 rounded-md border border-gray-200"
-                  />
-                </div>
-                <label htmlFor="fileInput">
-                  <span
-                    onClick={() =>
-                      setMetaFormErrors({ ...metaFormErrors, file: "" })
-                    }
-                    className="w-48 bg-indigo-600 text-white flex justify-center items-end px-4 py-3 rounded-md cursor-pointer"
-                  >
-                    Upload
-                  </span>
-                  <input
-                    type="file"
-                    id="fileInput"
-                    name="fileInput"
-                    className="hidden border border-gray-200"
-                    onChange={handleFileInput}
-                  />
-                </label>
-              </div>
-              {metaFormErrors.sourceTOB && (
+              <label htmlFor="tobType">Type of TOB</label>
+              <Select
+                id="filter"
+                options={typeOfTOBOptions}
+                onChange={(tobType) => setTobType(tobType.value)}
+                value={tobType}
+              />
+            </div>
+
+            {renderContent()}
+
+            {/* Client */}
+            <div className="flex flex-col">
+              <label htmlFor="client">Client</label>
+              <input
+                type="text"
+                name="client"
+                id="client"
+                value={client}
+                onFocus={handleFocus}
+                onChange={(e) => setClient(e.target.value)}
+                className="border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
+              />
+              {metaFormErrors.client && (
                 <p className="w-full text-red-400 text-xs text-left">
-                  {metaFormErrors.sourceTOB}
+                  {metaFormErrors.client}
                 </p>
               )}
             </div>
-          )}
 
-          <button
-            onClick={handleProcess}
-            disabled={!enableNew}
-            className={`w-full md:w-72 lg-w-2/3 mt-2 py-3  text-white focus:outline-none ${
-              enableNew ? "bg-indigo-600" : "bg-indigo-600/70"
-            }`}
-          >
-            Process
-          </button>
+            {/* Broker */}
+            <div className="flex flex-col">
+              <label htmlFor="broker">Broker</label>
+              <input
+                type="text"
+                name="broker"
+                id="broker"
+                value={broker}
+                onChange={(e) => setBroker(e.target.value)}
+                className="border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
+              />
+            </div>
+
+            {/* sourceTOB */}
+            {tobType === TobTypeList[0] && (
+              <div className="flex flex-col">
+                <label className="text-black" htmlFor="sourceTOB">
+                  Source TOB File
+                </label>
+                <div className="flex gap-4">
+                  <div className="flex flex-col flex-1">
+                    <input
+                      type="text"
+                      value={sourceTOB ? sourceTOB : ""}
+                      onFocus={handleFocus}
+                      disabled
+                      readOnly // Since this input is not intended to be modified directly by the user
+                      className="w-full p-2 rounded-md border border-gray-200"
+                    />
+                  </div>
+                  <label htmlFor="fileInput">
+                    <span
+                      onClick={() =>
+                        setMetaFormErrors({ ...metaFormErrors, file: "" })
+                      }
+                      className="bg-indigo-600 text-white flex justify-center items-end px-12 py-2 rounded-md cursor-pointer"
+                    >
+                      Upload
+                    </span>
+                    <input
+                      type="file"
+                      id="fileInput"
+                      name="fileInput"
+                      className="hidden border border-gray-200"
+                      onChange={handleFileInput}
+                    />
+                  </label>
+                </div>
+                {metaFormErrors.sourceTOB && (
+                  <p className="w-full text-red-400 text-xs text-left">
+                    {metaFormErrors.sourceTOB}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <button
+                onClick={handleProcess}
+                disabled={!enableNew}
+                className={`mt-2 px-12 py-2 rounded-md text-white focus:outline-none ${
+                  enableNew ? "bg-indigo-600" : "bg-indigo-600/70"
+                }`}
+              >
+                Process
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

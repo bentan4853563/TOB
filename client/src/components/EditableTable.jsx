@@ -105,12 +105,7 @@ const EditableTable = ({
                         type="text"
                         value={row[column]}
                         onChange={(e) =>
-                          handleEdit(
-                            tableName,
-                            e.target.value,
-                            rowIndex,
-                            column
-                          )
+                          handleEdit(tableName, e.target.value, row.id, column)
                         }
                         className="w-full bg-transparent focus:outline-none text-wrap"
                       />
@@ -124,9 +119,7 @@ const EditableTable = ({
                     <input
                       type="checkbox"
                       className="h-4 w-4"
-                      onChange={() =>
-                        handleConfirm(tableName, rowIndex, column)
-                      }
+                      onChange={() => handleConfirm(tableName, row.id, column)}
                       checked={row.edit}
                     />
                   </td>
@@ -143,12 +136,7 @@ const EditableTable = ({
                         type="text"
                         value={row[column]}
                         onChange={(e) =>
-                          handleEdit(
-                            tableName,
-                            e.target.value,
-                            rowIndex,
-                            column
-                          )
+                          handleEdit(tableName, e.target.value, row.id, column)
                         }
                         className="w-full focus:outline-none text-wrap"
                       />
@@ -214,7 +202,7 @@ const EditableTable = ({
                         type="checkbox"
                         className="h-4 w-4"
                         onChange={() =>
-                          handleConfirm(tableName, rowIndex, column)
+                          handleConfirm(tableName, row.id, column)
                         }
                         checked={row.Reviewed}
                       />
@@ -251,7 +239,7 @@ const EditableTable = ({
             })}
             <td key={`delete-${rowIndex}`} className="border border-gray-300">
               <FaTrash
-                onClick={() => onClickDeleteIcon(rowIndex)}
+                onClick={() => onClickDeleteIcon(row.id)}
                 className="h-4 w-4 cursor-pointer delete-icon"
               />
             </td>

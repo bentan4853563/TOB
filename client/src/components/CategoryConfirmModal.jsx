@@ -60,22 +60,21 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
         const initialized = Object.keys(data).reduce(
           (accumulator, category) => {
             accumulator[category] = Object.keys(data[category]).reduce(
-              (innerAccum, subCategory) => {
-                innerAccum[subCategory] = data[category][subCategory].map(
-                  (benefit) => {
-                    return {
-                      ...benefit,
-                      color: benefit.status === "checked" ? "green" : "red",
-                      edit: false,
-                      "New Benefit": "",
-                      "New Limit": "",
-                      "Edit Reason": "",
-                      "Review Required": false,
-                      Reviewed: false,
-                      "Review Comment": "",
-                    };
-                  }
-                );
+              (innerAccum, subTitle) => {
+                innerAccum[subTitle] = data[category][subTitle].map((row) => {
+                  return {
+                    id: crypto.randomUUID(),
+                    ...row,
+                    color: row.status === "checked" ? "green" : "red",
+                    edit: false,
+                    "New Benefit": "",
+                    "New Limit": "",
+                    "Edit Reason": "",
+                    "Review Required": false,
+                    Reviewed: false,
+                    "Review Comment": "",
+                  };
+                });
                 return innerAccum;
               },
               { status: "Processed", version: 0, comment: "" }

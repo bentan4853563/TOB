@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import { Tooltip } from "react-tooltip";
 import { MdOutlineInsertComment } from "react-icons/md";
+import Select from "react-select";
 
 import "react-toastify/dist/ReactToastify.css";
 
@@ -31,7 +32,9 @@ const DisplayTable = () => {
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
-  // const [showData, setShowData] = useState([]);
+
+  const [insurer, setInsurer] = useState({});
+  const [tobType, setTobType] = useState({});
 
   const [expand, setExpand] = useState({
     previousRow: null,
@@ -114,6 +117,16 @@ const DisplayTable = () => {
     "WATANIA TAKAFUL",
     "WILLIAM RUSSELL",
   ];
+
+  const typeOfTOBOptions = TobTypeList.map((tobType) => ({
+    value: tobType,
+    label: tobType,
+  }));
+
+  const insurerOptions = companyList.map((company) => ({
+    label: company,
+    value: company,
+  }));
 
   // const handleClickUpload = () => {
   // 	setSettingModalOpen(true);
@@ -267,45 +280,25 @@ const DisplayTable = () => {
             <label className="text-black" htmlFor="insurer">
               Type of TOB
             </label>
-            <select
-              name="tobType"
-              id="tobType"
-              onChange={(e) =>
-                setSearchValues({ ...searchValues, tobType: e.target.value })
-              }
-              className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
-            >
-              <option value=""></option>
-              {TobTypeList.map((item, index) => {
-                return (
-                  <option key={index} value={item}>
-                    {item}
-                  </option>
-                );
-              })}
-            </select>
+            <Select
+              id="filter"
+              options={typeOfTOBOptions}
+              onChange={(tobType) => setTobType(tobType.value)}
+              value={tobType}
+              className="w-full lg:w-1/2"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-black" htmlFor="tobType">
               Insurer
             </label>
-            <select
-              name="insurer"
-              id="insurer"
-              onChange={(e) =>
-                setSearchValues({ ...searchValues, insurer: e.target.value })
-              }
-              className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
-            >
-              <option value=""></option>
-              {companyList.map((item, index) => {
-                return (
-                  <option key={index} value={item}>
-                    {item}
-                  </option>
-                );
-              })}
-            </select>
+            <Select
+              id="tobType"
+              options={insurerOptions}
+              onChange={(selectedOption) => setInsurer(selectedOption.value)}
+              value={insurer}
+              className="w-full lg:w-1/2"
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-black" htmlFor="client">
