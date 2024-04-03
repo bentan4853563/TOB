@@ -39,6 +39,7 @@ export default function CustomizedTable() {
   const [tableName, setTableName] = useState("");
   const [column, setColumn] = useState("");
   const [clickedButton, setClickedButton] = useState("");
+  const [reviewedAll, setReviewedAll] = useState(false);
 
   const [saved, setSaved] = useState(true);
   const [enableReview, setEnableReview] = useState(true);
@@ -180,8 +181,6 @@ export default function CustomizedTable() {
     setFilteredTable(newFilteredTable);
   }
 
-  console.log("filteredTable", filteredTable);
-
   const handleEdit = (tableName, value, rowId, fieldName) => {
     setTableData((currentTableData) => ({
       ...currentTableData,
@@ -251,21 +250,134 @@ export default function CustomizedTable() {
     });
   };
 
-  const handleConfirm = (tableName, rowId, column) => {
+  const handleReason = (tableName, rowId, column) => {
+    console.log(tableName, rowId, column);
     setTableData((currentTableData) => {
       const rows = currentTableData[selectedCategory][tableName];
       const rowIndex = rows.findIndex((row) => row.id === rowId);
-
-      if (rowIndex !== -1 && rows[rowIndex][column] === false) {
-        setIsOpen(true);
-        setRowNumber(rowIndex); // Assuming you still need the index for other purposes
-        setTableName(tableName);
-        setColumn(column);
+      if (column === "Edit Reason") {
+        if (rowIndex !== -1 && rows[rowIndex].edit === true) {
+          setIsOpen(true);
+          setRowNumber(rowIndex); // Assuming you still need the index for other purposes
+          setTableName(tableName);
+          setColumn(column);
+          setComment(rows[rowIndex][column]);
+        } else {
+          toast.warning("This line has not been edited.", {
+            position: "top-right",
+          });
+        }
+      } else {
+        if (rowIndex !== -1 && rows[rowIndex].Reviewed === true) {
+          setIsOpen(true);
+          setRowNumber(rowIndex); // Assuming you still need the index for other purposes
+          setTableName(tableName);
+          setColumn(column);
+          setComment(rows[rowIndex][column]);
+        } else {
+          toast.warning("This line has not been reviewed.", {
+            position: "top-right",
+          });
+        }
       }
       return currentTableData;
     });
     setSaved(false);
   };
+
+  console.log(tableData);
+
+  const handleEditConfirm = (tableName, rowId, column) => {
+    setTableData((currentTableData) => ({
+      ...currentTableData,
+      [selectedCategory]: {
+        ...tableData[selectedCategory],
+        [tableName]: tableData[selectedCategory][tableName].map((row) => {
+          if (row.id === rowId && column === "edit") {
+            return {
+              ...row,
+              ["New Benefit"]: row["benefit"],
+              ["New Limit"]: row["limit"],
+              edit: true,
+              "Review Required": true,
+            };
+          } else {
+            return row;
+          }
+        }),
+        status: "Processed",
+      },
+    }));
+    setSaved(false);
+  };
+
+  const handleReviewConfirm = (tableName, rowId, column) => {
+    setTableData((currentTableData) => ({
+      ...currentTableData,
+      [selectedCategory]: {
+        ...tableData[selectedCategory],
+        [tableName]: tableData[selectedCategory][tableName].map((row) => {
+          if (row.id === rowId && column === "Reviewed") {
+            return {
+              ...row,
+              Reviewed: true,
+              "Review Comment": comment,
+            };
+          } else {
+            return row;
+          }
+        }),
+        status: "Processed",
+      },
+    }));
+    setSaved(false);
+  };
+
+  const handleReviewAll = () => {
+    let reviewRequiredRow = 0;
+
+    Object.keys(tableData).forEach((category) => {
+      titleMap.forEach((title) => {
+        if (tableData[category][title]) {
+          tableData[category][title].forEach((row) => {
+            if (row["Review Required"] === true) {
+              reviewRequiredRow += 1; // Simplified incrementation
+            }
+          });
+        }
+      });
+    });
+
+    if (reviewRequiredRow > 0) setReviewedAll(!reviewedAll);
+  };
+
+  useEffect(() => {
+    setTableData((currentTableData) => {
+      const updatedTableData = {};
+      Object.keys(currentTableData).forEach((category) => {
+        updatedTableData[category] = { ...currentTableData[category] };
+
+        titleMap.map((title) => {
+          if (updatedTableData[category][title]) {
+            updatedTableData[category][title] = updatedTableData[category][
+              title
+            ].map((row) => {
+              if (row["Review Required"] === true) {
+                return {
+                  ...row,
+                  Reviewed: reviewedAll,
+                };
+              } else {
+                return row;
+              }
+            });
+          }
+        });
+      });
+      return updatedTableData;
+    });
+    setSaved(false);
+  }, [reviewedAll]);
 
   const handleSaveCommentForRow = () => {
     setTableData((currentTableData) => ({
@@ -274,7 +386,7 @@ export default function CustomizedTable() {
         ...tableData[selectedCategory],
         [tableName]: tableData[selectedCategory][tableName].map(
           (row, index) => {
-            if (index === rowNumber && column === "edit") {
+            if (index === rowNumber && column === "Edit Reason") {
               return {
                 ...row,
                 ["New Benefit"]: row["benefit"],
@@ -283,7 +395,7 @@ export default function CustomizedTable() {
                 "Review Required": true,
                 "Edit Reason": comment,
               };
-            } else if (index === rowNumber && column === "Reviewed") {
+            } else if (index === rowNumber && column === "Review Comment") {
               return {
                 ...row,
                 Reviewed: true,
@@ -316,13 +428,7 @@ export default function CustomizedTable() {
     setSaved(false);
   };
 
-  const handleClickStatusChangeButton = (buttonName) => {
-    setClickedButton(buttonName);
-    setIsOpen(true);
-  };
-
-  const handleReview = async () => {
-    setIsOpen(false);
+  const handleReviewSeletedCategory = async () => {
     let required = 0;
     let reviewed = 0;
     titleMap.forEach((title) => {
@@ -331,20 +437,10 @@ export default function CustomizedTable() {
         if (row.Reviewed) reviewed++;
       });
     });
-    const tempData = {
-      ...tableData,
-      [selectedCategory]: {
-        ...tableData[selectedCategory],
-        status: "Reviewed",
-        comment: comment || "",
-      },
-    };
 
     if (required === reviewed) {
-      update(tempData);
-      toast.success("Successfuly Reviewed!!!", {
-        position: "top-right",
-      });
+      setClickedButton("handleReview");
+      setIsOpen(true);
     } else {
       toast.warning(
         `${required} / ${required - reviewed} Record still under review.`,
@@ -353,6 +449,24 @@ export default function CustomizedTable() {
         }
       );
     }
+  };
+
+  const reviewCategoryProcess = () => {
+    setIsOpen(false);
+    const tempData = {
+      ...tableData,
+      [selectedCategory]: {
+        ...tableData[selectedCategory],
+        status: "Reviewed",
+        comment: comment || "",
+      },
+    };
+    update(tempData);
+
+    toast.success("Successfuly Reviewed!!!", {
+      position: "top-right",
+    });
+
     setComment("");
     setClickedButton("");
   };
@@ -416,8 +530,6 @@ export default function CustomizedTable() {
       };
       return acc;
     }, {});
-
-    console.log("updatedData", updatedData);
 
     update(updatedData);
     setComment("");
@@ -706,6 +818,7 @@ export default function CustomizedTable() {
       if (response.ok) {
         const result = await response.json();
         const { metaData, tableData } = result;
+        console.log("res- table", tableData);
         dispatch(setMetaData(metaData));
         dispatch(storeTableData(tableData));
       } else {
@@ -713,32 +826,6 @@ export default function CustomizedTable() {
       }
     } catch (error) {
       console.error("Fetch Error:", error);
-    }
-  };
-
-  const handleCommentForCategory = () => {
-    if (!clickedButton) return;
-    switch (clickedButton) {
-      case "handleReview":
-        handleReview();
-        break;
-      case "handleGenerate":
-        handleGenerate();
-        break;
-      case "handleSaveToPDF":
-        handleSaveToPDF();
-        break;
-      case "handleSaveToCSV":
-        handleSaveToCSV(); // Assuming this is typo, it should match the function name
-        break;
-      case "handleSaveToXLS":
-        handleSaveToXLS(); // Assuming this is typo, it should match the function name
-        break;
-      case "handleRevise":
-        handleRevise();
-        break;
-      default:
-        setIsOpen(false);
     }
   };
 
@@ -770,17 +857,6 @@ export default function CustomizedTable() {
       navigate("/tb/dbtable");
     }
   };
-
-  // const getEndPoint = () => {
-  //   const currentHref = window.location.href;
-  //   const parsedUrl = new URL(currentHref);
-  //   const pathSegments = parsedUrl.pathname
-  //     .split("/")
-  //     .filter((segment) => segment);
-  //   return pathSegments[pathSegments.length - 1];
-  // };
-
-  // const endPoint = getEndPoint();
 
   const [modalIsOpen, setIsOpen] = useState(false);
 
@@ -831,11 +907,11 @@ export default function CustomizedTable() {
             cols="30"
             rows="10"
             placeholder={
-              column !== "" && column === "edit"
-                ? "Reason for Editing"
-                : clickedButton === "handleReview"
-                ? "Review Comment"
-                : ""
+              column !== ""
+                ? column === "Edit Reason"
+                  ? "Reason for Editing"
+                  : "Reason for Review"
+                : "Category Review Comment"
             }
             value={comment}
             autoFocus
@@ -846,9 +922,7 @@ export default function CustomizedTable() {
             <button
               className="bg-gray-200 px-2 py-1 rounded-md"
               onClick={
-                column !== ""
-                  ? handleSaveCommentForRow
-                  : handleCommentForCategory
+                column !== "" ? handleSaveCommentForRow : reviewCategoryProcess
               }
             >
               Submit
@@ -863,6 +937,7 @@ export default function CustomizedTable() {
         </div>
       </Modal>
       <ToastContainer />
+
       <div className="flex items-end gap-8">
         <div className="w-full md:w-2/3 lg:w-1/2 flex flex-col">
           <label htmlFor="category" className="font-bold">
@@ -927,6 +1002,19 @@ export default function CustomizedTable() {
 
       {/* Table Group */}
       <div className="w-full flex flex-col gap-4 my-4">
+        <label
+          htmlFor="review-all"
+          className="flex items-center ml-auto mr-[10rem]"
+        >
+          <input
+            id="review-all"
+            type="checkbox"
+            checked={reviewedAll}
+            onChange={handleReviewAll}
+            className="h-4 w-4 mr-4"
+          />
+          Review All
+        </label>
         {filteredTable &&
           Object.keys(filteredTable).length > 0 &&
           titleMap.map((tableName, index) => {
@@ -934,7 +1022,7 @@ export default function CustomizedTable() {
             return (
               <div
                 key={index}
-                className="w-full p-8 bg-white flex flex-col items-start"
+                className="w-full px-8 pb-8 bg-white flex flex-col items-start"
               >
                 <h1 className="text-3xl text-black font-bold m-4">
                   {tableName}
@@ -946,7 +1034,9 @@ export default function CustomizedTable() {
                     tableData={table}
                     handleEdit={handleEdit}
                     newRow={handleNewRow}
-                    handleConfirm={handleConfirm}
+                    handleReason={handleReason}
+                    handleEditConfirm={handleEditConfirm}
+                    handleReviewConfirm={handleReviewConfirm}
                     handleDelete={handleDeleteRow}
                   />
                 ) : (
@@ -976,7 +1066,7 @@ export default function CustomizedTable() {
           tableData[selectedCategory].status === "Processed" &&
           saved && (
             <button
-              onClick={() => handleClickStatusChangeButton("handleReview")}
+              onClick={handleReviewSeletedCategory}
               className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
             >
               Review

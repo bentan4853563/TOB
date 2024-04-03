@@ -11,7 +11,7 @@ import {
   storeTableData,
 } from "../redux/reducers/tableSlice";
 
-const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
+const SendCategoryModal = ({ list, file_name, hideModal }) => {
   const dispatch = useDispatch();
 
   const { token } = useSelector((state) => state.auth);
@@ -57,6 +57,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
       });
       if (response.ok) {
         const data = await response.json();
+
         const initialized = Object.keys(data).reduce(
           (accumulator, category) => {
             accumulator[category] = Object.keys(data[category]).reduce(
@@ -77,13 +78,15 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
                 });
                 return innerAccum;
               },
-              { status: "Processed", version: 0, comment: "" }
+              { status: "Processed", version: 1, comment: "" }
             );
             return accumulator;
           },
           {}
         );
-        saveStatusByCategory(initialized);
+        console.log("initialized", initialized);
+        // saveStatusByCategory(initialized);
+        dispatch(storeTableData(initialized));
         dispatch(clearLoading());
         hideModal();
       } else {
@@ -137,7 +140,7 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
         {confirm && (
           <div className="w-full flex flex-col gap-10">
             <label htmlFor="category_list" className="text-4xl text-center">
-              Category List
+              Category Input
             </label>
             <input
               id="set_List"
@@ -186,10 +189,10 @@ const CategoryConfirmModal = ({ list, file_name, hideModal }) => {
   );
 };
 
-CategoryConfirmModal.propTypes = {
+SendCategoryModal.propTypes = {
   list: PropTypes.array.isRequired,
   file_name: PropTypes.string.isRequired,
   hideModal: PropTypes.func.isRequired,
 };
 
-export default CategoryConfirmModal;
+export default SendCategoryModal;

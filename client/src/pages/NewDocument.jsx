@@ -7,7 +7,7 @@ import "react-confirm-alert/src/react-confirm-alert.css";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { setMetaData } from "../redux/reducers/tableSlice";
-import CategoryConfirmModal from "../components/CategoryConfirmModal";
+import SendCategoryModal from "../components/SendCategoryModal";
 import CustomizedTable from "../components/CustomizedTable";
 
 const NewDocument = () => {
@@ -17,8 +17,8 @@ const NewDocument = () => {
   const [file, setFile] = useState(null);
   const [broker, setBroker] = useState("");
   const [client, setClient] = useState("");
-  const [insurer, setInsurer] = useState({});
-  const [tobType, setTobType] = useState({});
+  const [insurer, setInsurer] = useState("");
+  const [tobType, setTobType] = useState("");
   const [sourceTOB, setSourceTOB] = useState("");
 
   const [categoryList, setCategoryList] = useState([]);
@@ -102,7 +102,7 @@ const NewDocument = () => {
   }));
 
   useEffect(() => {
-    setTobType(TobTypeList[0]);
+    setTobType(typeOfTOBOptions[0]);
   }, []);
 
   useEffect(() => {
@@ -112,18 +112,18 @@ const NewDocument = () => {
   }, [table]);
 
   useEffect(() => {
-    if (tobType === TobTypeList[0]) {
-      setInsurer(companyList[0]);
-    } else if (tobType === TobTypeList[1]) {
+    if (tobType.label === typeOfTOBOptions[0].label) {
+      setInsurer(insurerOptions[0]);
+    } else if (tobType.label === typeOfTOBOptions[1].label) {
       setGulfPlan(gulfPlanList[0]);
-    } else if (tobType === TobTypeList[2]) {
+    } else if (tobType.label === typeOfTOBOptions[2].label) {
       setThiqaPlan(ThiqaPlanList[0]);
     }
   }, [tobType]);
 
   const handleProcess = async () => {
     let newMetaData = {};
-    if (tobType === TobTypeList[0]) {
+    if (tobType.label === typeOfTOBOptions[0].label) {
       let newErrors = {};
       if (!client || !client.trim()) {
         newErrors.client = "Client is required";
@@ -134,11 +134,11 @@ const NewDocument = () => {
       setMetaFormErrors(newErrors);
       // Check if there are no errors in the newErrors object
       if (Object.keys(newErrors).length === 0) {
-        newMetaData.tobType = tobType;
+        newMetaData.tobType = tobType.label;
         newMetaData.client = client;
         // Only add the 'broker' key if 'broker' is not an empty string
         if (insurer !== "") {
-          newMetaData.insurer = insurer;
+          newMetaData.insurer = insurer.label;
         }
         if (broker !== "") {
           newMetaData.broker = broker;
@@ -151,7 +151,7 @@ const NewDocument = () => {
       }
     } else if (tobType === TobTypeList[1]) {
       if (tobType === TobTypeList[0] && insurer !== "") {
-        newMetaData.insurer = insurer;
+        newMetaData.insurer = insurer.label;
       }
       if (broker !== "") {
         newMetaData.broker = broker;
@@ -220,7 +220,7 @@ const NewDocument = () => {
   };
 
   const renderContent = () => {
-    switch (tobType) {
+    switch (tobType.label) {
       case "Elite Care":
         return (
           <div className="flex flex-col">
@@ -228,7 +228,7 @@ const NewDocument = () => {
             <Select
               id="tobType"
               options={insurerOptions}
-              onChange={(selectedOption) => setInsurer(selectedOption.value)}
+              onChange={(selectedOption) => setInsurer(selectedOption)}
               value={insurer}
             />
             {metaFormErrors.insurer && (
@@ -368,7 +368,7 @@ const NewDocument = () => {
               <Select
                 id="filter"
                 options={typeOfTOBOptions}
-                onChange={(tobType) => setTobType(tobType.value)}
+                onChange={(tobType) => setTobType(tobType)}
                 value={tobType}
               />
             </div>
@@ -408,47 +408,45 @@ const NewDocument = () => {
             </div>
 
             {/* sourceTOB */}
-            {tobType === TobTypeList[0] && (
-              <div className="flex flex-col">
-                <label className="text-black" htmlFor="sourceTOB">
-                  Source TOB File
-                </label>
-                <div className="flex gap-4">
-                  <div className="flex flex-col flex-1">
-                    <input
-                      type="text"
-                      value={sourceTOB ? sourceTOB : ""}
-                      onFocus={handleFocus}
-                      disabled
-                      readOnly // Since this input is not intended to be modified directly by the user
-                      className="w-full p-2 rounded-md border border-gray-200"
-                    />
-                  </div>
-                  <label htmlFor="fileInput">
-                    <span
-                      onClick={() =>
-                        setMetaFormErrors({ ...metaFormErrors, file: "" })
-                      }
-                      className="bg-indigo-600 text-white flex justify-center items-end px-12 py-2 rounded-md cursor-pointer"
-                    >
-                      Upload
-                    </span>
-                    <input
-                      type="file"
-                      id="fileInput"
-                      name="fileInput"
-                      className="hidden border border-gray-200"
-                      onChange={handleFileInput}
-                    />
-                  </label>
+            <div className="flex flex-col">
+              <label className="text-black" htmlFor="sourceTOB">
+                Source TOB File
+              </label>
+              <div className="flex gap-4">
+                <div className="flex flex-col flex-1">
+                  <input
+                    type="text"
+                    value={sourceTOB ? sourceTOB : ""}
+                    onFocus={handleFocus}
+                    disabled
+                    readOnly // Since this input is not intended to be modified directly by the user
+                    className="w-full p-2 rounded-md border border-gray-200"
+                  />
                 </div>
-                {metaFormErrors.sourceTOB && (
-                  <p className="w-full text-red-400 text-xs text-left">
-                    {metaFormErrors.sourceTOB}
-                  </p>
-                )}
+                <label htmlFor="fileInput">
+                  <span
+                    onClick={() =>
+                      setMetaFormErrors({ ...metaFormErrors, file: "" })
+                    }
+                    className="bg-indigo-600 text-white flex justify-center items-end px-12 py-2 rounded-md cursor-pointer"
+                  >
+                    Upload
+                  </span>
+                  <input
+                    type="file"
+                    id="fileInput"
+                    name="fileInput"
+                    className="hidden border border-gray-200"
+                    onChange={handleFileInput}
+                  />
+                </label>
               </div>
-            )}
+              {metaFormErrors.sourceTOB && (
+                <p className="w-full text-red-400 text-xs text-left">
+                  {metaFormErrors.sourceTOB}
+                </p>
+              )}
+            </div>
 
             <div>
               <button
@@ -468,7 +466,7 @@ const NewDocument = () => {
       {Object.keys(table).length > 0 && <CustomizedTable />}
 
       {modalOpen && (
-        <CategoryConfirmModal
+        <SendCategoryModal
           list={categoryList}
           file_name={tempFileName}
           hideModal={() => setModalOpen(false)}

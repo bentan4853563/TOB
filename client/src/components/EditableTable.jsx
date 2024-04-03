@@ -4,14 +4,17 @@ import { confirmAlert } from "react-confirm-alert";
 import { Tooltip } from "react-tooltip";
 
 import { FaTrash } from "react-icons/fa";
-import { MdOutlineInsertComment } from "react-icons/md";
+import { FaRegEdit } from "react-icons/fa";
 import { GoPlus } from "react-icons/go";
+import { MdOutlineInsertComment } from "react-icons/md";
 
 const EditableTable = ({
   tableName,
   tableData,
   handleEdit,
-  handleConfirm,
+  handleReason,
+  handleEditConfirm,
+  handleReviewConfirm,
   newRow,
   handleDelete,
 }) => {
@@ -80,9 +83,6 @@ const EditableTable = ({
                   return (
                     <td
                       key={columnIndex}
-                      // onClick={() =>
-                      //   handleFocus(tableName, rowIndex, columnIndex)
-                      // }
                       className={`w-1/4 ${
                         row.color === "green"
                           ? "status-checked"
@@ -96,9 +96,6 @@ const EditableTable = ({
                   return (
                     <td
                       key={columnIndex}
-                      // onClick={() =>
-                      //   handleFocus(tableName, rowIndex, columnIndex)
-                      // }
                       className={`w-1/4 bg-white focus:outline-none border border-gray-300`}
                     >
                       <input
@@ -119,7 +116,9 @@ const EditableTable = ({
                     <input
                       type="checkbox"
                       className="h-4 w-4"
-                      onChange={() => handleConfirm(tableName, row.id, column)}
+                      onChange={() =>
+                        handleEditConfirm(tableName, row.id, column)
+                      }
                       checked={row.edit}
                     />
                   </td>
@@ -152,30 +151,39 @@ const EditableTable = ({
                     key={column}
                     className="w-[4rem] px-2 mx-auto border border-gray-300"
                   >
-                    {row["Edit Reason"] !== "" && (
-                      <>
-                        <MdOutlineInsertComment
-                          data-tip
-                          data-tooltip-id={`comment-${rowIndex}-${columnIndex}`}
-                          className="comment-icon focus:outline-none cursor-pointer"
-                        />
-                        <Tooltip
-                          id={`comment-${rowIndex}-${columnIndex}`}
-                          place="bottom"
-                          effect="solid"
-                          content={row["Edit Reason"]}
-                          style={{
-                            width: "240px",
-                            textAlign: "left",
-                            fontSize: "14px",
-                            backgroundColor: "#595959",
-                            color: "white",
-                            borderRadius: "4px",
-                            padding: "8px",
-                          }}
-                        />
-                      </>
-                    )}
+                    <div className="flex items-center gap-4">
+                      <FaRegEdit
+                        className="cursor-pointer"
+                        onClick={() => handleReason(tableName, row.id, column)}
+                      />
+                      {row["Edit Reason"] !== "" && (
+                        <>
+                          <MdOutlineInsertComment
+                            data-tip
+                            onClick={() =>
+                              handleReason(tableName, row.id, column)
+                            }
+                            data-tooltip-id={`comment-${rowIndex}-${columnIndex}`}
+                            className="comment-icon focus:outline-none cursor-pointer"
+                          />
+                          <Tooltip
+                            id={`comment-${rowIndex}-${columnIndex}`}
+                            place="bottom"
+                            effect="solid"
+                            content={row["Edit Reason"]}
+                            style={{
+                              width: "240px",
+                              textAlign: "left",
+                              fontSize: "14px",
+                              backgroundColor: "#595959",
+                              color: "white",
+                              borderRadius: "4px",
+                              padding: "8px",
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
                   </td>
                 );
               }
@@ -185,9 +193,6 @@ const EditableTable = ({
                     <input
                       type="checkbox"
                       className="h-4 w-4"
-                      // onChange={() =>
-                      //   handleConfirm(tableName, rowIndex, column)
-                      // }
                       readOnly
                       checked={row["Review Required"]}
                     />
@@ -202,7 +207,7 @@ const EditableTable = ({
                         type="checkbox"
                         className="h-4 w-4"
                         onChange={() =>
-                          handleConfirm(tableName, row.id, column)
+                          handleReviewConfirm(tableName, row.id, column)
                         }
                         checked={row.Reviewed}
                       />
@@ -216,23 +221,32 @@ const EditableTable = ({
                     key={`comment-cell-${rowIndex}`}
                     className="px-2 border border-gray-300"
                   >
-                    {row["Review Comment"] !== "" && (
-                      <>
-                        <MdOutlineInsertComment
-                          data-tip
-                          data-tooltip-id={`ReviewComment-${rowIndex}`} // changed to `data-for` to match Tooltip's expected prop
-                          className="comment-icon focus:outline-none cursor-pointer"
-                        />
-                        <Tooltip
-                          id={`ReviewComment-${rowIndex}`}
-                          place="bottom"
-                          effect="solid"
-                          className="tooltip-custom" // use a className for styling instead of inline styles
-                        >
-                          {row["Review Comment"]}
-                        </Tooltip>
-                      </>
-                    )}
+                    <div className="flex items-center gap-4">
+                      <FaRegEdit
+                        className="cursor-pointer"
+                        onClick={() => handleReason(tableName, row.id, column)}
+                      />
+                      {row["Review Comment"] !== "" && (
+                        <>
+                          <MdOutlineInsertComment
+                            data-tip
+                            onClick={() =>
+                              handleReason(tableName, row.id, column)
+                            }
+                            data-tooltip-id={`ReviewComment-${rowIndex}`} // changed to `data-for` to match Tooltip's expected prop
+                            className="comment-icon focus:outline-none cursor-pointer"
+                          />
+                          <Tooltip
+                            id={`ReviewComment-${rowIndex}`}
+                            place="bottom"
+                            effect="solid"
+                            className="tooltip-custom" // use a className for styling instead of inline styles
+                          >
+                            {row["Review Comment"]}
+                          </Tooltip>
+                        </>
+                      )}
+                    </div>
                   </td>
                 );
               }
@@ -254,7 +268,9 @@ EditableTable.propTypes = {
   tableName: Proptypes.string.isRequired,
   tableData: Proptypes.array.isRequired,
   handleEdit: Proptypes.func.isRequired,
-  handleConfirm: Proptypes.func.isRequired,
+  handleReason: Proptypes.func.isRequired,
+  handleEditConfirm: Proptypes.func.isRequired,
+  handleReviewConfirm: Proptypes.func.isRequired,
   newRow: Proptypes.func.isRequired,
   handleDelete: Proptypes.func.isRequired,
 };

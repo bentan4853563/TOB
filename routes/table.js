@@ -32,9 +32,9 @@ router.post("/insert", auth, async (req, res) => {
   try {
     const { uuid, metaData, tableData } = req.body;
 
-    const processPath = `TBData/processed/${uuid}.json`;
+    console.log("tableData", tableData);
+
     const reviewedPath = `TBData/reviewed/${uuid}.json`;
-    await saveDataToFile(tableData, processPath);
     await saveDataToFile(tableData, reviewedPath);
 
     let statusByCategory = Object.keys(tableData).map((category) => {
@@ -42,7 +42,7 @@ router.post("/insert", auth, async (req, res) => {
         category: category,
         comment: "",
         status: "Processed",
-        version: 0,
+        version: 1,
       };
     });
 
@@ -56,7 +56,6 @@ router.post("/insert", auth, async (req, res) => {
       new: true,
       upsert: true,
     });
-    console.log("result", result);
 
     res.json({ metaData: result, tableData });
   } catch (error) {
@@ -86,12 +85,6 @@ router.post("/update", auth, async (req, res) => {
 
     const filepath = `TBData/reviewed/${uuid}.json`;
 
-    // const updatedStatusByCategory = await updateVersionAndSave(
-    //   uuid,
-    //   tableData,
-    //   []
-    // );
-
     await saveDataToFile(tableData, filepath);
 
     let statusByCategory = Object.keys(tableData).map((category) => {
@@ -100,9 +93,11 @@ router.post("/update", auth, async (req, res) => {
         status: tableData[category].status,
         version: tableData[category].version,
         comment: tableData[category].comment,
-        resultTOB: tableData[category].resultTOB,
+        // resultTOB: tableData[category].resultTOB,
       };
     });
+
+    console.log("statusByCategory", statusByCategory);
 
     const result = await Table.findOneAndUpdate(
       { uuid: uuid },
@@ -112,6 +107,7 @@ router.post("/update", auth, async (req, res) => {
         upsert: true,
       }
     );
+    console.log("result", result);
 
     res.json({ metaData: result, tableData });
   } catch (error) {
