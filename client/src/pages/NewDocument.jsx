@@ -201,7 +201,7 @@ const NewDocument = () => {
     formData.append("file", file);
     dispatch(setLoading());
     try {
-      const response = await fetch(`${python_server_url}/checkCategory`, {
+      const response = await fetch(`${python_server_url}/check-category`, {
         method: "POST",
         body: formData,
       });

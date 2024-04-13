@@ -73,7 +73,7 @@ const EditableTable = ({
           <tr key={rowIndex} className="w-full">
             <td className="border border-gray-300">
               <GoPlus
-                onClick={() => newRow(tableName, rowIndex)}
+                onClick={() => newRow(tableName, row.id)}
                 className="cursor-pointer"
               />
             </td>

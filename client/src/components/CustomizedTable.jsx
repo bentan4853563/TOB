@@ -98,7 +98,8 @@ export default function CustomizedTable() {
   }, [table]);
 
   useEffect(() => {
-    if (tableData && Object.keys(tableData).length > 0) {
+    console.log(selectedCategory);
+    if (tableData && Object.keys(tableData).length > 0 && selectedCategory) {
       let uncheckedCount = 0;
       let generated = 0;
       titleMap.map((tableName) => {
@@ -121,7 +122,7 @@ export default function CustomizedTable() {
         setEnableRevise(true);
       }
     }
-  }, [tableData]);
+  }, [tableData, selectedCategory]);
 
   useEffect(() => {
     if (
@@ -298,7 +299,7 @@ export default function CustomizedTable() {
               ...row,
               ["New Benefit"]: row["benefit"],
               ["New Limit"]: row["limit"],
-              edit: true,
+              edit: !row.edit,
               "Review Required": true,
             };
           } else {
@@ -320,7 +321,7 @@ export default function CustomizedTable() {
           if (row.id === rowId && column === "Reviewed") {
             return {
               ...row,
-              Reviewed: true,
+              Reviewed: !row.Reviewed,
               "Review Comment": comment,
             };
           } else {

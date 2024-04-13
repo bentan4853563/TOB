@@ -47,13 +47,15 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
     dispatch(setLoading());
     const formData = new FormData();
     formData.append("category_list", JSON.stringify(categoryList));
-    formData.append("file_name", JSON.stringify(file_name));
+    formData.append("file_name", file_name);
     dispatch(setLoading());
     try {
       const response = await fetch(`${python_server_url}/generateDoc`, {
         method: "POST",
+        headers: {
+          "ngrok-skip-browser-warning": true,
+        },
         body: formData,
-        "ngrok-skip-browser-warning": true,
       });
       if (response.ok) {
         const data = await response.json();
@@ -85,7 +87,7 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
           {}
         );
         console.log("initialized", initialized);
-        // saveStatusByCategory(initialized);
+        saveStatusByCategory(initialized);
         dispatch(storeTableData(initialized));
         dispatch(clearLoading());
         hideModal();
@@ -142,17 +144,31 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
             <label htmlFor="category_list" className="text-4xl text-center">
               Category Input
             </label>
-            <input
-              id="set_List"
-              type="text"
-              name="category"
-              value={categoryInput}
-              onChange={(e) => {
-                setCategoryInput(e.target.value);
-              }}
-              onKeyDown={handleKeyDown}
-              className="border border-gray-200 rounded-lg w-full px-2 py-2 outline-none focus:border-sky-700"
-            />
+            {list.length > 0 ? (
+              <span className="text-black text-md text-left">
+                Found the following Category/Categories in the Document. Please
+                check and Confirm.
+              </span>
+            ) : (
+              <span className="text-black text-md text-left">
+                Unable read and find the Category/Categories in the Document.
+                Please provide the Category or List of Categories and add them
+                to the list and Submit
+              </span>
+            )}
+            {list.length > 0 && (
+              <input
+                id="set_List"
+                type="text"
+                name="category"
+                value={categoryInput}
+                onChange={(e) => {
+                  setCategoryInput(e.target.value);
+                }}
+                onKeyDown={handleKeyDown}
+                className="border border-gray-200 rounded-lg w-full px-2 py-2 outline-none focus:border-sky-700"
+              />
+            )}
           </div>
         )}
         {/* Category list */}
