@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import ScrollToTop from "react-scroll-to-top";
 import { confirmAlert } from "react-confirm-alert";
-import Select from "react-select";
+import ReactSelect from "react-select";
 import "react-confirm-alert/src/react-confirm-alert.css";
 
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
@@ -101,6 +101,26 @@ const NewDocument = () => {
     value: company,
   }));
 
+  const gulfPlanOptions = gulfPlanList.map((plan) => ({
+    label: plan,
+    value: plan,
+  }));
+
+  const regulatorOptions = regulagorList.map((regulator) => ({
+    label: regulator,
+    value: regulator,
+  }));
+
+  const AIPlanOptions = AIPlanList.map((plan) => ({
+    label: `Plan ${plan}`,
+    value: `Plan ${plan}`,
+  }));
+
+  const ThiqaPlanOptions = ThiqaPlanList.map((plan) => ({
+    label: `Plan ${plan}`,
+    value: `Plan ${plan}`,
+  }));
+
   useEffect(() => {
     setTobType(typeOfTOBOptions[0]);
   }, []);
@@ -123,47 +143,95 @@ const NewDocument = () => {
 
   const handleProcess = async () => {
     let newMetaData = {};
-    if (tobType.label === typeOfTOBOptions[0].label) {
-      let newErrors = {};
-      if (!client || !client.trim()) {
-        newErrors.client = "Client is required";
-      }
-      if (!sourceTOB || !sourceTOB.trim()) {
-        newErrors.sourceTOB = "Source TOB is required";
-      }
-      setMetaFormErrors(newErrors);
-      // Check if there are no errors in the newErrors object
-      if (Object.keys(newErrors).length === 0) {
-        newMetaData.tobType = tobType.label;
-        newMetaData.client = client;
-        // Only add the 'broker' key if 'broker' is not an empty string
-        if (insurer !== "") {
+    let newErrors = {};
+
+    // Common validation for all tobTypes
+    if (!client || !client.trim()) {
+      newErrors.client = "Client is required";
+    }
+    if (!sourceTOB || !sourceTOB.trim()) {
+      newErrors.sourceTOB = "Source TOB is required";
+    }
+
+    // Validation specific to each tobType
+    switch (tobType.value) {
+      case "Elite Care":
+        if (!insurer || !insurer.value) {
+          newErrors.insurer = "Insurer is required for Elite Care";
+        }
+        break;
+      case "Gulf Care":
+        if (!gulfPlan || !gulfPlan.value) {
+          newErrors.gulfPlan = "Plan is required for Gulf Care";
+        }
+        if (!regulator || !regulator.value) {
+          newErrors.regulator = "Regulator is required for Gulf Care";
+        }
+        break;
+      case "Al Madallah":
+        if (!AIPlan || !AIPlan.value) {
+          newErrors.AIPlan = "Plan is required for Al Madallah";
+        }
+        // Assuming regulator is also required for Al Madallah
+        if (!regulator || !regulator.value) {
+          newErrors.regulator = "Regulator is required for Al Madallah";
+        }
+        break;
+      case "Thiqa":
+        if (!ThiqaPlan || !ThiqaPlan.value) {
+          newErrors.ThiqaPlan = "Plan is required for Thiqa";
+        }
+        // Assuming regulator is also required for Thiqa
+        if (!regulator || !regulator.value) {
+          newErrors.regulator = "Regulator is required for Thiqa";
+        }
+        break;
+      // Add additional cases for other tobTypes if necessary
+    }
+
+    setMetaFormErrors(newErrors);
+
+    // If there are no errors in the form, prepare metadata and possibly proceed with further processing
+    if (Object.keys(newErrors).length === 0) {
+      newMetaData.tobType = tobType.label;
+      newMetaData.client = client;
+
+      // Set metadata specific to each tobType
+      switch (tobType.value) {
+        case "Elite Care":
           newMetaData.insurer = insurer.label;
-        }
-        if (broker !== "") {
-          newMetaData.broker = broker;
-        }
-        if (sourceTOB !== "") {
-          newMetaData.sourceTOB = sourceTOB;
-        }
-        handleFetch();
-        dispatch(setMetaData(newMetaData));
+          break;
+        case "Gulf Care":
+          newMetaData.gulfPlan = gulfPlan.label;
+          newMetaData.regulator = regulator.label;
+          break;
+        case "Al Madallah":
+          newMetaData.AIPlan = AIPlan.label;
+          newMetaData.regulator = regulator.label;
+          break;
+        case "Thiqa":
+          newMetaData.ThiqaPlan = ThiqaPlan.label;
+          newMetaData.regulator = regulator.label;
+          break;
+        // Add additional cases for other tobTypes if necessary
       }
-    } else if (tobType === TobTypeList[1]) {
-      if (tobType === TobTypeList[0] && insurer !== "") {
-        newMetaData.insurer = insurer.label;
-      }
-      if (broker !== "") {
+
+      // Optional fields
+      if (broker) {
         newMetaData.broker = broker;
       }
-      if (tobType === TobTypeList[0] && sourceTOB !== "") {
+      if (sourceTOB) {
         newMetaData.sourceTOB = sourceTOB;
       }
+
+      // Make an API call or dispatch an action with the new metadata
+      handleFetch();
+      dispatch(setMetaData(newMetaData));
     }
   };
 
   const handleFocus = (e) => {
-    setMetaFormErrors({ ...metaFormErrors, [e.target.name]: "" });
+    setMetaFormErrors({ ...metaFormErrors, [e.target.id]: "" });
   };
 
   const handleFileInput = (e) => {
@@ -218,21 +286,22 @@ const NewDocument = () => {
       console.error("Error:", error);
     }
   };
-
+  console.log(gulfPlan, regulator, "new ===>");
   const renderContent = () => {
     switch (tobType.label) {
       case "Elite Care":
         return (
           <div className="flex flex-col">
             <label htmlFor="insurer">Insurer</label>
-            <Select
-              id="tobType"
+            <ReactSelect
+              id="insurer"
+              value={insurer}
               options={insurerOptions}
               onChange={(selectedOption) => setInsurer(selectedOption)}
-              value={insurer}
+              components={{ IndicatorSeparator: () => null }}
             />
             {metaFormErrors.insurer && (
-              <p className="w-full text-red-400 text-xs text-left">
+              <p className="text-red-500 text-xs pt-1">
                 {metaFormErrors.insurer}
               </p>
             )}
@@ -240,114 +309,110 @@ const NewDocument = () => {
         );
       case "Gulf Care":
         return (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
+          <>
+            <div className="flex flex-col" id="gulfPlan" onClick={handleFocus}>
               <label htmlFor="gulfPlan">Plan</label>
-              <select
-                name="gulfPlan"
-                id="gulfPlan"
+              <ReactSelect
+                options={gulfPlanOptions}
                 value={gulfPlan}
-                onClick={handleFocus}
-                onChange={(e) => setGulfPlan(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {gulfPlanList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
+                onChange={(selectedOption) => setGulfPlan(selectedOption)}
+                components={{ IndicatorSeparator: () => null }}
+              />
+              {metaFormErrors.gulfPlan && (
+                <p className="text-red-500 text-xs pt-1">
+                  {metaFormErrors.gulfPlan}
+                </p>
+              )}
             </div>
             <div className="flex flex-col">
               <label htmlFor="regulator">Regulator</label>
-              <select
-                name="regulator"
+              <ReactSelect
                 id="regulator"
                 value={regulator}
-                onClick={handleFocus}
-                onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {regulagorList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
-            </div>
-          </div>
-        );
-      case "Al Madallah":
-        return (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col">
-              <label htmlFor="AIPlan">Plan</label>
-              <select
-                name="AIPlan"
-                id="AIPlan"
-                value={AIPlan}
-                onClick={handleFocus}
-                onChange={(e) => setAIPlan(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {AIPlanList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
-            </div>
-            <div className="flex flex-col">
-              <label htmlFor="regulator">Regulator</label>
-              <select
-                name="regulator"
-                id="regulator"
-                value={regulator}
-                onClick={handleFocus}
-                onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {regulagorList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
+                options={regulatorOptions}
+                onChange={(selectedOption) => setRegulator(selectedOption)}
+                components={{ IndicatorSeparator: () => null }}
+              />
               {metaFormErrors.regulator && (
-                <p className="w-full text-red-400 text-xs text-left">
+                <p className="text-red-500 text-xs pt-1">
                   {metaFormErrors.regulator}
                 </p>
               )}
             </div>
-          </div>
+          </>
         );
-      case "Thiqa":
+      case "Al Madallah":
         return (
-          <div className="flex flex-col gap-4">
+          <>
             <div className="flex flex-col">
-              <label htmlFor="ThiqaPlan">Plan</label>
-              <select
-                name="ThiqaPlan"
-                id="ThiqaPlan"
-                value={ThiqaPlan}
-                onClick={handleFocus}
-                onChange={(e) => setThiqaPlan(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {ThiqaPlanList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
+              <label htmlFor="AIPlan">Plan</label>
+              <ReactSelect
+                id="AIPlan"
+                options={AIPlanOptions}
+                onChange={(selectedOption) => setAIPlan(selectedOption)}
+                value={AIPlan}
+                components={{ IndicatorSeparator: () => null }}
+              />
+              {metaFormErrors.AIPlan && (
+                <p className="text-red-500 text-xs pt-1">
+                  {metaFormErrors.AIPlan}
+                </p>
+              )}
             </div>
             <div className="flex flex-col">
               <label htmlFor="regulator">Regulator</label>
-              <select
-                name="regulator"
+              <ReactSelect
                 id="regulator"
+                options={regulatorOptions}
+                onChange={(selectedOption) => setRegulator(selectedOption)}
                 value={regulator}
-                onClick={handleFocus}
-                onChange={(e) => setRegulator(e.target.value)}
-                className="border border-gray-200 rounded-md p-2 outline-none focus:border-sky-700"
-              >
-                {regulagorList.map((value, index) => {
-                  return <option key={index}>{value}</option>;
-                })}
-              </select>
+                components={{ IndicatorSeparator: () => null }}
+              />
             </div>
-          </div>
+            {metaFormErrors.regulator && (
+              <p className="text-red-500 text-xs pt-1">
+                {metaFormErrors.regulator}
+              </p>
+            )}
+          </>
         );
+      case "Thiqa":
+        return (
+          <>
+            <div className="flex flex-col">
+              <label htmlFor="ThiqaPlan">Plan</label>
+              <ReactSelect
+                id="ThiqaPlan"
+                options={ThiqaPlanOptions}
+                onChange={(selectedOption) => setThiqaPlan(selectedOption)}
+                value={ThiqaPlan}
+                components={{ IndicatorSeparator: () => null }}
+              />
+              {metaFormErrors.ThiqaPlan && (
+                <p className="text-red-500 text-xs pt-1">
+                  {metaFormErrors.ThiqaPlan}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <label htmlFor="regulator">Regulator</label>
+              <ReactSelect
+                id="regulator"
+                options={regulatorOptions}
+                onChange={(selectedOption) => setRegulator(selectedOption)}
+                value={regulator}
+                components={{ IndicatorSeparator: () => null }}
+              />
+              {metaFormErrors.regulator && (
+                <p className="text-red-500 text-xs pt-1">
+                  {metaFormErrors.regulator}
+                </p>
+              )}
+            </div>
+          </>
+        );
+      default:
+        return null;
     }
   };
 
@@ -365,11 +430,14 @@ const NewDocument = () => {
             {/* tobType */}
             <div className="flex flex-col">
               <label htmlFor="tobType">Type of TOB</label>
-              <Select
+              <ReactSelect
                 id="filter"
                 options={typeOfTOBOptions}
                 onChange={(tobType) => setTobType(tobType)}
                 value={tobType}
+                components={{
+                  IndicatorSeparator: () => null,
+                }}
               />
             </div>
 

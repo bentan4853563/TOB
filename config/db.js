@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const db = "mongodb://127.0.0.1:27017/TOB";
+const db =
+  "mongodb+srv://yakiv390497:N4gkZwUKD2GahJVA@cluster0.mem6wir.mongodb.net/TOB";
 
 const connectDB = async () => {
   try {

@@ -17,7 +17,12 @@ const Home = () => {
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
-  const [statisticalData, setStatisticalData] = useState({});
+  const [statisticalData, setStatisticalData] = useState({
+    Processed: 0,
+    Reviewed: 0,
+    Revised: 0,
+  });
+
   useEffect(() => {
     dispatch(clearTableData());
     dispatch(clearMetaData());
@@ -36,15 +41,6 @@ const Home = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         let data = await response.json();
-        data = data.map((item) => ({
-          previousInsurer: item.previousInsurer,
-          client: item.client,
-          broker: item.broker,
-          sourceTOB: item.sourceTOB,
-          resultTOB: item.resultTOB,
-          status: item.status,
-        }));
-        console.log(data);
         setDBTableData(data);
         dispatch(clearLoading());
       } catch (error) {
@@ -54,21 +50,36 @@ const Home = () => {
     fetchData();
   }, [dispatch]);
 
-  useEffect(() => {}, [dbTableData]);
-
-  const countDocumentsByStatus = (docs) => {
-    return docs.reduce((acc, doc) => {
-      const { status } = doc;
-      if (!acc[status]) {
-        acc[status] = 0; // Initialize the counter for this status
-      }
-      acc[status] += 1; // Increment the counter for this status
-      return acc;
-    }, {});
-  };
-
   useEffect(() => {
-    setStatisticalData(countDocumentsByStatus(dbTableData));
+    if (dbTableData) {
+      dbTableData.map((item) => {
+        let categories = Object.keys(item);
+        let processed = 0;
+        let reviewed = 0;
+        let revised = 0;
+        item.statusByCategory.map((categoryData) => {
+          if (categoryData.status === "Processed") processed = processed + 1;
+          else if (categoryData.status === "Reviewed") reviewed = reviewed + 1;
+          if (categoryData.version > 1) revised = revised + 1;
+        });
+        if (revised === categories.length) {
+          setStatisticalData((previousState) => ({
+            ...previousState,
+            Revised: previousState.Revised + 1,
+          }));
+        } else if (reviewed === categories.length) {
+          setStatisticalData((previousState) => ({
+            ...previousState,
+            Reviewed: previousState.Reviewed + 1,
+          }));
+        } else {
+          setStatisticalData((previousState) => ({
+            ...previousState,
+            Processed: previousState.Processed + 1,
+          }));
+        }
+      });
+    }
   }, [dbTableData]);
 
   // const handleClickUpload = () => {
@@ -78,7 +89,6 @@ const Home = () => {
 
   const handleClickRow = (status) => {
     navigate("/tb/dbtable", { state: status });
-    console.log(status);
   };
 
   return (

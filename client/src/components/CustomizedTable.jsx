@@ -864,6 +864,7 @@ export default function CustomizedTable() {
   function closeModal() {
     setIsOpen(false);
     setTableName("");
+    setColumn("");
   }
 
   const customStyles = {
@@ -873,6 +874,7 @@ export default function CustomizedTable() {
       right: "auto",
       bottom: "auto",
       marginRight: "-50%",
+      borderRadius: "8px",
       transform: "translate(-50%, -50%)",
     },
   };
@@ -882,16 +884,18 @@ export default function CustomizedTable() {
   const modalHeather = () => {
     if (column === "") {
       if (clickedButton === "handleReview") {
-        return <h2 className="text-2xl mb-4">Review</h2>;
+        return <h2 className="text-2xl mb-4 font-medium">Review</h2>;
       }
     } else {
-      if (column === "edit") {
-        return <h2 className="text-2xl mb-4">Edit</h2>;
-      } else if (column === "Reviewed") {
-        return <h2 className="text-2xl mb-4">Review</h2>;
+      if (column === "Edit Reason") {
+        return <h2 className="text-2xl mb-4 font-medium">Reason For Edit</h2>;
+      } else if (column === "Review Comment") {
+        return <h2 className="text-2xl mb-4 font-medium">Review Comment</h2>;
       }
     }
   };
+
+  console.log("column==>>", column);
 
   return (
     <div className="w-full flex flex-col mt-8">
@@ -910,18 +914,19 @@ export default function CustomizedTable() {
             placeholder={
               column !== ""
                 ? column === "Edit Reason"
-                  ? "Reason for Editing"
-                  : "Reason for Review"
+                  ? "Reason"
+                  : "Comment"
                 : "Category Review Comment"
             }
+            required
             value={comment}
             autoFocus
-            className="w-full h-24 p-2 border border-gray-300 focus:outline-none"
+            className="w-full h-24 max-h-32 min-h-24 p-2 border border-gray-300 focus:border-gray-500 rounded-md focus:outline-none"
             onChange={(e) => setComment(e.target.value)}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-8">
             <button
-              className="bg-gray-200 px-2 py-1 rounded-md"
+              className="px-2 py-1 rounded-md bg-emerald-500 text-white active:bg-emerald-600 active:outline-none"
               onClick={
                 column !== "" ? handleSaveCommentForRow : reviewCategoryProcess
               }
@@ -929,7 +934,7 @@ export default function CustomizedTable() {
               Submit
             </button>
             <button
-              className="bg-gray-200 px-2 py-1 rounded-md"
+              className="bg-gray-200 px-2 py-1 rounded-md outline-none active:outline-none"
               onClick={closeModal}
             >
               Close
@@ -951,6 +956,9 @@ export default function CustomizedTable() {
             value={categoryOptions.find(
               (option) => option.value === selectedCategory
             )}
+            components={{
+              IndicatorSeparator: () => null,
+            }}
           />
         </div>
 

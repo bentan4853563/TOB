@@ -6,16 +6,28 @@ const TableSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  client: {
+    type: String,
+  },
+  broker: {
+    type: String,
+  },
   tobType: {
     type: String,
   },
   insurer: {
     type: String,
   },
-  client: {
+  gulfPlan: {
     type: String,
   },
-  broker: {
+  AIPlan: {
+    type: String,
+  },
+  ThiqaPlan: {
+    type: String,
+  },
+  regulator: {
     type: String,
   },
   sourceTOB: {

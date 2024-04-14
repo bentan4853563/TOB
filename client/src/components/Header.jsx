@@ -22,7 +22,7 @@ const Header = () => {
     <div className="w-full min-h-20 h-20 bg-white flex items-center justify-between px-24">
       <div className="flex gap-8">
         <Link
-          to="/tb/dbtable"
+          to="/tb/home"
           className="text-xl font-sans text-black hover:text-sky-900"
         >
           <img className="mx-auto w-24" src={logo} alt="logo" />

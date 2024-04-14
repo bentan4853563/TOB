@@ -83,10 +83,12 @@ const EditableTable = ({
                   return (
                     <td
                       key={columnIndex}
-                      className={`w-1/4 ${
+                      className={`${
                         row.color === "green"
                           ? "status-checked"
                           : "status-unchecked"
+                      } ${
+                        columnIndex === 0 ? "w-1/6" : "w-1/4"
                       } focus:outline-none border border-gray-300`}
                     >
                       {row[column]}
@@ -96,7 +98,9 @@ const EditableTable = ({
                   return (
                     <td
                       key={columnIndex}
-                      className={`w-1/4 bg-white focus:outline-none border border-gray-300`}
+                      className={`${
+                        columnIndex === 0 ? "w-1/6" : "w-1/4"
+                      } bg-white focus:outline-none border border-gray-300`}
                     >
                       <input
                         type="text"
@@ -128,16 +132,18 @@ const EditableTable = ({
                 return (
                   <td
                     key={columnIndex}
-                    className="w-1/4 border border-gray-300"
+                    className={`${
+                      columnIndex === 3 ? "w-1/6" : "w-1/4"
+                    } border border-gray-300`}
                   >
                     {row["edit"] === true ? (
-                      <input
-                        type="text"
+                      <textarea
+                        rows="8"
                         value={row[column]}
                         onChange={(e) =>
                           handleEdit(tableName, e.target.value, row.id, column)
                         }
-                        className="w-full focus:outline-none text-wrap"
+                        className="w-full focus:outline-none resize-none"
                       />
                     ) : (
                       row[column]

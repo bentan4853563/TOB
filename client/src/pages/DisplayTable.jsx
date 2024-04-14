@@ -32,7 +32,12 @@ const DisplayTable = () => {
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
 
+  const [searchValues, setSearchValues] = useState({
+    broker: "",
+    client: "",
+  });
   const [insurer, setInsurer] = useState({});
   const [tobType, setTobType] = useState({});
 
@@ -128,11 +133,6 @@ const DisplayTable = () => {
     value: company,
   }));
 
-  // const handleClickUpload = () => {
-  // 	setSettingModalOpen(true);
-  // 	// setIsModalOpen(false);
-  // };
-
   const handleView = async (uuid) => {
     dispatch(setLoading());
     const response = await fetch(`${node_server_url}/api/table/getOne`, {
@@ -188,69 +188,41 @@ const DisplayTable = () => {
     navigate("/tb/new");
   };
 
-  const [searchValues, setSearchValues] = useState({
-    broker: "",
-    client: "",
-    insurer: "",
-  });
+  useEffect(() => {
+    handleSearch();
+  }, [tobType, insurer, searchValues]);
 
-  // const handleSearch = async () => {
-  // 	dispatch(setLoading());
-  // 	const searchData = {
-  // 		broker,
-  // 		client,
-  // 		insurer,
-  // 	};
-  // 	const response = await fetch(`${node_server_url}/api/table/search`, {
-  // 		method: "POST",
-  // 		headers: {
-  // 			"Content-Type": "application/json",
-  // 			"x-auth-token": token,
-  // 			"ngrok-skip-browser-warning": true,
-  // 		},
-  // 		body: JSON.stringify(searchData),
-  // 	});
-  // 	const result = await response.data;
-  // 	setDBTableData(result);
-  // 	// dispatch(setMetaData(result.metaData));
-  // 	// dispatch(setTableData(result.fileData));
-  // 	// dispatch(setFileName(metaData.sourceTOB));
-  // 	// navigate("/tb/new_or_edit");
-  // 	dispatch(clearLoading());
-  // };
+  const handleSearch = () => {
+    const filteredData = dbTableData.filter((row) => {
+      const tobTypeMatch = tobType ? row.tobType === tobType : true;
+      const insurerMatch =
+        tobType && tobType === "Elite Case" && insurer
+          ? row.insurer === insurer
+          : true;
 
-  // const areAllSearchValuesEmpty = () => {
-  //   return Object.values(searchValues).every((value) => value.trim() === "");
-  // };
+      const clientSearchLower = searchValues.client.toLowerCase();
+      const brokerSearchLower = searchValues.broker.toLowerCase();
 
-  // const handleSearch = () => {
-  //   if (areAllSearchValuesEmpty()) {
-  //     toast.error("Please input any fields!", {
-  //       position: "top-right",
-  //     });
-  //   } else {
-  //     console.log(dbTableData);
-  //     const filteredData = dbTableData.filter((row) => {
-  //       // Safely access and convert strings to lowercase, ensuring they are defined first
-  //       const previousInsurer = row.previousInsurer
-  //         ? row.previousInsurer.toLowerCase()
-  //         : "";
-  //       const client = row.client ? row.client.toLowerCase() : "";
-  //       const broker = row.broker ? row.broker.toLowerCase() : "";
+      // Check if the client field includes the search text or is not being searched
+      // If client search value is empty, match all; otherwise, match if the row's client contains the search value
+      const clientMatch =
+        !searchValues.client ||
+        (row.client && row.client.toLowerCase().includes(clientSearchLower));
 
-  //       return (
-  //         (!searchValues.insurer ||
-  //           previousInsurer.includes(searchValues.insurer.toLowerCase())) &&
-  //         (!searchValues.client ||
-  //           client.includes(searchValues.client.toLowerCase())) &&
-  //         (!searchValues.broker ||
-  //           broker.includes(searchValues.broker.toLowerCase()))
-  //       );
-  //     });
-  //     setShowData(filteredData);
-  //   }
-  // };
+      // Check if the broker field includes the search text or is not being searched
+      // If broker search value is empty, match all; otherwise, match if the row's broker contains the search value
+      const brokerMatch =
+        !searchValues.broker ||
+        (row.broker && row.broker.toLowerCase().includes(brokerSearchLower));
 
+      // Only include rows that match all criteria
+      return insurerMatch && tobTypeMatch && clientMatch && brokerMatch;
+    });
+
+    setFilteredData(filteredData);
+  };
+
+  // console.log(dbTableData, tobType, insurer, searchValues);
   // const handleKeyDown = (e) => {
   //   if (e.key === "Enter") {
   //     handleSearch();
@@ -284,22 +256,30 @@ const DisplayTable = () => {
               id="filter"
               options={typeOfTOBOptions}
               onChange={(tobType) => setTobType(tobType.value)}
-              value={tobType}
+              value={tobType.value}
+              components={{
+                IndicatorSeparator: () => null,
+              }}
               className="w-full lg:w-1/2"
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-black" htmlFor="tobType">
-              Insurer
-            </label>
-            <Select
-              id="tobType"
-              options={insurerOptions}
-              onChange={(selectedOption) => setInsurer(selectedOption.value)}
-              value={insurer}
-              className="w-full lg:w-1/2"
-            />
-          </div>
+          {tobType === "Elite Case" && (
+            <div className="flex flex-col gap-1">
+              <label className="text-black" htmlFor="tobType">
+                Insurer
+              </label>
+              <Select
+                id="tobType"
+                options={insurerOptions}
+                onChange={(selectedOption) => setInsurer(selectedOption.value)}
+                value={insurer.value}
+                components={{
+                  IndicatorSeparator: () => null,
+                }}
+                className="w-full lg:w-1/2"
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label className="text-black" htmlFor="client">
               Client
@@ -341,13 +321,15 @@ const DisplayTable = () => {
         </div>
       </div>
 
-      {dbTableData && dbTableData.length > 0 && (
+      {filteredData && filteredData.length > 0 && (
         <div className="w-full py-2 my-4 flex flex-col bg-white rounded-lg divide-y divide-gray-300">
           <div className="py-2 px-8">
             <span className="text-xl font-bold font-sans">Search Results</span>
           </div>
+
+          {/* Table */}
           <div className="px-4 py-4">
-            {dbTableData && (
+            {filteredData && (
               <table className="w-full">
                 <thead>
                   <tr>
@@ -365,8 +347,8 @@ const DisplayTable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dbTableData &&
-                    dbTableData.map((row, rowIndex) => (
+                  {filteredData &&
+                    filteredData.map((row, rowIndex) => (
                       <React.Fragment key={`fragment-${row.uuid}`}>
                         <tr
                           key={`main-${row.uuid}`}

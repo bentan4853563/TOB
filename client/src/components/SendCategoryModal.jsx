@@ -13,6 +13,8 @@ import {
 
 const SendCategoryModal = ({ list, file_name, hideModal }) => {
   const dispatch = useDispatch();
+  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
+  const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
 
   const { token } = useSelector((state) => state.auth);
   const { metaData } = useSelector((state) => state.table);
@@ -24,8 +26,6 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
     categoryList: [],
   });
 
-  const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
-  const python_server_url = import.meta.env.VITE_PYTHON_SERVER_URL;
   useEffect(() => {
     setCategoryList(list);
   }, [list]);
@@ -86,7 +86,6 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
           },
           {}
         );
-        console.log("initialized", initialized);
         saveStatusByCategory(initialized);
         dispatch(storeTableData(initialized));
         dispatch(clearLoading());
@@ -144,7 +143,7 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
             <label htmlFor="category_list" className="text-4xl text-center">
               Category Input
             </label>
-            {list.length > 0 ? (
+            {categoryList.length > 0 ? (
               <span className="text-black text-md text-left">
                 Found the following Category/Categories in the Document. Please
                 check and Confirm.
@@ -156,47 +155,47 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
                 to the list and Submit
               </span>
             )}
-            {list.length > 0 && (
-              <input
-                id="set_List"
-                type="text"
-                name="category"
-                value={categoryInput}
-                onChange={(e) => {
-                  setCategoryInput(e.target.value);
-                }}
-                onKeyDown={handleKeyDown}
-                className="border border-gray-200 rounded-lg w-full px-2 py-2 outline-none focus:border-sky-700"
-              />
-            )}
+            <input
+              id="set_List"
+              type="text"
+              name="category"
+              value={categoryInput}
+              onChange={(e) => {
+                setCategoryInput(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              className="border border-gray-200 rounded-lg w-full px-2 py-2 outline-none focus:border-sky-700"
+            />
           </div>
         )}
         {/* Category list */}
-        <div>
-          <div className="w-full p-2 flex flex-wrap gap-2 min-h-16  border border-gray-200 rounded-lg">
-            {categoryList &&
-              categoryList.length > 0 &&
-              categoryList.map((item, index) => {
-                return (
-                  <span
-                    key={index}
-                    className="h-8 pl-4 pr-5 py-2 flex items-center rounded-sm relative bg-green-100"
-                  >
-                    {item}
-                    <IoClose
-                      className="w-4 h-4 absolute top-0.5 right-0.5 cursor-pointer"
-                      onClick={() => handleRemoveCategory(index)}
-                    />
-                  </span>
-                );
-              })}
+        {categoryList.length > 0 && (
+          <div>
+            <div className="w-full p-2 flex flex-wrap gap-2 min-h-16  border border-gray-200 rounded-lg">
+              {categoryList &&
+                categoryList.length > 0 &&
+                categoryList.map((item, index) => {
+                  return (
+                    <span
+                      key={index}
+                      className="h-8 pl-4 pr-5 py-2 flex items-center rounded-sm relative bg-green-100"
+                    >
+                      {item}
+                      <IoClose
+                        className="w-4 h-4 absolute top-0.5 right-0.5 cursor-pointer"
+                        onClick={() => handleRemoveCategory(index)}
+                      />
+                    </span>
+                  );
+                })}
+            </div>
+            {metaFormErrors.categoryList && (
+              <p className="w-full text-red-400 text-xs text-left">
+                {metaFormErrors.categoryList}
+              </p>
+            )}
           </div>
-          {metaFormErrors.categoryList && (
-            <p className="w-full text-red-400 text-xs text-left">
-              {metaFormErrors.categoryList}
-            </p>
-          )}
-        </div>
+        )}
         <button onClick={handleSubmit} className="bg-indigo-600 text-white">
           Submit
         </button>

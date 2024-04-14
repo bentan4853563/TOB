@@ -5,7 +5,7 @@ import ScrollToTop from "react-scroll-to-top";
 const EditDocument = () => {
   const { metaData } = useSelector((state) => state.table);
   const { table } = useSelector((state) => state.table);
-
+  console.log(metaData);
   return (
     <div className="w-full h-full bg-gray-100 px-8 md:px-16 xl:px-24 flex flex-col items-start justify-start">
       <div className="w-full px-8 py-4 my-4 flex justify-between items-center bg-white rounded-lg">
