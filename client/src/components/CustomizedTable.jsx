@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
@@ -24,6 +24,8 @@ import AdditionalContent from "./AdditionalContent";
 export default function CustomizedTable() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  const additionalContentRef = useRef();
 
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
@@ -575,6 +577,7 @@ export default function CustomizedTable() {
   const handleSave = async () => {
     dispatch(setLoading());
     try {
+      // additionalContentRef.current.save();
       const response = await fetch(`${node_server_url}/api/table/file-save`, {
         method: "POST",
         headers: {
@@ -1081,7 +1084,12 @@ export default function CustomizedTable() {
           })}
       </div>
 
-      <AdditionalContent regulator={selectedRegulator} />
+      <div className="bg-white px-8 pb-8">
+        <AdditionalContent
+          regulator={selectedRegulator}
+          ref={additionalContentRef}
+        />
+      </div>
 
       <div className="flex gap-4 my-8">
         {!saved &&
