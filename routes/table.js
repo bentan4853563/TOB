@@ -97,8 +97,6 @@ router.post("/update", auth, async (req, res) => {
       };
     });
 
-    console.log("statusByCategory", statusByCategory);
-
     const result = await Table.findOneAndUpdate(
       { uuid: uuid },
       { statusByCategory },
@@ -287,7 +285,5 @@ router.delete("/delete/:id", auth, async (req, res) => {
       .json({ message: "Error deleting record", error: error.message });
   }
 });
-
-module.exports = router;
 
 module.exports = router;

@@ -15,6 +15,7 @@ app.use(cors());
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/table", require("./routes/table"));
+app.use("/api/content", require("./routes/content"));
 
 // app.use("/TBData", require("./routes/fileUpload"));
 app.use(express.static("TBData"));

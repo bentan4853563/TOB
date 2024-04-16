@@ -9,16 +9,17 @@ import { utils, writeFile } from "xlsx";
 import Select from "react-select";
 import Modal from "react-modal";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { confirmAlert } from "react-confirm-alert";
 import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
-import "react-toastify/dist/ReactToastify.css";
 
 import EditableTable from "./EditableTable";
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import ViewTable from "./ViewTable";
+import AdditionalContent from "./AdditionalContent";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function CustomizedTable() {
   const { metaData } = useSelector((state) => state.table);
 
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedRegulator, setSelectedRegulator] = useState("");
   const [filteredTable, setFilteredTable] = useState({});
   const [tableData, setTableData] = useState({});
 
@@ -50,6 +52,11 @@ export default function CustomizedTable() {
     value: category,
     label: category,
   }));
+
+  const regulatorOptions = [
+    { label: "DHA", value: "DHA" },
+    { label: "HAAD", value: "HAAD" },
+  ];
 
   const filterOptions = [
     { value: "all", label: "All" },
@@ -71,6 +78,10 @@ export default function CustomizedTable() {
   const handleCategoryChange = (selectedOption) => {
     setSelectedCategory(selectedOption.value);
     localStorage.setItem("saved-category", selectedOption.value);
+  };
+
+  const handleRegulatorChange = (selectedOption) => {
+    setSelectedRegulator(selectedOption.value);
   };
 
   const handleFilterChange = (selectedOption) => {
@@ -98,7 +109,6 @@ export default function CustomizedTable() {
   }, [table]);
 
   useEffect(() => {
-    console.log(selectedCategory);
     if (tableData && Object.keys(tableData).length > 0 && selectedCategory) {
       let uncheckedCount = 0;
       let generated = 0;
@@ -108,6 +118,7 @@ export default function CustomizedTable() {
             uncheckedCount = uncheckedCount + 1;
         });
       });
+      console.log("uncheckedCount", uncheckedCount);
       if (uncheckedCount !== 0) {
         setEnableReview(false);
       } else {
@@ -285,8 +296,6 @@ export default function CustomizedTable() {
     });
     setSaved(false);
   };
-
-  console.log(tableData);
 
   const handleEditConfirm = (tableName, rowId, column) => {
     setTableData((currentTableData) => ({
@@ -894,9 +903,6 @@ export default function CustomizedTable() {
       }
     }
   };
-
-  console.log("column==>>", column);
-
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
@@ -945,21 +951,37 @@ export default function CustomizedTable() {
       <ToastContainer />
 
       <div className="flex items-end gap-8">
-        <div className="w-full md:w-2/3 lg:w-1/2 flex flex-col">
-          <label htmlFor="category" className="font-bold">
-            Category
-          </label>
-          <Select
-            id="category"
-            options={categoryOptions}
-            onChange={handleCategoryChange}
-            value={categoryOptions.find(
-              (option) => option.value === selectedCategory
-            )}
-            components={{
-              IndicatorSeparator: () => null,
-            }}
-          />
+        <div className="w-1/2 flex gap-[2rem]">
+          <div className="w-full sm:w-1/2 flex flex-col">
+            <label htmlFor="category" className="font-bold">
+              Category
+            </label>
+            <Select
+              id="category"
+              options={categoryOptions}
+              onChange={handleCategoryChange}
+              value={categoryOptions.find(
+                (option) => option.value === selectedCategory
+              )}
+              components={{
+                IndicatorSeparator: () => null,
+              }}
+            />
+          </div>
+          <div className="w-full sm:w-1/2 flex flex-col">
+            <label htmlFor="regulator" className="font-bold">
+              Regulator
+            </label>
+            <Select
+              id="regulator"
+              options={regulatorOptions}
+              onChange={handleRegulatorChange}
+              value={selectedRegulator.label}
+              components={{
+                IndicatorSeparator: () => null,
+              }}
+            />
+          </div>
         </div>
 
         {/* Status */}
@@ -969,7 +991,7 @@ export default function CustomizedTable() {
           </label>
           <span
             id="status"
-            className="bg-cyan-200 w-24 px-4 py-2 flex justify-center rounded-full"
+            className="w-40 bg-cyan-200 px-4 py-2 flex justify-center rounded-full"
           >
             {tableData &&
               Object.keys(tableData).length > 0 &&
@@ -1005,6 +1027,9 @@ export default function CustomizedTable() {
             value={filterOptions.find(
               (option) => option.value === selectedFilter
             )}
+            components={{
+              IndicatorSeparator: () => null,
+            }}
           />
         </div>
       </div>
@@ -1056,6 +1081,8 @@ export default function CustomizedTable() {
           })}
       </div>
 
+      <AdditionalContent regulator={selectedRegulator} />
+
       <div className="flex gap-4 my-8">
         {!saved &&
           tableData &&
@@ -1072,7 +1099,8 @@ export default function CustomizedTable() {
         {tableData &&
           tableData[selectedCategory] &&
           enableReview &&
-          tableData[selectedCategory].status === "Processed" &&
+          (tableData[selectedCategory].status === "To Be Reviewed" ||
+            tableData[selectedCategory].status === "Processed") &&
           saved && (
             <button
               onClick={handleReviewSeletedCategory}

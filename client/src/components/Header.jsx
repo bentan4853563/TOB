@@ -35,10 +35,6 @@ const Header = () => {
         <Link className="text-lg font-sans text-black" to="/tb/dbtable">
           Documents
         </Link>
-        {/* <TbBellRinging
-					size={28}
-					className=' hover:text-indigo-500 cursor-pointer'
-				/> */}
         <Menu
           menuButton={
             <MenuButton className="h-10 flex justify-center items-center focus:outline-none border-none">

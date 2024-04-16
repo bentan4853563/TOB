@@ -86,7 +86,6 @@ const Home = () => {
   // 	setSettingModalOpen(true);
   // 	// setIsModalOpen(false);
   // };
-
   const handleClickRow = (status) => {
     navigate("/tb/dbtable", { state: status });
   };

@@ -138,7 +138,6 @@ const EditableTable = ({
                   >
                     {row["edit"] === true ? (
                       <textarea
-                        rows="8"
                         value={row[column]}
                         onChange={(e) =>
                           handleEdit(tableName, e.target.value, row.id, column)
