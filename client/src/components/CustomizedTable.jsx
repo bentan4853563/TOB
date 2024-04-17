@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import jsPDF from "jspdf";
@@ -15,17 +15,19 @@ import { Menu, MenuItem, MenuButton } from "@szhsin/react-menu";
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 
+import ViewTable from "./ViewTable";
 import EditableTable from "./EditableTable";
+import ExclusionTable from "./ExclusionTable";
+
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
-import ViewTable from "./ViewTable";
-import AdditionalContent from "./AdditionalContent";
+import { handleSaveToDB } from "../redux/actions/table";
+import { handleUpdateExclusion } from "../redux/actions/content";
+import AdditionalTable from "./AdditionalTable";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  const additionalContentRef = useRef();
 
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
@@ -50,10 +52,18 @@ export default function CustomizedTable() {
   const [enableRevise, setEnableRevise] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("all");
 
-  const categoryOptions = Object.keys(table).map((category) => ({
-    value: category,
-    label: category,
-  }));
+  const [modalIsOpen, setIsOpen] = useState(false);
+
+  const { contents } = useSelector((state) => state.content);
+  const [dha, setDha] = useState([]);
+  const [haad, setHaad] = useState([]);
+
+  const categoryOptions = Object.keys(table)
+    .filter((category) => category !== "notes")
+    .map((category) => ({
+      value: category,
+      label: category,
+    }));
 
   const regulatorOptions = [
     { label: "DHA", value: "DHA" },
@@ -83,7 +93,7 @@ export default function CustomizedTable() {
   };
 
   const handleRegulatorChange = (selectedOption) => {
-    setSelectedRegulator(selectedOption.value);
+    setSelectedRegulator(selectedOption);
   };
 
   const handleFilterChange = (selectedOption) => {
@@ -111,6 +121,16 @@ export default function CustomizedTable() {
   }, [table]);
 
   useEffect(() => {
+    if (contents && contents.length > 0) {
+      setSelectedRegulator(regulatorOptions[0]);
+      setDha(contents[0].description);
+      setHaad(contents[1].description);
+    }
+  }, [contents]);
+
+  console.log("table", table, tableData);
+
+  useEffect(() => {
     if (tableData && Object.keys(tableData).length > 0 && selectedCategory) {
       let uncheckedCount = 0;
       let generated = 0;
@@ -120,7 +140,6 @@ export default function CustomizedTable() {
             uncheckedCount = uncheckedCount + 1;
         });
       });
-      console.log("uncheckedCount", uncheckedCount);
       if (uncheckedCount !== 0) {
         setEnableReview(false);
       } else {
@@ -131,8 +150,13 @@ export default function CustomizedTable() {
           generated = generated + 1;
         }
       });
-      if (Object.keys(tableData).length === generated) {
+      if (
+        Object.keys(tableData).filter((category) => category !== "notes")
+          .length === generated
+      ) {
         setEnableRevise(true);
+      } else {
+        setEnableRevise(false);
       }
     }
   }, [tableData, selectedCategory]);
@@ -146,6 +170,38 @@ export default function CustomizedTable() {
       filterTableData();
     }
   }, [selectedCategory, selectedFilter, tableData]);
+
+  useEffect(() => {
+    setTableData((currentTableData) => {
+      const updatedTableData = {};
+      Object.keys(currentTableData).forEach((category) => {
+        if (category !== "notes") {
+          updatedTableData[category] = { ...currentTableData[category] };
+
+          titleMap.map((title) => {
+            if (updatedTableData[category][title]) {
+              updatedTableData[category][title] = updatedTableData[category][
+                title
+              ].map((row) => {
+                if (row["Review Required"] === true) {
+                  return {
+                    ...row,
+                    Reviewed: reviewedAll,
+                  };
+                } else {
+                  return row;
+                }
+              });
+            }
+          });
+        } else {
+          updatedTableData[category] = currentTableData[category];
+        }
+      });
+      return updatedTableData;
+    });
+    setSaved(false);
+  }, [reviewedAll]);
 
   function filterTableData() {
     const newFilteredTable = {};
@@ -174,7 +230,7 @@ export default function CustomizedTable() {
         case "review-required":
           newFilteredTable[tableName] = tableData[selectedCategory][
             tableName
-          ].filter((row) => !row["Review Required"]);
+          ].filter((row) => row["Review Required"]);
           break;
         case "reviewed":
           newFilteredTable[tableName] = tableData[selectedCategory][
@@ -204,6 +260,7 @@ export default function CustomizedTable() {
           if (row.id === rowId) {
             return {
               ...row,
+              Reviewed: false,
               [fieldName]: value,
             };
           }
@@ -306,12 +363,15 @@ export default function CustomizedTable() {
         ...tableData[selectedCategory],
         [tableName]: tableData[selectedCategory][tableName].map((row) => {
           if (row.id === rowId && column === "edit") {
+            if (row.Reviewed) {
+              return row;
+            }
             return {
               ...row,
               ["New Benefit"]: row["benefit"],
               ["New Limit"]: row["limit"],
               edit: !row.edit,
-              "Review Required": true,
+              "Review Required": row.edit ? false : true,
             };
           } else {
             return row;
@@ -348,48 +408,22 @@ export default function CustomizedTable() {
   const handleReviewAll = () => {
     let reviewRequiredRow = 0;
 
-    Object.keys(tableData).forEach((category) => {
-      titleMap.forEach((title) => {
-        if (tableData[category][title]) {
-          tableData[category][title].forEach((row) => {
-            if (row["Review Required"] === true) {
-              reviewRequiredRow += 1; // Simplified incrementation
-            }
-          });
-        }
-      });
-    });
-
-    if (reviewRequiredRow > 0) setReviewedAll(!reviewedAll);
-  };
-
-  useEffect(() => {
-    setTableData((currentTableData) => {
-      const updatedTableData = {};
-      Object.keys(currentTableData).forEach((category) => {
-        updatedTableData[category] = { ...currentTableData[category] };
-
-        titleMap.map((title) => {
-          if (updatedTableData[category][title]) {
-            updatedTableData[category][title] = updatedTableData[category][
-              title
-            ].map((row) => {
+    Object.keys(tableData)
+      .filter((category) => category !== "notes")
+      .forEach((category) => {
+        titleMap.forEach((title) => {
+          if (tableData[category][title]) {
+            tableData[category][title].forEach((row) => {
               if (row["Review Required"] === true) {
-                return {
-                  ...row,
-                  Reviewed: reviewedAll,
-                };
-              } else {
-                return row;
+                reviewRequiredRow += 1; // Simplified incrementation
               }
             });
           }
         });
       });
-      return updatedTableData;
-    });
-    setSaved(false);
-  }, [reviewedAll]);
+
+    if (reviewRequiredRow > 0) setReviewedAll(!reviewedAll);
+  };
 
   const handleSaveCommentForRow = () => {
     setTableData((currentTableData) => ({
@@ -505,41 +539,45 @@ export default function CustomizedTable() {
 
   const reviseProcess = async () => {
     const updatedData = Object.keys(tableData).reduce((acc, category) => {
-      acc[category] = {
-        ...tableData[category],
-        ...Object.keys(tableData[category]).reduce((innerAcc, title) => {
-          if (
-            title !== "status" &&
-            title !== "comment" &&
-            title !== "version"
-          ) {
-            const isDataArray = Array.isArray(tableData[category][title]);
-            if (isDataArray) {
-              innerAcc[title] = tableData[category][title].map((row) => {
-                if (row.edit === true || row.Reviewed === true) {
-                  return {
-                    ...row,
-                    benefit: row["New Benefit"],
-                    limit: row["New Limit"],
-                    color: "green",
-                  };
-                }
-                return { ...row, color: "green" };
-              });
-            } else {
-              console.error(
-                `Expected an array for ${title}, but received:`,
-                tableData[category][title]
-              );
-              innerAcc[title] = tableData[category][title];
+      if (category !== "notes") {
+        acc[category] = {
+          ...tableData[category],
+          ...Object.keys(tableData[category]).reduce((innerAcc, title) => {
+            if (
+              title !== "status" &&
+              title !== "comment" &&
+              title !== "version"
+            ) {
+              const isDataArray = Array.isArray(tableData[category][title]);
+              if (isDataArray) {
+                innerAcc[title] = tableData[category][title].map((row) => {
+                  if (row.edit === true || row.Reviewed === true) {
+                    return {
+                      ...row,
+                      benefit: row["New Benefit"],
+                      limit: row["New Limit"],
+                      color: "green",
+                    };
+                  }
+                  return { ...row, color: "green" };
+                });
+              } else {
+                console.error(
+                  `Expected an array for ${title}, but received:`,
+                  tableData[category][title]
+                );
+                innerAcc[title] = tableData[category][title];
+              }
             }
-          }
-          return innerAcc;
-        }, {}),
-        status: "Processed",
-        comment: comment || "",
-        version: tableData[category].version + 1,
-      };
+            return innerAcc;
+          }, {}),
+          status: "Processed",
+          comment: comment || "",
+          version: tableData[category].version + 1,
+        };
+      } else {
+        acc[category] = tableData[category];
+      }
       return acc;
     }, {});
 
@@ -575,36 +613,13 @@ export default function CustomizedTable() {
   }
 
   const handleSave = async () => {
-    dispatch(setLoading());
-    try {
-      // additionalContentRef.current.save();
-      const response = await fetch(`${node_server_url}/api/table/file-save`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-auth-token": token, // Include the token in the Authorization header
-          "ngrok-skip-browser-warning": true,
-        },
-        body: JSON.stringify({
-          uuid: metaData.uuid,
-          tableData,
-        }),
-      });
-      if (response.ok) {
-        setSaved(true);
-        const savedTableData = await response.json();
-        console.log("savedTableData", savedTableData);
-        dispatch(storeTableData(savedTableData));
-        toast.success("Successfuly saved!!!", {
-          position: "top-right",
-        });
-      } else {
-        console.error("Error:", response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error("Fetch Error:", error);
-    }
-    dispatch(clearLoading());
+    dispatch(handleSaveToDB(tableData));
+    const exclusionData = {
+      id: selectedRegulator === "HAAD" ? contents[1]._id : contents[0]._id,
+      description: selectedRegulator === "HAAD" ? haad : dha,
+    };
+    dispatch(handleUpdateExclusion(exclusionData));
+    setSaved(true);
   };
 
   const handleSaveToPDF = async () => {
@@ -668,6 +683,35 @@ export default function CustomizedTable() {
       }
     });
 
+    if (tableData.notes && tableData.notes.length > 0) {
+      doc.setFontSize(14);
+      doc.text("Notes", 20, 20); // Title for the notes section
+
+      doc.autoTable({
+        startY: 30,
+        head: [["No", "Description"]], // Set headers for the notes
+        body: tableData.notes.map((note, index) => [
+          (index + 1).toString(),
+          note.toString(),
+        ]),
+      });
+    }
+
+    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
+
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text(`${selectedRegulator.label} Exclusions`, 20, 20);
+
+    doc.autoTable({
+      startY: 30,
+      head: [["No", "Description"]],
+      body: exclusionData.map((desc, index) => [
+        (index + 1).toString(),
+        desc.toString(),
+      ]),
+    });
+
     const fileName = `${
       metaData.client
     }-${selectedCategory}-${new Date().toISOString()}-V${
@@ -685,6 +729,7 @@ export default function CustomizedTable() {
 
   const handleSaveToCSV = async () => {
     dispatch(setLoading());
+
     const addSectionToCSV = (title, data) => {
       if (Array.isArray(data) && data.length > 0) {
         // Include client name and category for the 'General Benefit'
@@ -747,6 +792,30 @@ export default function CustomizedTable() {
       }
     });
 
+    if (tableData.notes && tableData.notes.length > 0) {
+      csvData += `"Notes"\n`;
+      csvData += `"No","Description"\n`; // Set headers for the notes
+      csvData +=
+        tableData.notes
+          .map(
+            (note, index) =>
+              `"${(index + 1).toString()}","${note.replace(/"/g, '""')}"`
+          )
+          .join("\n") + "\n\n";
+    }
+
+    // Include Exclusions after all sections
+    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
+    csvData += `"${selectedRegulator.label} Exclusions"\n`;
+    csvData += `"No","Description"\n`;
+    csvData += exclusionData
+      .map((desc, index) => {
+        return `"${(index + 1).toString()}","${desc
+          .toString()
+          .replace(/"/g, '""')}"`;
+      })
+      .join("\n");
+
     // Use the same file-naming convention as saveToPDF
     const fileName = `${
       metaData.client
@@ -801,6 +870,42 @@ export default function CustomizedTable() {
         );
       }
     });
+
+    if (tableData.notes && tableData.notes.length > 0) {
+      const notesHeaders = ["No", "Description"]; // Set headers for the notes
+      const notesWorkSheetData = tableData.notes.map((note, index) => ({
+        No: (index + 1).toString(),
+        Description: note.toString(),
+      }));
+
+      const notesWorkSheet = utils.json_to_sheet(notesWorkSheetData, {
+        header: notesHeaders,
+        skipHeader: false, // Include headers in the worksheet
+      });
+
+      utils.book_append_sheet(workBook, notesWorkSheet, "Notes"); // Append worksheet for notes
+    }
+
+    // Include Exclusions after all sections
+    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
+    const exclusionHeaders = ["No", "Description"];
+    const exclusionWorkSheetData = exclusionData.map((desc, index) => ({
+      No: (index + 1).toString(),
+      Description: desc.toString(),
+    }));
+
+    // Create worksheet with headers and data
+    const exclusionWorkSheet = utils.json_to_sheet(exclusionWorkSheetData, {
+      header: exclusionHeaders,
+      skipHeader: false,
+    });
+
+    // Append worksheet to workbook for Exclusions
+    utils.book_append_sheet(
+      workBook,
+      exclusionWorkSheet,
+      `${selectedRegulator.label} Exclusions`
+    );
 
     // Generate file name and write the workbook
     const fileName = `${
@@ -871,8 +976,6 @@ export default function CustomizedTable() {
     }
   };
 
-  const [modalIsOpen, setIsOpen] = useState(false);
-
   function closeModal() {
     setIsOpen(false);
     setTableName("");
@@ -891,8 +994,6 @@ export default function CustomizedTable() {
     },
   };
 
-  Modal.setAppElement("#root");
-
   const modalHeather = () => {
     if (column === "") {
       if (clickedButton === "handleReview") {
@@ -906,6 +1007,91 @@ export default function CustomizedTable() {
       }
     }
   };
+
+  const handleEditExclusion = (index, newValue) => {
+    if (selectedRegulator === "DHA") {
+      const updatedDha = [...dha];
+      updatedDha[index] = newValue;
+      setDha(updatedDha);
+    } else if (selectedRegulator === "HAAD") {
+      const updatedHaad = [...haad];
+      updatedHaad[index] = newValue;
+      setHaad(updatedHaad);
+    }
+  };
+
+  const handleNewExclusion = (index) => {
+    if (selectedRegulator === "DHA") {
+      const updatedDha = [...dha];
+      updatedDha.splice(index + 1, 0, ""); // Insert a new empty row next to the clicked row
+      setDha(updatedDha);
+    } else if (selectedRegulator === "HAAD") {
+      const updatedHaad = [...haad];
+      updatedHaad.splice(index + 1, 0, ""); // Insert a new empty row next to the clicked row
+      setHaad(updatedHaad);
+    }
+  };
+
+  const handleDeleteExclusion = (index) => {
+    confirmAlert({
+      title: "Delete!",
+      message: "Are you sure?",
+      buttons: [
+        {
+          label: "Delete",
+          onClick: async () => {
+            if (selectedRegulator === "DHA") {
+              const updatedDha = [...dha];
+              updatedDha.splice(index, 1);
+              setDha(updatedDha);
+            } else if (selectedRegulator === "HAAD") {
+              const updatedHaad = [...haad];
+              updatedHaad.splice(index, 1);
+              setHaad(updatedHaad);
+            }
+          },
+        },
+        {
+          label: "Cancel",
+          onClick: () => {},
+        },
+      ],
+    });
+  };
+
+  // Adds a new empty note immediately after the selected index
+  const handleNewAdditional = (index) => {
+    setTableData((currentTableData) => {
+      const updatedNotes = [...currentTableData.notes];
+      updatedNotes.splice(index + 1, 0, "");
+
+      return {
+        ...currentTableData,
+        notes: updatedNotes,
+      };
+    });
+  };
+
+  // Edits an existing note at a given index with the new value
+  const handleEditAdditional = (index, newValue) => {
+    setTableData((currentTableData) => ({
+      ...currentTableData,
+      notes: currentTableData.notes.map(
+        (note, i) => (i === index ? newValue : note) // Only updates the note at the specific index
+      ),
+    }));
+  };
+
+  // Deletes a note at a given index from the array
+  const handleDeleteAdditional = (index) => {
+    setTableData((currentTableData) => ({
+      ...currentTableData,
+      notes: currentTableData.notes.filter((_, i) => i !== index), // Removes the note at the specified index
+    }));
+  };
+
+  Modal.setAppElement("#root");
+
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
@@ -925,7 +1111,7 @@ export default function CustomizedTable() {
                 ? column === "Edit Reason"
                   ? "Reason"
                   : "Comment"
-                : "Category Review Comment"
+                : "Review Comments"
             }
             required
             value={comment}
@@ -956,6 +1142,20 @@ export default function CustomizedTable() {
       <div className="flex items-end gap-8">
         <div className="w-1/2 flex gap-[2rem]">
           <div className="w-full sm:w-1/2 flex flex-col">
+            <label htmlFor="regulator" className="font-bold">
+              Regulator
+            </label>
+            <Select
+              id="regulator"
+              options={regulatorOptions}
+              onChange={handleRegulatorChange}
+              value={selectedRegulator}
+              components={{
+                IndicatorSeparator: () => null,
+              }}
+            />
+          </div>
+          <div className="w-full sm:w-1/2 flex flex-col">
             <label htmlFor="category" className="font-bold">
               Category
             </label>
@@ -966,20 +1166,6 @@ export default function CustomizedTable() {
               value={categoryOptions.find(
                 (option) => option.value === selectedCategory
               )}
-              components={{
-                IndicatorSeparator: () => null,
-              }}
-            />
-          </div>
-          <div className="w-full sm:w-1/2 flex flex-col">
-            <label htmlFor="regulator" className="font-bold">
-              Regulator
-            </label>
-            <Select
-              id="regulator"
-              options={regulatorOptions}
-              onChange={handleRegulatorChange}
-              value={selectedRegulator.label}
               components={{
                 IndicatorSeparator: () => null,
               }}
@@ -1064,8 +1250,7 @@ export default function CustomizedTable() {
                 <h1 className="text-3xl text-black font-bold m-4">
                   {tableName}
                 </h1>
-                {filteredTable.status !== "Generated" &&
-                filteredTable.status !== "Revised" ? (
+                {tableData[selectedCategory].status !== "Generated" ? (
                   <EditableTable
                     tableName={tableName}
                     tableData={table}
@@ -1084,10 +1269,31 @@ export default function CustomizedTable() {
           })}
       </div>
 
-      <div className="bg-white px-8 pb-8">
-        <AdditionalContent
-          regulator={selectedRegulator}
-          ref={additionalContentRef}
+      {tableData &&
+        tableData.notes &&
+        Object.keys(tableData.notes).length > 0 && (
+          <div className="bg-white px-8 pb-8">
+            <AdditionalTable
+              notes={tableData.notes}
+              handleNewAdditional={handleNewAdditional}
+              handleEditAdditional={handleEditAdditional}
+              handleDeleteAdditional={handleDeleteAdditional}
+            />
+          </div>
+        )}
+
+      <div className="bg-white px-8 pb-8 mt-8">
+        <ExclusionTable
+          regulator={selectedRegulator.label}
+          editable={
+            Object.keys(tableData).length > 0 &&
+            tableData[selectedCategory].status !== "Generated"
+          }
+          dha={dha}
+          haad={haad}
+          handleNewExclusion={handleNewExclusion}
+          handleEditExclusion={handleEditExclusion}
+          handleDeleteExclusion={handleDeleteExclusion}
         />
       </div>
 
@@ -1120,7 +1326,8 @@ export default function CustomizedTable() {
 
         {tableData &&
           tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Reviewed" && (
+          tableData[selectedCategory].status === "Reviewed" &&
+          saved && (
             <div className="relative">
               <Menu
                 menuButton={

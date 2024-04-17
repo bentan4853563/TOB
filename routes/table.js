@@ -32,19 +32,19 @@ router.post("/insert", auth, async (req, res) => {
   try {
     const { uuid, metaData, tableData } = req.body;
 
-    console.log("tableData", tableData);
-
     const reviewedPath = `TBData/reviewed/${uuid}.json`;
     await saveDataToFile(tableData, reviewedPath);
 
-    let statusByCategory = Object.keys(tableData).map((category) => {
-      return {
-        category: category,
-        comment: "",
-        status: "Processed",
-        version: 1,
-      };
-    });
+    let statusByCategory = Object.keys(tableData)
+      .filter((category) => category !== "notes")
+      .map((category) => {
+        return {
+          category: category,
+          comment: "",
+          status: "Processed",
+          version: 1,
+        };
+      });
 
     const inputData = {
       uuid,
@@ -87,15 +87,17 @@ router.post("/update", auth, async (req, res) => {
 
     await saveDataToFile(tableData, filepath);
 
-    let statusByCategory = Object.keys(tableData).map((category) => {
-      return {
-        category: category,
-        status: tableData[category].status,
-        version: tableData[category].version,
-        comment: tableData[category].comment,
-        // resultTOB: tableData[category].resultTOB,
-      };
-    });
+    let statusByCategory = Object.keys(tableData)
+      .filter((category) => category !== "notes")
+      .map((category) => {
+        return {
+          category: category,
+          status: tableData[category].status,
+          version: tableData[category].version,
+          comment: tableData[category].comment,
+          // resultTOB: tableData[category].resultTOB,
+        };
+      });
 
     const result = await Table.findOneAndUpdate(
       { uuid: uuid },

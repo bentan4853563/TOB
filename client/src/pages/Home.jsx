@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import "@szhsin/react-menu/dist/index.css";
@@ -17,11 +17,6 @@ const Home = () => {
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
 
   const [dbTableData, setDBTableData] = useState([]);
-  const [statisticalData, setStatisticalData] = useState({
-    Processed: 0,
-    Reviewed: 0,
-    Revised: 0,
-  });
 
   useEffect(() => {
     dispatch(clearTableData());
@@ -50,42 +45,16 @@ const Home = () => {
     fetchData();
   }, [dispatch]);
 
-  useEffect(() => {
-    if (dbTableData) {
-      dbTableData.map((item) => {
-        let categories = Object.keys(item);
-        let processed = 0;
-        let reviewed = 0;
-        let revised = 0;
-        item.statusByCategory.map((categoryData) => {
-          if (categoryData.status === "Processed") processed = processed + 1;
-          else if (categoryData.status === "Reviewed") reviewed = reviewed + 1;
-          if (categoryData.version > 1) revised = revised + 1;
-        });
-        if (revised === categories.length) {
-          setStatisticalData((previousState) => ({
-            ...previousState,
-            Revised: previousState.Revised + 1,
-          }));
-        } else if (reviewed === categories.length) {
-          setStatisticalData((previousState) => ({
-            ...previousState,
-            Reviewed: previousState.Reviewed + 1,
-          }));
-        } else {
-          setStatisticalData((previousState) => ({
-            ...previousState,
-            Processed: previousState.Processed + 1,
-          }));
-        }
-      });
-    }
+  const generatedCount = useMemo(() => {
+    return dbTableData.reduce((acc, data) => {
+      const generated = data.statusByCategory.reduce((sum, category) => {
+        if (category.status === "Generated") sum += 1;
+        return sum;
+      }, 0);
+      return acc + (generated === data.statusByCategory.length ? 1 : 0);
+    }, 0);
   }, [dbTableData]);
 
-  // const handleClickUpload = () => {
-  // 	setSettingModalOpen(true);
-  // 	// setIsModalOpen(false);
-  // };
   const handleClickRow = (status) => {
     navigate("/tb/dbtable", { state: status });
   };
@@ -95,21 +64,27 @@ const Home = () => {
       {/* Dashboard */}
       <div className="w-full lg:w-1/2 py-2 mb-4 flex flex-col items-start bg-white rounded-lg px-4 mt-8">
         <table>
-          <thead className="">
-            <th>Status</th>
-            <th>Count</th>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Count</th>
+            </tr>
           </thead>
           <tbody>
-            {Object.entries(statisticalData).map(([status, count]) => (
-              <tr
-                key={status}
-                onClick={() => handleClickRow(status)}
-                className="cursor-pointer"
-              >
-                <td>{status}</td>
-                <td>{count}</td>
-              </tr>
-            ))}
+            <tr
+              onClick={() => handleClickRow("Processed")}
+              className="cursor-pointer"
+            >
+              <td>Processed</td>
+              <td>{dbTableData.length - generatedCount}</td>
+            </tr>
+            <tr
+              onClick={() => handleClickRow("Generated")}
+              className="cursor-pointer"
+            >
+              <td>Generated</td>
+              <td>{generatedCount}</td>
+            </tr>
           </tbody>
         </table>
       </div>

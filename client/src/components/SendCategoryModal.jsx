@@ -59,33 +59,39 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
 
         const initialized = Object.keys(data).reduce(
           (accumulator, category) => {
-            accumulator[category] = Object.keys(data[category]).reduce(
-              (innerAccum, subTitle) => {
-                innerAccum[subTitle] = data[category][subTitle].map((row) => {
-                  return {
-                    id: crypto.randomUUID(),
-                    ...row,
-                    color: row.status === "checked" ? "green" : "red",
-                    edit: false,
-                    "New Benefit": "",
-                    "New Limit": "",
-                    "Edit Reason": "",
-                    "Review Required": false,
-                    Reviewed: false,
-                    "Review Comment": "",
-                  };
-                });
-                return innerAccum;
-              },
-              { status: "Processed", version: 1, comment: "" }
-            );
+            if (category !== "notes") {
+              accumulator[category] = Object.keys(data[category]).reduce(
+                (innerAccum, subTitle) => {
+                  innerAccum[subTitle] = data[category][subTitle].map((row) => {
+                    return {
+                      id: crypto.randomUUID(),
+                      ...row,
+                      color: row.status === "checked" ? "green" : "red",
+                      edit: false,
+                      "New Benefit": "",
+                      "New Limit": "",
+                      "Edit Reason": "",
+                      "Review Required": false,
+                      Reviewed: false,
+                      "Review Comment": "",
+                    };
+                  });
+                  return innerAccum;
+                },
+                { status: "Processed", version: 1, comment: "" }
+              );
+            } else if (category === "notes") {
+              accumulator[category] = Object.values(data[category]); // Return original notes for the "notes" category
+            }
             return accumulator;
           },
           {}
         );
+
         saveStatusByCategory(initialized);
         dispatch(storeTableData(initialized));
         dispatch(clearLoading());

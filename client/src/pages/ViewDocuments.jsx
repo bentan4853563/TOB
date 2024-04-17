@@ -10,13 +10,15 @@ import "react-toastify/dist/ReactToastify.css";
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 
 import ViewTable from "../components/ViewTable";
-import AdditionalContent from "../components/AdditionalContent";
+import AdditionalContent from "../components/ExclusionTable";
 
 export default function CustomizedTable() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const node_server_url = import.meta.env.VITE_NODE_SERVER_URL;
   const { token } = useSelector((state) => state.auth);
+  const { contents } = useSelector((state) => state.content);
 
   const { table } = useSelector((state) => state.table);
   const { metaData } = useSelector((state) => state.table);
@@ -25,6 +27,9 @@ export default function CustomizedTable() {
   const [selectedTable, setSelectedTable] = useState({});
   const [tableData, setTableData] = useState({});
   const [enableRevise, setEnableRevise] = useState(false);
+
+  const [dha, setDha] = useState([]);
+  const [haad, setHaad] = useState([]);
 
   const categoryOptions = Object.keys(table).map((category) => ({
     value: category,
@@ -45,6 +50,14 @@ export default function CustomizedTable() {
   }, [table]);
 
   useEffect(() => {
+    if (contents && contents.length > 0) {
+      setSelectedRegulator(regulatorOptions[0]);
+      setDha(contents[0].description);
+      setHaad(contents[1].description);
+    }
+  }, [contents]);
+
+  useEffect(() => {
     if (tableData && selectedCategory !== null) {
       setSelectedTable(tableData[selectedCategory]);
     }
@@ -58,7 +71,10 @@ export default function CustomizedTable() {
           generated = generated + 1;
         }
       });
-      if (Object.keys(tableData).length === generated) {
+      if (
+        Object.keys(tableData).filter((category) => category !== "notes")
+          .length === generated
+      ) {
         setEnableRevise(true);
       } else {
         setEnableRevise(false);
@@ -71,11 +87,11 @@ export default function CustomizedTable() {
   };
 
   const handleCategoryChange = (selectedOption) => {
-    setselectedCategory(selectedOption.value);
+    setselectedCategory(selectedOption);
   };
 
   const handleRegulatorChange = (selectedOption) => {
-    setSelectedRegulator(selectedOption.value);
+    setSelectedRegulator(selectedOption);
   };
 
   const handleRevise = async () => {
@@ -98,43 +114,45 @@ export default function CustomizedTable() {
   };
 
   const reviseProcess = async () => {
-    const updatedData = Object.keys(tableData).reduce((acc, category) => {
-      acc[category] = {
-        ...tableData[category],
-        ...Object.keys(tableData[category]).reduce((innerAcc, title) => {
-          if (
-            title !== "status" &&
-            title !== "comment" &&
-            title !== "version"
-          ) {
-            const isDataArray = Array.isArray(tableData[category][title]);
-            if (isDataArray) {
-              innerAcc[title] = tableData[category][title].map((row) => {
-                if (row.edit === true || row.Reviewed === true) {
-                  return {
-                    ...row,
-                    benefit: row["New Benefit"],
-                    limit: row["New Limit"],
-                    color: "green",
-                  };
-                }
-                return { ...row, color: "green" };
-              });
-            } else {
-              console.error(
-                `Expected an array for ${title}, but received:`,
-                tableData[category][title]
-              );
-              innerAcc[title] = tableData[category][title];
+    const updatedData = Object.keys(tableData)
+      .filter((category) => category !== "notes")
+      .reduce((acc, category) => {
+        acc[category] = {
+          ...tableData[category],
+          ...Object.keys(tableData[category]).reduce((innerAcc, title) => {
+            if (
+              title !== "status" &&
+              title !== "comment" &&
+              title !== "version"
+            ) {
+              const isDataArray = Array.isArray(tableData[category][title]);
+              if (isDataArray) {
+                innerAcc[title] = tableData[category][title].map((row) => {
+                  if (row.edit === true || row.Reviewed === true) {
+                    return {
+                      ...row,
+                      benefit: row["New Benefit"],
+                      limit: row["New Limit"],
+                      color: "green",
+                    };
+                  }
+                  return { ...row, color: "green" };
+                });
+              } else {
+                console.error(
+                  `Expected an array for ${title}, but received:`,
+                  tableData[category][title]
+                );
+                innerAcc[title] = tableData[category][title];
+              }
             }
-          }
-          return innerAcc;
-        }, {}),
-        status: "Processed",
-        version: tableData[category].version + 1,
-      };
-      return acc;
-    }, {});
+            return innerAcc;
+          }, {}),
+          status: "Processed",
+          version: tableData[category].version + 1,
+        };
+        return acc;
+      }, {});
 
     update(updatedData);
     toast.success("Successfully Revised!!!", { position: "top-right" });
@@ -260,6 +278,20 @@ export default function CustomizedTable() {
           {/* Category Selector */}
           <div className="w-1/2 flex gap-[2rem]">
             <div className="w-full sm:w-1/2 flex flex-col">
+              <label htmlFor="regulator" className="font-bold">
+                Regulator
+              </label>
+              <Select
+                id="regulator"
+                options={regulatorOptions}
+                onChange={handleRegulatorChange}
+                value={selectedRegulator}
+                components={{
+                  IndicatorSeparator: () => null,
+                }}
+              />
+            </div>
+            <div className="w-full sm:w-1/2 flex flex-col">
               <label htmlFor="category" className="font-bold">
                 Category
               </label>
@@ -270,20 +302,6 @@ export default function CustomizedTable() {
                 value={categoryOptions.find(
                   (option) => option.value === selectedCategory
                 )}
-                components={{
-                  IndicatorSeparator: () => null,
-                }}
-              />
-            </div>
-            <div className="w-full sm:w-1/2 flex flex-col">
-              <label htmlFor="regulator" className="font-bold">
-                Regulator
-              </label>
-              <Select
-                id="regulator"
-                options={regulatorOptions}
-                onChange={handleRegulatorChange}
-                value={selectedRegulator.label}
                 components={{
                   IndicatorSeparator: () => null,
                 }}
@@ -343,7 +361,15 @@ export default function CustomizedTable() {
           })}
       </div>
 
-      <AdditionalContent regulator={selectedRegulator} />
+      <AdditionalContent
+        regulator={selectedRegulator.value}
+        editable={
+          Object.keys(tableData).length > 0 &&
+          tableData[selectedCategory].status !== "Generated"
+        }
+        dha={dha}
+        haad={haad}
+      />
 
       <ScrollToTop
         className="scroll-to-top flex fixed focus:outline-none text-black shadow-md shadow-gray-800 justify-center items-center rounded-full"

@@ -12,7 +12,7 @@ export const tableSlice = createSlice({
   initialState,
   reducers: {
     storeTableData: (state, action) => {
-      console.log(action.payload);
+      console.log("action payload", action.payload);
       state.table = action.payload;
     },
     clearTableData: (state) => {
