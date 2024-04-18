@@ -186,7 +186,7 @@ export default function CustomizedTable() {
                 if (row["Review Required"] === true) {
                   return {
                     ...row,
-                    Reviewed: reviewedAll,
+                    Reviewed: reviewedAll ? reviewedAll : row.Reviewed,
                   };
                 } else {
                   return row;
