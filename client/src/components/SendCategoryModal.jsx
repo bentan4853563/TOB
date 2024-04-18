@@ -82,10 +82,12 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
                   });
                   return innerAccum;
                 },
-                { status: "Processed", version: 1, comment: "" }
+                { status: "Processed", version: 1, comment: "", resultTOB: "" }
               );
             } else if (category === "notes") {
-              accumulator[category] = Object.values(data[category]); // Return original notes for the "notes" category
+              if (data[category]) {
+                accumulator[category] = Object.values(data[category]); // Return original notes for the "notes" category
+              }
             }
             return accumulator;
           },

@@ -56,6 +56,7 @@ export const handleUpdateExclusion = (exclusionData) => async (dispatch) => {
     const response = await fetch(`${backend_url}/api/content/update`, options);
     if (response.ok) {
       const responseData = await response.json();
+      console.log("=", responseData);
       dispatch(setExclusionData(responseData.result));
       dispatch(clearLoading());
     }

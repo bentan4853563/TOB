@@ -86,7 +86,6 @@ router.post("/update", auth, async (req, res) => {
     const filepath = `TBData/reviewed/${uuid}.json`;
 
     await saveDataToFile(tableData, filepath);
-
     let statusByCategory = Object.keys(tableData)
       .filter((category) => category !== "notes")
       .map((category) => {
@@ -95,7 +94,7 @@ router.post("/update", auth, async (req, res) => {
           status: tableData[category].status,
           version: tableData[category].version,
           comment: tableData[category].comment,
-          // resultTOB: tableData[category].resultTOB,
+          resultTOB: tableData[category].resultTOB,
         };
       });
 

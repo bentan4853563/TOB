@@ -18,12 +18,12 @@ import "@szhsin/react-menu/dist/transitions/slide.css";
 import ViewTable from "./ViewTable";
 import EditableTable from "./EditableTable";
 import ExclusionTable from "./ExclusionTable";
+import AdditionalTable from "./AdditionalTable";
 
-import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
-import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { handleSaveToDB } from "../redux/actions/table";
 import { handleUpdateExclusion } from "../redux/actions/content";
-import AdditionalTable from "./AdditionalTable";
+import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
+import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 
 export default function CustomizedTable() {
   const navigate = useNavigate();
@@ -123,12 +123,12 @@ export default function CustomizedTable() {
   useEffect(() => {
     if (contents && contents.length > 0) {
       setSelectedRegulator(regulatorOptions[0]);
-      setDha(contents[0].description);
-      setHaad(contents[1].description);
+      contents.map((content) => {
+        if (content.regulator === "DHA") setDha(content.description);
+        else setHaad(content.description);
+      });
     }
   }, [contents]);
-
-  console.log("table", table, tableData);
 
   useEffect(() => {
     if (tableData && Object.keys(tableData).length > 0 && selectedCategory) {
@@ -612,11 +612,16 @@ export default function CustomizedTable() {
     return word;
   }
 
-  const handleSave = async () => {
-    dispatch(handleSaveToDB(tableData));
+  const handleSave = () => {
+    dispatch(handleSaveToDB(tableData, metaData, token));
     const exclusionData = {
-      id: selectedRegulator === "HAAD" ? contents[1]._id : contents[0]._id,
-      description: selectedRegulator === "HAAD" ? haad : dha,
+      id: contents.map((content) => {
+        if (content.regulator === selectedRegulator.label) return content._id;
+      }),
+      description: contents.map((content) => {
+        if (content.regulator === selectedRegulator.label)
+          return content.description;
+      }),
     };
     dispatch(handleUpdateExclusion(exclusionData));
     setSaved(true);
@@ -721,7 +726,9 @@ export default function CustomizedTable() {
     doc.save(`${fileName}.pdf`);
 
     await handleGenerate(fileName);
+
     dispatch(clearLoading());
+
     toast.success("Successfully generated!", {
       position: "top-right",
     });
@@ -1009,11 +1016,11 @@ export default function CustomizedTable() {
   };
 
   const handleEditExclusion = (index, newValue) => {
-    if (selectedRegulator === "DHA") {
+    if (selectedRegulator.label === "DHA") {
       const updatedDha = [...dha];
       updatedDha[index] = newValue;
       setDha(updatedDha);
-    } else if (selectedRegulator === "HAAD") {
+    } else if (selectedRegulator.label === "HAAD") {
       const updatedHaad = [...haad];
       updatedHaad[index] = newValue;
       setHaad(updatedHaad);

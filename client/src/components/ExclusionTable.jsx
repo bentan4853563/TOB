@@ -34,8 +34,6 @@ function ExclusionTable({
     return pathSegments[pathSegments.length - 1];
   };
 
-  console.log("===>", endPoint !== "view" && editable, endPoint, editable);
-
   return (
     <div className="w-full">
       <h1 className="text-3xl text-black font-bold m-4">Exclusions</h1>
