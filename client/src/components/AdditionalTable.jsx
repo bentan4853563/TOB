@@ -6,6 +6,7 @@ import { getContent } from "../redux/actions/content";
 
 import { GoPlus } from "react-icons/go";
 import { FaTrash } from "react-icons/fa";
+import DynamicHeightTextarea from "./DynamicHeightTextarea";
 
 function AdditionalTable({
   notes,
@@ -64,12 +65,18 @@ function AdditionalTable({
                   <td className="border border-gray-300">{index + 1}</td>
                   <td className="w-full border border-gray-300">
                     {endPoint !== "view" ? (
-                      <textarea
-                        value={row}
-                        onChange={(e) =>
+                      // <textarea
+                      //   value={row}
+                      //   onChange={(e) =>
+                      //     handleEditAdditional(index, e.target.value)
+                      //   }
+                      //   className="w-full focus:outline-none bg-transparent"
+                      // />
+                      <DynamicHeightTextarea
+                        content={row}
+                        handeChange={(e) =>
                           handleEditAdditional(index, e.target.value)
                         }
-                        className="w-full focus:outline-none bg-transparent"
                       />
                     ) : (
                       row

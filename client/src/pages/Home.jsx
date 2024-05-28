@@ -63,7 +63,7 @@ const Home = () => {
     <div className="w-full h-full bg-gray-100 px-8 lg:px-24 flex flex-col items-center justify-start">
       {/* Dashboard */}
       <div className="w-full lg:w-1/2 py-2 mb-4 flex flex-col items-start bg-white rounded-lg px-4 mt-8">
-        <table>
+        <table className="text-black">
           <thead>
             <tr>
               <th>Status</th>

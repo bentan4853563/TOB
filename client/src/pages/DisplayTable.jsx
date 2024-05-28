@@ -12,6 +12,8 @@ import { BsEye } from "react-icons/bs";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 
+import Pagination from "../components/Pagination";
+
 import "@szhsin/react-menu/dist/index.css";
 import "@szhsin/react-menu/dist/transitions/slide.css";
 import "react-confirm-alert/src/react-confirm-alert.css";
@@ -47,6 +49,23 @@ const DisplayTable = () => {
     expanded: false,
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalItems, setTotalItems] = useState(0);
+  const currentItems = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page
+  };
+
   useEffect(() => {
     dispatch(clearTableData());
     dispatch(clearMetaData());
@@ -75,6 +94,12 @@ const DisplayTable = () => {
     fetchData();
     dispatch(clearLoading());
   }, []);
+
+  useEffect(() => {
+    if (filteredData.length > 0) {
+      setTotalItems(filteredData.length);
+    }
+  }, [filteredData]);
 
   const mainColumns = [
     { label: "Type of TOB", key: "tobType" },
@@ -195,10 +220,7 @@ const DisplayTable = () => {
   const handleSearch = () => {
     const filteredData = dbTableData.filter((row) => {
       const tobTypeMatch = tobType ? row.tobType === tobType : true;
-      const insurerMatch =
-        tobType && tobType === "Elite Case" && insurer
-          ? row.insurer === insurer
-          : true;
+      const insurerMatch = insurer ? row.insurer === insurer : true;
 
       const clientSearchLower = searchValues.client.toLowerCase();
       const brokerSearchLower = searchValues.broker.toLowerCase();
@@ -222,6 +244,19 @@ const DisplayTable = () => {
     setFilteredData(filteredData);
   };
 
+  const isEditable = (rowData) => {
+    let generated = 0;
+    rowData["statusByCategory"].map((category) => {
+      if (category.status === "Generated") {
+        generated = generated + 1;
+      }
+    });
+    if (generated === rowData["statusByCategory"].length) {
+      return false;
+    } else {
+      return true;
+    }
+  };
   // console.log(dbTableData, tobType, insurer, searchValues);
   // const handleKeyDown = (e) => {
   //   if (e.key === "Enter") {
@@ -260,26 +295,24 @@ const DisplayTable = () => {
               components={{
                 IndicatorSeparator: () => null,
               }}
-              className="w-full lg:w-1/2"
+              className="w-full lg:w-1/2 text-black"
             />
           </div>
-          {tobType === "Elite Case" && (
-            <div className="flex flex-col gap-1">
-              <label className="text-black" htmlFor="tobType">
-                Insurer
-              </label>
-              <Select
-                id="tobType"
-                options={insurerOptions}
-                onChange={(selectedOption) => setInsurer(selectedOption.value)}
-                value={insurer.value}
-                components={{
-                  IndicatorSeparator: () => null,
-                }}
-                className="w-full lg:w-1/2"
-              />
-            </div>
-          )}
+          <div className="flex flex-col gap-1">
+            <label className="text-black" htmlFor="tobType">
+              Insurer
+            </label>
+            <Select
+              id="tobType"
+              options={insurerOptions}
+              onChange={(selectedOption) => setInsurer(selectedOption.value)}
+              value={insurer.value}
+              components={{
+                IndicatorSeparator: () => null,
+              }}
+              className="w-full lg:w-1/2 text-black"
+            />
+          </div>
           <div className="flex flex-col gap-1">
             <label className="text-black" htmlFor="client">
               Client
@@ -293,7 +326,7 @@ const DisplayTable = () => {
               onChange={(e) =>
                 setSearchValues({ ...searchValues, client: e.target.value })
               }
-              className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
+              className="w-full lg:w-1/2 text-black px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -309,7 +342,7 @@ const DisplayTable = () => {
               onChange={(e) =>
                 setSearchValues({ ...searchValues, broker: e.target.value })
               }
-              className="w-full lg:w-1/2 px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
+              className="w-full lg:w-1/2 text-black px-2 py-1.5 rounded-md border border-gray-200 focus:outline-none focus:border-indigo-600"
             />
           </div>
           <button
@@ -347,8 +380,8 @@ const DisplayTable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData &&
-                    filteredData.map((row, rowIndex) => (
+                  {currentItems &&
+                    currentItems.map((row, rowIndex) => (
                       <React.Fragment key={`fragment-${row.uuid}`}>
                         <tr
                           key={`main-${row.uuid}`}
@@ -372,7 +405,7 @@ const DisplayTable = () => {
                               <IoIosArrowForward className="cursor-pointer" />
                             )}
                           </td>
-                          <td>{rowIndex + 1}</td>
+                          <td>{(currentPage - 1) * pageSize + rowIndex + 1}</td>
                           {mainColumns.map((item, colIndex) => (
                             <td key={colIndex}>{row[item.key]}</td>
                           ))}
@@ -383,11 +416,13 @@ const DisplayTable = () => {
                                 size={20}
                                 onClick={() => handleView(row.uuid)}
                               />
-                              <MdOutlineModeEditOutline
-                                className="cursor-pointer hover:text-green-600"
-                                size={20}
-                                onClick={() => handleEdit(row.uuid)}
-                              />
+                              {isEditable(row) && (
+                                <MdOutlineModeEditOutline
+                                  className="cursor-pointer hover:text-green-600"
+                                  size={20}
+                                  onClick={() => handleEdit(row.uuid)}
+                                />
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -467,6 +502,16 @@ const DisplayTable = () => {
             )}
           </div>
         </div>
+      )}
+
+      {filteredData.length > 10 && (
+        <Pagination
+          itemsCount={totalItems}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          currentPage={currentPage}
+        />
       )}
     </div>
   );

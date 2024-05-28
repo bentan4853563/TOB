@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 
 import PropTypes from "prop-types";
 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { IoClose } from "react-icons/io5";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import {
@@ -44,65 +47,97 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
   };
 
   const handleSubmit = async () => {
-    dispatch(setLoading());
-    const formData = new FormData();
-    formData.append("category_list", JSON.stringify(categoryList));
-    formData.append("file_name", file_name);
-    dispatch(setLoading());
-    try {
-      const response = await fetch(`${python_server_url}/generateDoc`, {
-        method: "POST",
-        headers: {
-          "ngrok-skip-browser-warning": true,
-        },
-        body: formData,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data);
-
-        const initialized = Object.keys(data).reduce(
-          (accumulator, category) => {
-            if (category !== "notes") {
-              accumulator[category] = Object.keys(data[category]).reduce(
-                (innerAccum, subTitle) => {
-                  innerAccum[subTitle] = data[category][subTitle].map((row) => {
-                    return {
-                      id: crypto.randomUUID(),
-                      ...row,
-                      color: row.status === "checked" ? "green" : "red",
-                      edit: false,
-                      "New Benefit": "",
-                      "New Limit": "",
-                      "Edit Reason": "",
-                      "Review Required": false,
-                      Reviewed: false,
-                      "Review Comment": "",
-                    };
-                  });
-                  return innerAccum;
-                },
-                { status: "Processed", version: 1, comment: "", resultTOB: "" }
-              );
-            } else if (category === "notes") {
-              if (data[category]) {
-                accumulator[category] = Object.values(data[category]); // Return original notes for the "notes" category
-              }
-            }
-            return accumulator;
+    if (categoryList.length > 0) {
+      dispatch(setLoading());
+      const formData = new FormData();
+      formData.append("category_list", JSON.stringify(categoryList));
+      formData.append("file_name", file_name);
+      dispatch(setLoading());
+      try {
+        const response = await fetch(`${python_server_url}/getBenefits`, {
+          method: "POST",
+          headers: {
+            "ngrok-skip-browser-warning": true,
           },
-          {}
-        );
+          body: formData,
+        });
+        console.log("Response:", response);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          dispatch(clearLoading());
 
-        saveStatusByCategory(initialized);
-        dispatch(storeTableData(initialized));
-        dispatch(clearLoading());
-        hideModal();
-      } else {
-        console.error("Error:", response.statusText);
+          const initialized = Object.keys(data).reduce(
+            (accumulator, category) => {
+              if (category !== "notes") {
+                let regulator = "";
+                if (category.includes("DXB")) regulator = "DHA";
+                else if (category.includes("AUH")) regulator = "HAAD";
+                else regulator = "";
+                accumulator[category] = Object.keys(data[category]).reduce(
+                  (innerAccum, subTitle) => {
+                    if (subTitle !== "error") {
+                      innerAccum[subTitle] = data[category][subTitle].map(
+                        (row) => {
+                          let color = "";
+                          if (row.match === "NOT_FOUND_IN_SOB")
+                            color = "orange";
+                          else if (row.match === "NOT_FOUND_IN_CONTENT")
+                            color = "red";
+                          else color = "green";
+
+                          return {
+                            id: crypto.randomUUID(),
+                            ...row,
+                            color: color,
+                            edit: false,
+                            "New Benefit": "",
+                            "New Limit": "",
+                            "Edit Reason": "",
+                            "Review Required": false,
+                            Reviewed: false,
+                            "Review Comment": "",
+                          };
+                        }
+                      );
+                      return innerAccum;
+                    }
+                  },
+                  {
+                    status: "Processed",
+                    version: 1,
+                    comment: "",
+                    resultTOB: "",
+                    regulator,
+                  }
+                );
+              } else if (category === "notes") {
+                if (data[category]) {
+                  accumulator[category] = data[category]; // Return original notes for the "notes" category
+                }
+              }
+              return accumulator;
+            },
+            {}
+          );
+
+          saveStatusByCategory(initialized);
+          dispatch(storeTableData(initialized));
+          hideModal();
+        } else {
+          dispatch(clearLoading());
+          toast.error("Failed extraction data by using AI. Please try again!", {
+            position: "top-right",
+          });
+          console.error("Error:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error:", error);
       }
-    } catch (error) {
-      console.error("Error:", error);
+    } else {
+      toast.warning("Please input category name at least one.", {
+        position: "top-right",
+      });
     }
   };
 
@@ -131,12 +166,26 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
         dispatch(setMetaData(metaData[0]));
         dispatch(storeTableData(tableData));
       } else {
-        console.error("Error:", response.status, response.statusText);
+        // Handle non-2xx response statuses by showing a toast.
+        toast.error("Failed extraction data by using AI. Please try again!", {
+          position: "top-right",
+        });
+        console.error("Error:", response.statusText);
       }
     } catch (error) {
-      console.error("Fetch Error:", error);
+      // Handle network errors or other exceptions.
+      toast.error(
+        "Network error or other issue encountered. Please try again!",
+        {
+          position: "top-right",
+        }
+      );
+      console.error("Error:", error);
+    } finally {
+      // Stop loading irrespective of the outcome of the request.
+      dispatch(clearLoading());
     }
-    dispatch(clearLoading);
+    hideModal(); // Hide modal depending on your application flow.
   };
 
   return (
@@ -208,6 +257,7 @@ const SendCategoryModal = ({ list, file_name, hideModal }) => {
           Submit
         </button>
       </div>
+      <ToastContainer />
     </div>
   );
 };

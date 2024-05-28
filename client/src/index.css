@@ -6,17 +6,27 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
+  width: 100%;
   box-sizing: border-box;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: black;
   background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background-color: lightgray;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgb(185, 184, 184);
+  border-radius: 4px;
 }
 
 a {
@@ -89,6 +99,7 @@ button:focus-visible {
   animation: fadeInScaleUp 0.5s ease forwards;
 }
 table {
+  color:#1a1a1a;
   width: 100%;
 }
 
@@ -120,12 +131,15 @@ td {
   background-color: #e0e0e0; /* Slightly darker on hover for interactivity */
 }
 
-.status-checked {
+.MATCH_FOUND {
   background-color: #e1ffe8; /* Green for checked status */
 }
 
-.status-unchecked {
+.NOT_OFFERED_BY_INSURER {
   background-color: #fae0e0; /* Red for unchecked status */
+}
+.NOT_OFFERED_BY_QIC {
+  background-color: #ffedd5; /* Red for unchecked status */
 }
 
 .action-cell {
@@ -138,6 +152,10 @@ td {
 
 input[type='checkbox']:checked + label {
   color: #4caf50; /* Green color when checked */
+}
+
+input[type='text'] {
+  background-color: white;
 }
 
 .comment-icon {
@@ -155,3 +173,10 @@ input[type='checkbox']:checked + label {
   max-width: 150px; /* You can set the max-width as per your design */
 }
 
+.react-confirm-alert-body > h1 {
+  font-size: 32px;
+}
+
+textarea {
+  background-color: white;
+}

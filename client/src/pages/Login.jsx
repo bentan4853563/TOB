@@ -85,7 +85,7 @@ const SignIn = () => {
               autoFocus
               onFocus={handleFocus}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full py-2 mt-4 rounded-sm pl-2 border border-gray-600 focus:outline-none"
+              className="bg-white w-full py-2 mt-4 rounded-sm pl-2 border border-gray-600 focus:outline-none"
             />
             {errors.email && (
               <p className="text-red-400 text-xs text-left w-4/5 sm:w-2/3">
@@ -100,7 +100,7 @@ const SignIn = () => {
               onChange={(e) => setPassword(e.target.value)}
               onFocus={handleFocus}
               onKeyDown={handleKeyDown}
-              className="w-full py-2 mt-8 rounded-sm pl-2 border border-gray-600 focus:outline-none"
+              className="bg-white w-full py-2 mt-8 rounded-sm pl-2 border border-gray-600 focus:outline-none"
             />
             {errors.password && (
               <p className="text-red-400 text-xs text-left w-4/5 sm:w-2/3">

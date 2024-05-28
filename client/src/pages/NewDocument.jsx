@@ -5,6 +5,9 @@ import { confirmAlert } from "react-confirm-alert";
 import ReactSelect from "react-select";
 import "react-confirm-alert/src/react-confirm-alert.css";
 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 import { setMetaData } from "../redux/reducers/tableSlice";
 import SendCategoryModal from "../components/SendCategoryModal";
@@ -275,11 +278,16 @@ const NewDocument = () => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log("data", data);
         setCategoryList(data.category_list);
         setTempFileName(data.file_name);
         setModalOpen(true);
         dispatch(clearLoading());
       } else {
+        dispatch(clearLoading());
+        toast.error("Failed extraction data by using AI. Please try again!", {
+          position: "top-right",
+        });
         console.error("Error:", response.statusText);
       }
     } catch (error) {
@@ -421,12 +429,13 @@ const NewDocument = () => {
       <div className="w-full px-8 py-4 my-4 flex justify-start items-center bg-white rounded-lg">
         <span className="text-2xl">Documents</span>
       </div>
+      <ToastContainer />
       <div className="w-full py-2 flex flex-col items-start bg-white rounded-lg divide-y divide-gray-300">
         <div className="py-2 px-8">
           <span className="text-xl font-bold font-sans">New Document</span>
         </div>
         <div className="w-full p-8">
-          <div className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col gap-2">
+          <div className="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col gap-2 text-black">
             {/* tobType */}
             <div className="flex flex-col">
               <label htmlFor="tobType">Type of TOB</label>
@@ -453,7 +462,7 @@ const NewDocument = () => {
                 value={client}
                 onFocus={handleFocus}
                 onChange={(e) => setClient(e.target.value)}
-                className="border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
+                className="bg-white border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
               />
               {metaFormErrors.client && (
                 <p className="w-full text-red-400 text-xs text-left">
@@ -471,7 +480,7 @@ const NewDocument = () => {
                 id="broker"
                 value={broker}
                 onChange={(e) => setBroker(e.target.value)}
-                className="border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
+                className="bg-white border border-gray-200 rounded-[4px] p-2 outline-none focus:border-sky-700"
               />
             </div>
 

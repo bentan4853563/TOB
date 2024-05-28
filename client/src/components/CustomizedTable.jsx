@@ -25,6 +25,8 @@ import { handleUpdateExclusion } from "../redux/actions/content";
 import { setMetaData, storeTableData } from "../redux/reducers/tableSlice";
 import { clearLoading, setLoading } from "../redux/reducers/loadingSlice";
 
+import logo from "../assets/logo.png";
+
 export default function CustomizedTable() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -37,6 +39,7 @@ export default function CustomizedTable() {
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedRegulator, setSelectedRegulator] = useState("");
+  // const [manualRegulator, setManualRegulator] = useState("");
   const [filteredTable, setFilteredTable] = useState({});
   const [tableData, setTableData] = useState({});
 
@@ -58,17 +61,17 @@ export default function CustomizedTable() {
   const [dha, setDha] = useState([]);
   const [haad, setHaad] = useState([]);
 
-  const categoryOptions = Object.keys(table)
+  const regulatorOptions = [
+    { label: "HAAD", value: "HAAD" },
+    { label: "DHA", value: "DHA" },
+  ];
+
+  const categoryOptions = Object.keys(tableData)
     .filter((category) => category !== "notes")
     .map((category) => ({
       value: category,
       label: category,
     }));
-
-  const regulatorOptions = [
-    { label: "DHA", value: "DHA" },
-    { label: "HAAD", value: "HAAD" },
-  ];
 
   const filterOptions = [
     { value: "all", label: "All" },
@@ -81,19 +84,19 @@ export default function CustomizedTable() {
   ];
 
   const titleMap = [
-    "General Benefit",
-    "In Patient Benefit",
-    "Out Patient Benefit",
-    "Other Benefit",
+    "General Benefits",
+    "In Patient Benefits",
+    "Out Patient Benefits",
+    "Other Benefits",
   ];
 
   const handleCategoryChange = (selectedOption) => {
     setSelectedCategory(selectedOption.value);
-    localStorage.setItem("saved-category", selectedOption.value);
+    localStorage.setItem("category", selectedOption.value);
   };
 
   const handleRegulatorChange = (selectedOption) => {
-    setSelectedRegulator(selectedOption);
+    setSelectedRegulator(selectedOption.label);
   };
 
   const handleFilterChange = (selectedOption) => {
@@ -122,7 +125,6 @@ export default function CustomizedTable() {
 
   useEffect(() => {
     if (contents && contents.length > 0) {
-      setSelectedRegulator(regulatorOptions[0]);
       contents.map((content) => {
         if (content.regulator === "DHA") setDha(content.description);
         else setHaad(content.description);
@@ -130,15 +132,23 @@ export default function CustomizedTable() {
     }
   }, [contents]);
 
+  // useEffect(() => {
+  //   if (categoryOptions.length > 0 && selectedRegulator) {
+  //     setSelectedCategory(categoryOptions[0].label);
+  //   }
+  // }, [selectedRegulator]);
+
   useEffect(() => {
     if (tableData && Object.keys(tableData).length > 0 && selectedCategory) {
       let uncheckedCount = 0;
       let generated = 0;
       titleMap.map((tableName) => {
-        tableData[selectedCategory][tableName].map((row) => {
-          if (row.color === "red" && row["Review Required"] === false)
-            uncheckedCount = uncheckedCount + 1;
-        });
+        if (tableData[selectedCategory][tableName]) {
+          tableData[selectedCategory][tableName].map((row) => {
+            if (row.color === "red" && row["Review Required"] === false)
+              uncheckedCount = uncheckedCount + 1;
+          });
+        }
       });
       if (uncheckedCount !== 0) {
         setEnableReview(false);
@@ -368,8 +378,8 @@ export default function CustomizedTable() {
             }
             return {
               ...row,
-              ["New Benefit"]: row["benefit"],
-              ["New Limit"]: row["limit"],
+              ["New Benefit"]: row.edit ? "" : row["benefit"],
+              ["New Limit"]: row.edit ? "" : row["limit"],
               edit: !row.edit,
               "Review Required": row.edit ? false : true,
             };
@@ -614,16 +624,27 @@ export default function CustomizedTable() {
 
   const handleSave = () => {
     dispatch(handleSaveToDB(tableData, metaData, token));
-    const exclusionData = {
-      id: contents.map((content) => {
-        if (content.regulator === selectedRegulator.label) return content._id;
-      }),
-      description: contents.map((content) => {
-        if (content.regulator === selectedRegulator.label)
-          return content.description;
-      }),
-    };
-    dispatch(handleUpdateExclusion(exclusionData));
+
+    // Filter out contents that do not match the selectedRegulator
+    const matchedContents = contents.filter(
+      (content) => content.regulator === selectedRegulator
+    );
+
+    // Ensure that at least one content matches before trying to access properties.
+    if (matchedContents.length > 0) {
+      const exclusionData = {
+        id: matchedContents[0]._id,
+        description: (() => {
+          if (selectedRegulator === "DHA") return dha;
+          else if (selectedRegulator === "HAAD") return haad;
+          else return null;
+        })(), // Immediately invoked function expression to calculate description
+      };
+
+      console.log("exclusionData :>> ", exclusionData);
+      dispatch(handleUpdateExclusion(exclusionData));
+    }
+
     setSaved(true);
   };
 
@@ -633,25 +654,45 @@ export default function CustomizedTable() {
 
     const pdfColumns = ["benefit", "limit"];
     const headers = pdfColumns.map((header) => capitalizeFirstLetter(header));
-    const addSectionToPDF = (title, data) => {
-      if (Array.isArray(data) && data.length > 0) {
+    let currentY = 30; // Starting Y position for the first section (after the logo)
+
+    const addLogoToPage = () => {
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      doc.addImage(logo, "PNG", pdfWidth - 40, 10, 30, 10);
+    };
+
+    titleMap.forEach((title) => {
+      const sectionData =
+        tableData[selectedCategory] && tableData[selectedCategory][title];
+      if (Array.isArray(sectionData) && sectionData.length > 0) {
+        // Add a new page if the current section won't fit on the current page
+        if (
+          currentY + sectionData.length * 8 + 20 >
+          doc.internal.pageSize.getHeight() - 20
+        ) {
+          doc.addPage();
+          currentY = 30;
+          addLogoToPage();
+        } else {
+          addLogoToPage(); // Add the logo to the current page
+        }
+
         doc.setFontSize(14);
-        doc.text(title, 20, 30);
+        doc.text(title, 20, currentY);
 
         if (title === "General Benefit") {
           doc.setFontSize(10);
           doc.text(
             `Client: ${metaData.client}     Category: ${selectedCategory}`,
             20,
-            40
+            currentY + 10
           );
         }
-        // Calculate startY based on the last text element
-        let startY = 50;
+
         doc.autoTable({
-          startY: startY,
+          startY: title === "General Benefit" ? currentY + 20 : currentY + 5,
           head: [["S No"].concat(headers)],
-          body: data.map((item, index) => {
+          body: sectionData.map((item, index) => {
             const serialNumber = (index + 1).toString();
             if (item.edit === true) {
               return [
@@ -667,49 +708,64 @@ export default function CustomizedTable() {
               ];
             }
           }),
-        }),
-          doc.addPage();
+        });
+
+        currentY += sectionData.length * 8 + 50; // Update the currentY for the next section
       } else {
         console.error(
           `No data provided for title "${title}", skipping section.`
         );
       }
-    };
-
-    titleMap.forEach((title) => {
-      const sectionData =
-        tableData[selectedCategory] && tableData[selectedCategory][title];
-      if (sectionData) {
-        addSectionToPDF(title, sectionData);
-      } else {
-        console.error(
-          `No data found for category "${selectedCategory}" and title "${title}". Skipping this section.`
-        );
-      }
     });
 
     if (tableData.notes && tableData.notes.length > 0) {
+      // Add a new page if the notes section won't fit on the current page
+      if (
+        currentY + tableData.notes.length * 8 + 40 >
+        doc.internal.pageSize.getHeight() - 20
+      ) {
+        doc.addPage();
+        currentY = 30;
+        addLogoToPage();
+      } else {
+        addLogoToPage(); // Add the logo to the current page
+      }
+
       doc.setFontSize(14);
-      doc.text("Notes", 20, 20); // Title for the notes section
+      doc.text("Notes", 20, currentY);
 
       doc.autoTable({
-        startY: 30,
+        startY: currentY + 10,
         head: [["No", "Description"]], // Set headers for the notes
         body: tableData.notes.map((note, index) => [
           (index + 1).toString(),
           note.toString(),
         ]),
       });
+
+      currentY += tableData.notes.length * 8 + 30; // Update the currentY for the exclusions section
     }
 
-    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
+    // Add the exclusions section
+    const exclusionData = selectedRegulator === "DHA" ? dha : haad;
 
-    doc.addPage();
+    // Add a new page if the exclusions section won't fit on the current page
+    if (
+      currentY + exclusionData.length * 8 + 30 >
+      doc.internal.pageSize.getHeight() - 20
+    ) {
+      doc.addPage();
+      currentY = 30;
+      addLogoToPage();
+    } else {
+      addLogoToPage(); // Add the logo to the current page
+    }
+
     doc.setFontSize(14);
-    doc.text(`${selectedRegulator.label} Exclusions`, 20, 20);
+    doc.text(`${selectedRegulator} Exclusions`, 20, currentY);
 
     doc.autoTable({
-      startY: 30,
+      startY: currentY + 5,
       head: [["No", "Description"]],
       body: exclusionData.map((desc, index) => [
         (index + 1).toString(),
@@ -812,8 +868,8 @@ export default function CustomizedTable() {
     }
 
     // Include Exclusions after all sections
-    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
-    csvData += `"${selectedRegulator.label} Exclusions"\n`;
+    const exclusionData = selectedRegulator === "DHA" ? dha : haad;
+    csvData += `"${selectedRegulator} Exclusions"\n`;
     csvData += `"No","Description"\n`;
     csvData += exclusionData
       .map((desc, index) => {
@@ -894,7 +950,7 @@ export default function CustomizedTable() {
     }
 
     // Include Exclusions after all sections
-    const exclusionData = selectedRegulator.label === "DHA" ? dha : haad;
+    const exclusionData = selectedRegulator === "DHA" ? dha : haad;
     const exclusionHeaders = ["No", "Description"];
     const exclusionWorkSheetData = exclusionData.map((desc, index) => ({
       No: (index + 1).toString(),
@@ -911,7 +967,7 @@ export default function CustomizedTable() {
     utils.book_append_sheet(
       workBook,
       exclusionWorkSheet,
-      `${selectedRegulator.label} Exclusions`
+      `${selectedRegulator} Exclusions`
     );
 
     // Generate file name and write the workbook
@@ -943,7 +999,6 @@ export default function CustomizedTable() {
       if (response.ok) {
         const result = await response.json();
         const { metaData, tableData } = result;
-        console.log("res- table", tableData);
         dispatch(setMetaData(metaData));
         dispatch(storeTableData(tableData));
       } else {
@@ -1016,11 +1071,11 @@ export default function CustomizedTable() {
   };
 
   const handleEditExclusion = (index, newValue) => {
-    if (selectedRegulator.label === "DHA") {
+    if (selectedRegulator === "DHA") {
       const updatedDha = [...dha];
       updatedDha[index] = newValue;
       setDha(updatedDha);
-    } else if (selectedRegulator.label === "HAAD") {
+    } else if (selectedRegulator === "HAAD") {
       const updatedHaad = [...haad];
       updatedHaad[index] = newValue;
       setHaad(updatedHaad);
@@ -1098,7 +1153,7 @@ export default function CustomizedTable() {
   };
 
   Modal.setAppElement("#root");
-
+  console.log("tableData", tableData);
   return (
     <div className="w-full flex flex-col mt-8">
       <Modal
@@ -1148,20 +1203,7 @@ export default function CustomizedTable() {
 
       <div className="flex items-end gap-8">
         <div className="w-1/2 flex gap-[2rem]">
-          <div className="w-full sm:w-1/2 flex flex-col">
-            <label htmlFor="regulator" className="font-bold">
-              Regulator
-            </label>
-            <Select
-              id="regulator"
-              options={regulatorOptions}
-              onChange={handleRegulatorChange}
-              value={selectedRegulator}
-              components={{
-                IndicatorSeparator: () => null,
-              }}
-            />
-          </div>
+          {/* Category Select */}
           <div className="w-full sm:w-1/2 flex flex-col">
             <label htmlFor="category" className="font-bold">
               Category
@@ -1178,6 +1220,39 @@ export default function CustomizedTable() {
               }}
             />
           </div>
+
+          {/* Regulator Select */}
+          {selectedCategory !== "" &&
+          tableData[selectedCategory].regulator === "" ? (
+            <div className="w-full sm:w-1/2 flex flex-col">
+              <label htmlFor="regulator" className="font-bold">
+                Regulator
+              </label>
+              <input
+                type="text"
+                value={selectedRegulator}
+                onChange={(e) => setSelectedRegulator(e.target.value)}
+                className="border border-gray-400 rounded-md p-1"
+              />
+            </div>
+          ) : (
+            <div className="w-full sm:w-1/2 flex flex-col">
+              <label htmlFor="regulator" className="font-bold">
+                Regulator
+              </label>
+              <Select
+                id="regulator"
+                options={regulatorOptions}
+                onChange={handleRegulatorChange}
+                value={regulatorOptions.find(
+                  (option) => option.value === selectedRegulator
+                )}
+                components={{
+                  IndicatorSeparator: () => null,
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Status */}
@@ -1191,7 +1266,8 @@ export default function CustomizedTable() {
           >
             {tableData &&
               Object.keys(tableData).length > 0 &&
-              selectedCategory !== "" &&
+              selectedCategory &&
+              Object.keys(tableData[selectedCategory].length > 0) &&
               tableData[selectedCategory].status}
           </span>
         </div>
@@ -1248,31 +1324,33 @@ export default function CustomizedTable() {
         {filteredTable &&
           Object.keys(filteredTable).length > 0 &&
           titleMap.map((tableName, index) => {
-            let table = Object.values(filteredTable[tableName]);
-            return (
-              <div
-                key={index}
-                className="w-full px-8 pb-8 bg-white flex flex-col items-start"
-              >
-                <h1 className="text-3xl text-black font-bold m-4">
-                  {tableName}
-                </h1>
-                {tableData[selectedCategory].status !== "Generated" ? (
-                  <EditableTable
-                    tableName={tableName}
-                    tableData={table}
-                    handleEdit={handleEdit}
-                    newRow={handleNewRow}
-                    handleReason={handleReason}
-                    handleEditConfirm={handleEditConfirm}
-                    handleReviewConfirm={handleReviewConfirm}
-                    handleDelete={handleDeleteRow}
-                  />
-                ) : (
-                  <ViewTable tableData={table} />
-                )}
-              </div>
-            );
+            if (filteredTable[tableName]) {
+              let table = Object.values(filteredTable[tableName]);
+              return (
+                <div
+                  key={index}
+                  className="w-full px-8 pb-8 bg-white flex flex-col items-start"
+                >
+                  <h1 className="text-3xl text-black font-bold m-4">
+                    {tableName}
+                  </h1>
+                  {tableData[selectedCategory].status !== "Generated" ? (
+                    <EditableTable
+                      tableName={tableName}
+                      tableData={table}
+                      handleEdit={handleEdit}
+                      newRow={handleNewRow}
+                      handleReason={handleReason}
+                      handleEditConfirm={handleEditConfirm}
+                      handleReviewConfirm={handleReviewConfirm}
+                      handleDelete={handleDeleteRow}
+                    />
+                  ) : (
+                    <ViewTable tableData={table} />
+                  )}
+                </div>
+              );
+            }
           })}
       </div>
 
@@ -1281,7 +1359,7 @@ export default function CustomizedTable() {
         Object.keys(tableData.notes).length > 0 && (
           <div className="bg-white px-8 pb-8">
             <AdditionalTable
-              notes={tableData.notes}
+              notes={tableData.notes.notes}
               handleNewAdditional={handleNewAdditional}
               handleEditAdditional={handleEditAdditional}
               handleDeleteAdditional={handleDeleteAdditional}
@@ -1289,95 +1367,98 @@ export default function CustomizedTable() {
           </div>
         )}
 
-      <div className="bg-white px-8 pb-8 mt-8">
-        <ExclusionTable
-          regulator={selectedRegulator.label}
-          editable={
-            Object.keys(tableData).length > 0 &&
-            tableData[selectedCategory].status !== "Generated"
-          }
-          dha={dha}
-          haad={haad}
-          handleNewExclusion={handleNewExclusion}
-          handleEditExclusion={handleEditExclusion}
-          handleDeleteExclusion={handleDeleteExclusion}
-        />
-      </div>
+      {selectedRegulator !== "" && (
+        <div className="bg-white px-8 pb-8 mt-8">
+          <ExclusionTable
+            regulator={selectedRegulator}
+            editable={
+              Object.keys(tableData).length > 0 &&
+              tableData[selectedCategory].status !== "Generated"
+            }
+            dha={dha}
+            haad={haad}
+            handleNewExclusion={handleNewExclusion}
+            handleEditExclusion={handleEditExclusion}
+            handleDeleteExclusion={handleDeleteExclusion}
+          />
+        </div>
+      )}
 
-      <div className="flex gap-4 my-8">
-        {!saved &&
-          tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status !== "Generated" && (
-            <button
-              onClick={handleSave}
-              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-            >
-              Save
-            </button>
-          )}
-
-        {tableData &&
-          tableData[selectedCategory] &&
-          enableReview &&
-          (tableData[selectedCategory].status === "To Be Reviewed" ||
-            tableData[selectedCategory].status === "Processed") &&
-          saved && (
-            <button
-              onClick={handleReviewSeletedCategory}
-              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-            >
-              Review
-            </button>
-          )}
-
-        {tableData &&
-          tableData[selectedCategory] &&
-          tableData[selectedCategory].status === "Reviewed" &&
-          saved && (
-            <div className="relative">
-              <Menu
-                menuButton={
-                  <MenuButton className="w-48 h-12 bg-indigo-600 text-white hover:bg-indigo-500 flex justify-center items-center focus:outline-none border-none">
-                    Generate
-                  </MenuButton>
-                }
-                transition
-                gap={8}
-                align="end"
+      {!enableRevise && (
+        <div className="flex gap-4 my-8">
+          {!saved &&
+            tableData &&
+            tableData[selectedCategory] &&
+            tableData[selectedCategory].status !== "Generated" && (
+              <button
+                onClick={handleSave}
+                className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
               >
-                <MenuItem
-                  onClick={handleSaveToPDF}
-                  className="flex justify-center"
+                Save
+              </button>
+            )}
+
+          {tableData &&
+            tableData[selectedCategory] &&
+            enableReview &&
+            (tableData[selectedCategory].status === "To Be Reviewed" ||
+              tableData[selectedCategory].status === "Processed") &&
+            saved && (
+              <button
+                onClick={handleReviewSeletedCategory}
+                className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+              >
+                Review
+              </button>
+            )}
+
+          {tableData &&
+            tableData[selectedCategory] &&
+            tableData[selectedCategory].status === "Reviewed" &&
+            saved && (
+              <div className="relative">
+                <Menu
+                  menuButton={
+                    <MenuButton className="w-48 h-12 bg-indigo-600 text-white hover:bg-indigo-500 flex justify-center items-center focus:outline-none border-none">
+                      Generate
+                    </MenuButton>
+                  }
+                  transition
+                  gap={8}
+                  align="end"
                 >
-                  Save to PDF
-                </MenuItem>
-                <MenuItem
-                  className="flex justify-center"
-                  onClick={handleSaveToCSV}
-                >
-                  Save to CSV
-                </MenuItem>
-                <MenuItem
-                  className="flex justify-center"
-                  onClick={handleSaveToXLS}
-                >
-                  Save to XLS
-                </MenuItem>
-              </Menu>
-            </div>
+                  <MenuItem
+                    onClick={handleSaveToPDF}
+                    className="flex justify-center"
+                  >
+                    Save to PDF
+                  </MenuItem>
+                  <MenuItem
+                    className="flex justify-center"
+                    onClick={handleSaveToCSV}
+                  >
+                    Save to CSV
+                  </MenuItem>
+                  <MenuItem
+                    className="flex justify-center"
+                    onClick={handleSaveToXLS}
+                  >
+                    Save to XLS
+                  </MenuItem>
+                </Menu>
+              </div>
+            )}
+
+          {enableRevise && (
+            <button
+              onClick={handleRevise}
+              className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+            >
+              Revise
+            </button>
           )}
 
-        {enableRevise && (
-          <button
-            onClick={handleRevise}
-            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-          >
-            Revise
-          </button>
-        )}
-
-        {/* {endPoint !== "view" && (
+          {/* {endPoint !== "view" && (
           <button
             onClick={handleDelete}
             className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
@@ -1386,13 +1467,14 @@ export default function CustomizedTable() {
           </button>
         )} */}
 
-        <button
-          onClick={handleClose}
-          className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
-        >
-          Close
-        </button>
-      </div>
+          <button
+            onClick={handleClose}
+            className="w-48 bg-indigo-600 text-white hover:bg-indigo-500 focus:outline-none"
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }

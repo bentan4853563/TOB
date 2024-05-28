@@ -26,11 +26,12 @@ router.post("/insert", async (req, res) => {
 
 router.post("/update", async (req, res) => {
   try {
-    const { id, contentData } = req.body;
-
+    console.log("req.body :>> ", req.body);
+    const { id, description } = req.body;
+    console.log("====>id, description :>> ", id, description);
     const result = await Content.findByIdAndUpdate(
       id,
-      { contentData },
+      { description },
       {
         new: true,
         upsert: true,

@@ -7,6 +7,7 @@ import { FaTrash } from "react-icons/fa";
 import { FaRegEdit } from "react-icons/fa";
 import { GoPlus } from "react-icons/go";
 import { MdOutlineInsertComment } from "react-icons/md";
+import DynamicHeightTextarea from "./DynamicHeightTextarea";
 
 const EditableTable = ({
   tableName,
@@ -55,6 +56,7 @@ const EditableTable = ({
       <thead className="table-header">
         <tr className="">
           <th className="px-2">New</th>
+          <th className="px-2">No</th>
           {columns.map((column, index) => {
             return (
               <th
@@ -77,6 +79,7 @@ const EditableTable = ({
                 className="cursor-pointer"
               />
             </td>
+            <td>{rowIndex + 1}</td>
             {columns.map((column, columnIndex) => {
               if (columnIndex < 2) {
                 if (row.color !== "yellow") {
@@ -85,13 +88,33 @@ const EditableTable = ({
                       key={columnIndex}
                       className={`${
                         row.color === "green"
-                          ? "status-checked"
-                          : "status-unchecked"
+                          ? "MATCH_FOUND"
+                          : row.color === "red"
+                          ? "NOT_OFFERED_BY_INSURER"
+                          : "NOT_OFFERED_BY_QIC"
                       } ${
                         columnIndex === 0 ? "w-1/6" : "w-1/4"
-                      } focus:outline-none border border-gray-300`}
+                      } focus:outline-none border border-gray-300  min-h-[100px]`}
                     >
-                      {row[column]}
+                      {/* {row[column]} */}
+                      {/* Display the entire benefit text with its structure */}
+                      <div>
+                        {row &&
+                          row[column] &&
+                          row[column]
+                            .split("\n")
+                            .map((line, index) => (
+                              <div key={index}>
+                                {line.startsWith("□ ") ? (
+                                  <span style={{ marginLeft: "20px" }}>
+                                    {line.slice(3)}
+                                  </span>
+                                ) : (
+                                  line
+                                )}
+                              </div>
+                            ))}
+                      </div>
                     </td>
                   );
                 } else {
@@ -137,12 +160,18 @@ const EditableTable = ({
                     } border border-gray-300`}
                   >
                     {row["edit"] === true ? (
-                      <textarea
-                        value={row[column]}
-                        onChange={(e) =>
+                      // <textarea
+                      //   value={row[column]}
+                      //   onChange={(e) =>
+                      //     handleEdit(tableName, e.target.value, row.id, column)
+                      //   }
+                      //   className="w-full focus:outline-none h-full min-h-[100px] resize-none"
+                      // />
+                      <DynamicHeightTextarea
+                        content={row[column]}
+                        handleChange={(e) =>
                           handleEdit(tableName, e.target.value, row.id, column)
                         }
-                        className="w-full focus:outline-none resize-none"
                       />
                     ) : (
                       row[column]

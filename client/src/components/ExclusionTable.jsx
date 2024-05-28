@@ -6,6 +6,7 @@ import { getContent } from "../redux/actions/content";
 
 import { GoPlus } from "react-icons/go";
 import { FaTrash } from "react-icons/fa";
+import DynamicHeightTextarea from "./DynamicHeightTextarea";
 
 function ExclusionTable({
   regulator,
@@ -68,12 +69,18 @@ function ExclusionTable({
                     <td className="border border-gray-300">{index + 1}</td>
                     <td className="w-full border border-gray-300">
                       {endPoint !== "view" && editable ? (
-                        <textarea
-                          value={row}
-                          onChange={(e) =>
+                        // <textarea
+                        //   value={row}
+                        //   onChange={(e) =>
+                        //     handleEditExclusion(index, e.target.value)
+                        //   }
+                        //   className="w-full focus:outline-none bg-transparent"
+                        // />
+                        <DynamicHeightTextarea
+                          content={row}
+                          handleChange={(e) =>
                             handleEditExclusion(index, e.target.value)
                           }
-                          className="w-full focus:outline-none bg-transparent"
                         />
                       ) : (
                         row

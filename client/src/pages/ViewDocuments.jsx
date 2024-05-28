@@ -31,10 +31,16 @@ export default function CustomizedTable() {
   const [dha, setDha] = useState([]);
   const [haad, setHaad] = useState([]);
 
-  const categoryOptions = Object.keys(table).map((category) => ({
-    value: category,
-    label: category,
-  }));
+  const categoryOptions = Object.keys(tableData)
+    .filter(
+      (category) =>
+        category !== "notes" &&
+        selectedRegulator.label === tableData[category].regulator
+    )
+    .map((category) => ({
+      value: category,
+      label: category,
+    }));
 
   const regulatorOptions = [
     { label: "DHA", value: "DHA" },
@@ -56,6 +62,12 @@ export default function CustomizedTable() {
       setHaad(contents[1].description);
     }
   }, [contents]);
+
+  useEffect(() => {
+    if (categoryOptions.length > 0 && selectedRegulator) {
+      setselectedCategory(categoryOptions[0].label);
+    }
+  }, [selectedRegulator]);
 
   useEffect(() => {
     if (tableData && selectedCategory !== null) {
@@ -87,7 +99,7 @@ export default function CustomizedTable() {
   };
 
   const handleCategoryChange = (selectedOption) => {
-    setselectedCategory(selectedOption);
+    setselectedCategory(selectedOption.value);
   };
 
   const handleRegulatorChange = (selectedOption) => {
@@ -187,11 +199,13 @@ export default function CustomizedTable() {
   };
 
   const titleMap = [
-    "General Benefit",
-    "In Patient Benefit",
-    "Other Benefit",
-    "Out Patient Benefit",
+    "General Benefits",
+    "In Patient Benefits",
+    "Other Benefits",
+    "Out Patient Benefits",
   ];
+
+  console.log("selectedTable :>> ", selectedTable);
 
   return (
     <div className="w-full h-full bg-gray-100 px-8 md:px-16 xl:px-24 flex flex-col items-start justify-start">
@@ -272,7 +286,9 @@ export default function CustomizedTable() {
           )}
         </div>
       </div>
+
       <ToastContainer />
+
       <div className="w-full mt-4 flex items-end gap-8">
         <div className="w-full flex items-end gap-8">
           {/* Category Selector */}
